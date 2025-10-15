@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Handle CORS preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# API Routes
+RewriteRule ^auth/(.*)$ auth.php [QSA,L]
+RewriteRule ^clients/(.*)$ clients.php [QSA,L]
+RewriteRule ^clients$ clients.php [QSA,L]
+RewriteRule ^bookings/(.*)$ bookings.php [QSA,L]
+RewriteRule ^bookings$ bookings.php [QSA,L]
+RewriteRule ^galleries/(.*)$ galleries.php [QSA,L]
+RewriteRule ^galleries$ galleries.php [QSA,L]
+RewriteRule ^invoices/(.*)$ invoices.php [QSA,L]
+RewriteRule ^invoices$ invoices.php [QSA,L]
+RewriteRule ^dashboard$ dashboard.php [QSA,L]

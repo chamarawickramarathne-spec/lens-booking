@@ -1,0 +1,309 @@
+/**
+ * API Client for Lens Booking Pro
+ * Replaces Supabase integration with PHP backend API calls
+ */
+
+const API_BASE_URL = 'http://localhost/lens-booking/api';
+
+class ApiClient {
+  private baseURL: string;
+  private token: string | null;
+
+  constructor() {
+    this.baseURL = API_BASE_URL;
+    this.token = localStorage.getItem('auth_token');
+  }
+
+  private getHeaders(): HeadersInit {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    return headers;
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    const config: RequestInit = {
+      ...options,
+      headers: {
+        ...this.getHeaders(),
+        ...options.headers,
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'API request failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API request error:', error);
+      throw error;
+    }
+  }
+
+  // Authentication methods
+  async login(email: string, password: string) {
+    const response = await this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.token) {
+      this.token = response.token;
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user_data', JSON.stringify(response.user));
+    }
+
+    return response;
+  }
+
+  async register(userData: {
+    email: string;
+    password: string;
+    full_name: string;
+    phone?: string;
+    role?: string;
+  }) {
+    const response = await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+
+    if (response.token) {
+      this.token = response.token;
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user_data', JSON.stringify(response.user));
+    }
+
+    return response;
+  }
+
+  async getProfile() {
+    return this.request('/auth/profile');
+  }
+
+  async updateProfile(profileData: any) {
+    return this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  logout() {
+    this.token = null;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+  }
+
+  // Client methods
+  async getClients() {
+    return this.request('/clients');
+  }
+
+  async getClient(id: number) {
+    return this.request(`/clients/${id}`);
+  }
+
+  async createClient(clientData: any) {
+    return this.request('/clients', {
+      method: 'POST',
+      body: JSON.stringify(clientData),
+    });
+  }
+
+  async updateClient(id: number, clientData: any) {
+    return this.request(`/clients/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(clientData),
+    });
+  }
+
+  async deleteClient(id: number) {
+    return this.request(`/clients/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Booking methods
+  async getBookings() {
+    return this.request('/bookings');
+  }
+
+  async getBooking(id: number) {
+    return this.request(`/bookings/${id}`);
+  }
+
+  async createBooking(bookingData: any) {
+    return this.request('/bookings', {
+      method: 'POST',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBooking(id: number, bookingData: any) {
+    return this.request(`/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBookingStatus(id: number, status: string) {
+    return this.request(`/bookings/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async deleteBooking(id: number) {
+    return this.request(`/bookings/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Gallery methods
+  async getGalleries() {
+    return this.request('/galleries');
+  }
+
+  async getGallery(id: number) {
+    return this.request(`/galleries/${id}`);
+  }
+
+  async createGallery(galleryData: any) {
+    return this.request('/galleries', {
+      method: 'POST',
+      body: JSON.stringify(galleryData),
+    });
+  }
+
+  async updateGallery(id: number, galleryData: any) {
+    return this.request(`/galleries/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(galleryData),
+    });
+  }
+
+  async deleteGallery(id: number) {
+    return this.request(`/galleries/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Invoice methods
+  async getInvoices() {
+    return this.request('/invoices');
+  }
+
+  async getInvoice(id: number) {
+    return this.request(`/invoices/${id}`);
+  }
+
+  async createInvoice(invoiceData: any) {
+    return this.request('/invoices', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+    });
+  }
+
+  async updateInvoice(id: number, invoiceData: any) {
+    return this.request(`/invoices/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(invoiceData),
+    });
+  }
+
+  async deleteInvoice(id: number) {
+    return this.request(`/invoices/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Dashboard methods
+  async getDashboardStats() {
+    return this.request('/dashboard');
+  }
+
+  // Utility methods
+  isAuthenticated(): boolean {
+    return !!this.token;
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  getCurrentUser() {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
+  }
+}
+
+// Create and export a singleton instance
+export const apiClient = new ApiClient();
+
+// Export types for better TypeScript support
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  phone?: string;
+  role: 'admin' | 'photographer' | 'client';
+  profile_picture?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Client {
+  id: number;
+  user_id: number;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Booking {
+  id: number;
+  user_id: number;
+  client_id: number;
+  package_id?: number;
+  booking_date: string;
+  booking_time?: string;
+  end_time?: string;
+  location?: string;
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  total_amount?: number;
+  paid_amount?: number;
+  currency?: string;
+  deposit_amount?: number;
+  deposit_paid?: boolean;
+  special_requirements?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  client_name?: string;
+  client_email?: string;
+  client_phone?: string;
+  package_name?: string;
+}
+
+// Re-export the client as default for easier imports
+export default apiClient;
