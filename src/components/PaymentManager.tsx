@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, DollarSign } from "lucide-react";

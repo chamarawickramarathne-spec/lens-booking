@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, Camera } from "lucide-react";
 
 interface SignupFormProps {
@@ -19,10 +20,12 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Password Mismatch",
@@ -35,38 +38,33 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
-      
-      const { data, error } = await supabase.auth.signUp({
+      const response = await register({
         email,
         password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            photographer_name: photographerName,
-          }
-        }
+        full_name: photographerName,
       });
 
-      if (error) {
-        toast({
-          title: "Signup Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data.user) {
+      if (response.token && response.user) {
         toast({
           title: "Account Created",
-          description: "Welcome to PhotoStudio Manager! Profile created automatically.",
+          description:
+            "Welcome to Lens Booking Pro! Your account has been created successfully.",
+        });
+
+        // Navigate to dashboard using React Router
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Signup Failed",
+          description: response.message || "Failed to create account",
+          variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description:
+          error.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
     } finally {

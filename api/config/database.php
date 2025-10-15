@@ -6,9 +6,9 @@
 
 class Database {
     private $host = "localhost";
-    private $database_name = "lens_booking_pro";
-    private $username = "root";
-    private $password = "";
+    private $database_name = "lens-booking-pro";
+    private $username = "test";
+    private $password = "FZ8V6dtvf2kNG0";
     private $conn;
 
     // Get database connection

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Form,
@@ -30,6 +30,8 @@ const clientSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().optional(),
   notes: z.string().optional(),
+  second_contact: z.string().optional(),
+  second_phone: z.string().optional(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -58,27 +60,28 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
 
   const onSubmit = async (data: ClientFormData) => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("clients")
-        .insert({
-          name: data.name,
-          email: data.email,
-          phone: data.phone || null,
-          address: data.address || null,
-          notes: data.notes || null,
-          photographer_id: user.id,
-        });
+      const clientData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        address: data.address || null,
+        notes: data.notes || null,
+        second_contact: data.second_contact || null,
+        second_phone: data.second_phone || null,
+        photographer_id: user.id,
+        status: "active",
+      };
 
-      if (error) throw error;
+      await apiClient.createClient(clientData);
 
       toast({
         title: "Success",
         description: "Client added successfully!",
       });
-      
+
       form.reset();
       setOpen(false);
       onSuccess();
@@ -95,9 +98,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Client</DialogTitle>
@@ -117,7 +118,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="email"
@@ -125,13 +126,17 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="client@example.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="client@example.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="phone"
@@ -145,7 +150,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="address"
@@ -159,7 +164,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="notes"
@@ -167,13 +172,44 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                 <FormItem>
                   <FormLabel>Notes (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional notes about the client" {...field} />
+                    <Textarea
+                      placeholder="Additional notes about the client"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
+            <FormField
+              control={form.control}
+              name="second_contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Second Contact (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Secondary contact person" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="second_phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Second Phone (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Secondary phone number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"

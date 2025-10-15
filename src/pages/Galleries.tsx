@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Image, Plus, Edit, Trash2, AlertTriangle, Upload, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import GalleryForm from "@/components/forms/GalleryForm";
 import EditGalleryForm from "@/components/forms/EditGalleryForm";

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import {
   Select,
   SelectContent,
@@ -26,7 +26,10 @@ interface BookingStatusManagerProps {
   onStatusChange: () => void;
 }
 
-const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerProps) => {
+const BookingStatusManager = ({
+  booking,
+  onStatusChange,
+}: BookingStatusManagerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
@@ -37,17 +40,25 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
     { value: "confirmed", label: "Confirmed", variant: "default" as const },
     { value: "completed", label: "Completed", variant: "default" as const },
     { value: "cancelled", label: "Cancelled", variant: "destructive" as const },
-    { value: "cancel_by_client", label: "Cancel by Client", variant: "destructive" as const },
+    {
+      value: "cancel_by_client",
+      label: "Cancel by Client",
+      variant: "destructive" as const,
+    },
   ];
 
   const getStatusBadge = (status: string) => {
-    const statusOption = statusOptions.find(opt => opt.value === status);
+    const statusOption = statusOptions.find((opt) => opt.value === status);
     if (!statusOption) return <Badge variant="secondary">{status}</Badge>;
 
     return (
-      <Badge 
+      <Badge
         variant={statusOption.variant}
-        className={statusOption.value === "completed" ? "bg-success text-success-foreground" : ""}
+        className={
+          statusOption.value === "completed"
+            ? "bg-success text-success-foreground"
+            : ""
+        }
       >
         {statusOption.label}
       </Badge>
@@ -56,9 +67,13 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
 
   const handleStatusChange = (newStatus: string) => {
     if (newStatus === booking.status) return;
-    
+
     // Show confirmation for critical status changes
-    if (newStatus === "cancelled" || newStatus === "cancel_by_client" || newStatus === "confirmed") {
+    if (
+      newStatus === "cancelled" ||
+      newStatus === "cancel_by_client" ||
+      newStatus === "confirmed"
+    ) {
       setPendingStatus(newStatus);
       setShowConfirmDialog(true);
     } else {
@@ -69,15 +84,12 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
   const updateStatus = async (newStatus: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: newStatus })
-        .eq("id", booking.id);
+      await apiClient.updateBookingStatus(booking.id, newStatus);
 
-      if (error) throw error;
+      let statusMessage = `Booking status updated to ${
+        statusOptions.find((s) => s.value === newStatus)?.label
+      }`;
 
-      let statusMessage = `Booking status updated to ${statusOptions.find(s => s.value === newStatus)?.label}`;
-      
       if (newStatus === "confirmed") {
         statusMessage += ". Draft invoice(s) have been automatically created.";
       }
@@ -86,7 +98,7 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
         title: "Success",
         description: statusMessage,
       });
-      
+
       onStatusChange();
     } catch (error: any) {
       toast({
@@ -118,13 +130,15 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
   };
 
   // Don't allow status changes for completed bookings unless cancelling
-  const canChangeStatus = booking.status !== "completed" || 
-    (booking.status === "completed" && (pendingStatus === "cancelled" || pendingStatus === "cancel_by_client"));
+  const canChangeStatus =
+    booking.status !== "completed" ||
+    (booking.status === "completed" &&
+      (pendingStatus === "cancelled" || pendingStatus === "cancel_by_client"));
 
   return (
     <div className="flex items-center gap-2">
       {getStatusBadge(booking.status)}
-      
+
       {canChangeStatus && (
         <Select onValueChange={handleStatusChange} value={booking.status}>
           <SelectTrigger className="w-[140px]">
@@ -150,7 +164,7 @@ const BookingStatusManager = ({ booking, onStatusChange }: BookingStatusManagerP
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmStatusChange}
               disabled={isLoading}
             >

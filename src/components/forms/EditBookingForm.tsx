@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
@@ -63,7 +63,12 @@ interface EditBookingFormProps {
   onSuccess: () => void;
 }
 
-const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFormProps) => {
+const EditBookingForm = ({
+  booking,
+  isOpen,
+  onClose,
+  onSuccess,
+}: EditBookingFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const { toast } = useToast();
@@ -109,17 +114,12 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
 
   const fetchClients = async () => {
     if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, name, email")
-        .eq("photographer_id", user.id)
-        .order("name");
 
-      if (error) throw error;
-      setClients(data || []);
+    try {
+      const response = await apiClient.getClients();
+      setClients(response.data || []);
     } catch (error: any) {
+      console.error("Failed to fetch clients:", error);
       toast({
         title: "Error",
         description: "Failed to load clients",
@@ -130,7 +130,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
 
   const onSubmit = async (data: EditBookingFormData) => {
     if (!user || !booking) return;
-    
+
     setIsLoading(true);
     try {
       const bookingData = {
@@ -143,22 +143,18 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
         location: data.location || null,
         package_type: data.package_type || null,
         total_amount: data.total_amount ? parseFloat(data.total_amount) : null,
-        deposit_amount: data.deposit_amount ? parseFloat(data.deposit_amount) : null,
+        deposit_amount: data.deposit_amount
+          ? parseFloat(data.deposit_amount)
+          : null,
       };
 
-      const { error } = await supabase
-        .from("bookings")
-        .update(bookingData)
-        .eq("id", booking.id)
-        .eq("photographer_id", user.id);
-
-      if (error) throw error;
+      await apiClient.updateBooking(booking.id, bookingData);
 
       toast({
         title: "Success",
         description: "Booking updated successfully!",
       });
-      
+
       onClose();
       onSuccess();
     } catch (error: any) {
@@ -187,13 +183,16 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Wedding Photography Session" {...field} />
+                    <Input
+                      placeholder="Wedding Photography Session"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="client_id"
@@ -218,7 +217,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="booking_date"
@@ -265,7 +264,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -280,7 +279,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="end_time"
@@ -295,7 +294,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="location"
@@ -309,7 +308,7 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="package_type"
@@ -317,13 +316,16 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 <FormItem>
                   <FormLabel>Package Type</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Wedding Premium, Portrait Basic" {...field} />
+                    <Input
+                      placeholder="e.g., Wedding Premium, Portrait Basic"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -332,13 +334,18 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                   <FormItem>
                     <FormLabel>Total Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="deposit_amount"
@@ -346,14 +353,19 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                   <FormItem>
                     <FormLabel>Deposit Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -361,19 +373,18 @@ const EditBookingForm = ({ booking, isOpen, onClose, onSuccess }: EditBookingFor
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional details about the booking" {...field} />
+                    <Textarea
+                      placeholder="Additional details about the booking"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

@@ -6,7 +6,7 @@
 
 class User {
     private $conn;
-    private $table_name = "users";
+    private $table_name = "photographers";
 
     public $id;
     public $email;
@@ -28,28 +28,45 @@ class User {
      * Create new user
      */
     public function create() {
+        // Split full_name into first_name and last_name
+        $name_parts = explode(' ', trim($this->full_name), 2);
+        $first_name = $name_parts[0];
+        $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+
         $query = "INSERT INTO " . $this->table_name . " 
-                 SET email=:email, password_hash=:password_hash, full_name=:full_name, 
-                     phone=:phone, role=:role, profile_picture=:profile_picture";
+                 SET email=:email, password=:password, first_name=:first_name, 
+                     last_name=:last_name, phone=:phone, user_access_level=:user_access_level, 
+                     profile_image=:profile_image, currency_type=:currency_type, active_date=:active_date";
 
         $stmt = $this->conn->prepare($query);
 
         // Sanitize inputs
         $this->email = htmlspecialchars(strip_tags($this->email));
-        $this->full_name = htmlspecialchars(strip_tags($this->full_name));
+        $first_name = htmlspecialchars(strip_tags($first_name));
+        $last_name = htmlspecialchars(strip_tags($last_name));
         $this->phone = htmlspecialchars(strip_tags($this->phone));
-        $this->role = htmlspecialchars(strip_tags($this->role));
+        
+        // Set user_access_level to 'free' for all new photographers
+        $user_access_level = 'free';
 
         // Hash password
-        $this->password_hash = password_hash($this->password_hash, PASSWORD_DEFAULT);
+        $password_hash = password_hash($this->password_hash, PASSWORD_DEFAULT);
+
+        // Set defaults
+        $profile_image = $this->profile_picture ?: '';
+        $currency_type = 'USD'; // Default currency
+        $active_date = date('Y-m-d'); // Set active_date to current date
 
         // Bind values
         $stmt->bindParam(":email", $this->email);
-        $stmt->bindParam(":password_hash", $this->password_hash);
-        $stmt->bindParam(":full_name", $this->full_name);
+        $stmt->bindParam(":password", $password_hash);
+        $stmt->bindParam(":first_name", $first_name);
+        $stmt->bindParam(":last_name", $last_name);
         $stmt->bindParam(":phone", $this->phone);
-        $stmt->bindParam(":role", $this->role);
-        $stmt->bindParam(":profile_picture", $this->profile_picture);
+        $stmt->bindParam(":user_access_level", $user_access_level);
+        $stmt->bindParam(":profile_image", $profile_image);
+        $stmt->bindParam(":currency_type", $currency_type);
+        $stmt->bindParam(":active_date", $active_date);
 
         if ($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
@@ -62,9 +79,10 @@ class User {
      * Login user
      */
     public function login($email, $password) {
-        $query = "SELECT id, email, password_hash, full_name, phone, role, profile_picture, is_active 
+        $query = "SELECT id, email, password, first_name, last_name, phone, 
+                         user_access_level, profile_image, created_at, updated_at
                  FROM " . $this->table_name . " 
-                 WHERE email = :email AND is_active = 1";
+                 WHERE email = :email";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
@@ -72,8 +90,19 @@ class User {
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (password_verify($password, $row['password_hash'])) {
-                return $row;
+            if (password_verify($password, $row['password'])) {
+                // Map the photographers table structure to expected user structure
+                return [
+                    'id' => $row['id'],
+                    'email' => $row['email'],
+                    'full_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+                    'phone' => $row['phone'],
+                    'role' => $row['user_access_level'],
+                    'profile_picture' => $row['profile_image'],
+                    'is_active' => 1, // Assume active if record exists
+                    'created_at' => $row['created_at'],
+                    'updated_at' => $row['updated_at']
+                ];
             }
         }
         return false;
@@ -83,8 +112,8 @@ class User {
      * Get user by ID
      */
     public function getById($id) {
-        $query = "SELECT id, email, full_name, phone, role, profile_picture, is_active, 
-                         email_verified, created_at, updated_at 
+        $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
+                         profile_image, created_at, updated_at 
                  FROM " . $this->table_name . " 
                  WHERE id = :id";
 
@@ -93,7 +122,20 @@ class User {
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Map the photographers table structure to expected user structure
+            return [
+                'id' => $row['id'],
+                'email' => $row['email'],
+                'full_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+                'phone' => $row['phone'],
+                'role' => $row['user_access_level'],
+                'profile_picture' => $row['profile_image'],
+                'is_active' => 1, // Assume active if record exists
+                'email_verified' => 0, // Default for existing schema
+                'created_at' => $row['created_at'],
+                'updated_at' => $row['updated_at']
+            ];
         }
         return false;
     }
@@ -102,20 +144,27 @@ class User {
      * Update user
      */
     public function update() {
+        // Split full_name into first_name and last_name
+        $name_parts = explode(' ', trim($this->full_name), 2);
+        $first_name = $name_parts[0];
+        $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+
         $query = "UPDATE " . $this->table_name . " 
-                 SET full_name=:full_name, phone=:phone, profile_picture=:profile_picture 
+                 SET first_name=:first_name, last_name=:last_name, phone=:phone, profile_image=:profile_image 
                  WHERE id=:id";
 
         $stmt = $this->conn->prepare($query);
 
         // Sanitize inputs
-        $this->full_name = htmlspecialchars(strip_tags($this->full_name));
+        $first_name = htmlspecialchars(strip_tags($first_name));
+        $last_name = htmlspecialchars(strip_tags($last_name));
         $this->phone = htmlspecialchars(strip_tags($this->phone));
 
         // Bind values
-        $stmt->bindParam(":full_name", $this->full_name);
+        $stmt->bindParam(":first_name", $first_name);
+        $stmt->bindParam(":last_name", $last_name);
         $stmt->bindParam(":phone", $this->phone);
-        $stmt->bindParam(":profile_picture", $this->profile_picture);
+        $stmt->bindParam(":profile_image", $this->profile_picture);
         $stmt->bindParam(":id", $this->id);
 
         return $stmt->execute();

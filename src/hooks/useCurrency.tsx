@@ -1,38 +1,19 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
+﻿import { useState } from "react";
 
 export const useCurrency = () => {
-  const { user } = useAuth();
-  const [currency, setCurrency] = useState<string>("USD");
-  const [loading, setLoading] = useState(true);
+  const [currency] = useState("LKR");
 
-  useEffect(() => {
-    const fetchCurrency = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("currency_type")
-        .eq("user_id", user.id)
-        .single();
-
-      if (data && !error) {
-        setCurrency(data.currency_type || "USD");
-      }
-      setLoading(false);
-    };
-
-    fetchCurrency();
-  }, [user]);
-
-  const formatCurrency = (amount: number | string) => {
-    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-    return `${currency} ${numAmount.toFixed(2)}`;
+  const formatCurrency = (amount: number) => {
+    if (!amount) return "LKR 0.00";
+    return new Intl.NumberFormat("en-LK", {
+      style: "currency",
+      currency: "LKR",
+      minimumFractionDigits: 2,
+    }).format(amount);
   };
 
-  return { currency, formatCurrency, loading };
+  return {
+    currency,
+    formatCurrency,
+  };
 };

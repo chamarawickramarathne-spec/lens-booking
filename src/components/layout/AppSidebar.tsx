@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Calendar, Users, FileText, CreditCard, Image, Settings, LogOut, Camera } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Calendar,
+  Users,
+  FileText,
+  CreditCard,
+  Image,
+  Settings,
+  LogOut,
+  Camera,
+} from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { apiClient } from "@/integrations/api/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Sidebar,
@@ -30,20 +40,30 @@ const navigationItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const currentPath = location.pathname;
   const { toast } = useToast();
   const collapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-primary text-primary-foreground font-medium" : "hover:bg-secondary";
+    isActive
+      ? "bg-primary text-primary-foreground font-medium"
+      : "hover:bg-secondary";
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await logout();
+      navigate("/login");
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+    } catch (error) {
       toast({
         title: "Logout Error",
-        description: error.message,
+        description: "Failed to logout. Please try again.",
         variant: "destructive",
       });
     }
@@ -51,7 +71,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`bg-sidebar border-sidebar-border ${collapsed ? "w-14" : "w-60"}`}
+      className={`bg-sidebar border-sidebar-border ${
+        collapsed ? "w-14" : "w-60"
+      }`}
       collapsible="icon"
     >
       <SidebarContent className="bg-sidebar">
@@ -65,12 +87,12 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="w-full">
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => 
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
                         `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                          isActive 
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                             : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                         }`
                       }
@@ -81,10 +103,10 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
+
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={handleLogout} 
+                <SidebarMenuButton
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
                 >
                   <LogOut className="h-4 w-4 flex-shrink-0" />

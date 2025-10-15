@@ -4,10 +4,12 @@
  * Handles login, register, and authentication endpoints
  */
 
-require_once '../config/database.php';
-require_once '../config/cors.php';
-require_once '../models/User.php';
-require_once '../middleware/auth.php';
+// Include CORS configuration first - this sets all necessary headers
+require_once 'config/cors.php';
+
+require_once 'config/database.php';
+require_once 'models/User.php';
+require_once 'middleware/auth.php';
 
 class AuthController {
     private $database;
@@ -84,11 +86,14 @@ class AuthController {
         $this->user->profile_picture = $data['profile_picture'] ?? '';
 
         if ($this->user->create()) {
+            // Get the actual user data from database after creation
+            $created_user = $this->user->getById($this->user->id);
+            
             $user_data = [
-                'id' => $this->user->id,
-                'email' => $this->user->email,
-                'full_name' => $this->user->full_name,
-                'role' => $this->user->role
+                'id' => $created_user['id'],
+                'email' => $created_user['email'],
+                'full_name' => $created_user['full_name'],
+                'role' => $created_user['role']
             ];
 
             $token = $this->auth->generateToken($user_data);
@@ -168,6 +173,9 @@ $request_uri = $_SERVER['REQUEST_URI'];
 // Remove base path and get endpoint
 $endpoint = str_replace('/lens-booking/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
 
+// Debug logging
+error_log("Auth API - Method: $request_method, URI: $request_uri, Endpoint: $endpoint");
+
 switch ($request_method) {
     case 'POST':
         if ($endpoint === '/login') {
@@ -176,7 +184,14 @@ switch ($request_method) {
             $auth_controller->register();
         } else {
             http_response_code(404);
-            echo json_encode(["message" => "Endpoint not found"]);
+            echo json_encode([
+                "message" => "Endpoint not found", 
+                "debug" => [
+                    "method" => $request_method,
+                    "uri" => $request_uri,
+                    "endpoint" => $endpoint
+                ]
+            ]);
         }
         break;
     

@@ -1,0 +1,137 @@
+import { useState } from "react";import { useState } from "react";import { useState } from "react";import { useState } from "react";import { useEffect, useState } from "react";import { useEffect, useState } from "react";
+
+
+
+export const useCurrency = () => {
+
+  const [currency] = useState("LKR");
+
+export const useCurrency = () => {
+
+  const formatCurrency = (amount: number) => {
+
+    if (!amount) return "LKR 0.00";  const [currency] = useState("LKR");
+
+    return new Intl.NumberFormat('en-LK', {
+
+      style: 'currency',export const useCurrency = () => {
+
+      currency: 'LKR',
+
+      minimumFractionDigits: 2,  const formatCurrency = (amount: number) => {
+
+    }).format(amount);
+
+  };    if (!amount) return "LKR 0.00";  const [currency] = useState("LKR");
+
+
+
+  return {    return new Intl.NumberFormat('en-LK', {
+
+    currency,
+
+    formatCurrency,      style: 'currency',export const useCurrency = () => {import { useAuth } from "./useAuth";import { useAuth } from "./useAuth";
+
+  };
+
+};      currency: 'LKR',
+
+      minimumFractionDigits: 2,  const formatCurrency = (amount: number) => {
+
+    }).format(amount);
+
+  };    if (!amount) return "LKR 0.00";  const [currency] = useState("LKR");
+
+
+
+  return {    return new Intl.NumberFormat('en-LK', {
+
+    currency,
+
+    formatCurrency,      style: 'currency',
+
+  };
+
+};      currency: 'LKR',
+
+      minimumFractionDigits: 2,  const formatCurrency = (amount: number) => {
+
+    }).format(amount);
+
+  };    if (!amount) return "LKR 0.00";export const useCurrency = () => {export const useCurrency = () => {
+
+
+
+  return {    return new Intl.NumberFormat('en-LK', {
+
+    currency,
+
+    formatCurrency,      style: 'currency',  const [currency, setCurrency] = useState("LKR");  const { user } = useAuth();
+
+  };
+
+};      currency: 'LKR',
+
+      minimumFractionDigits: 2,  const [exchangeRate, setExchangeRate] = useState(1);  const [currency, setCurrency] = useState<string>("USD");
+
+    }).format(amount);
+
+  };  const { user } = useAuth();  const [loading, setLoading] = useState(true);
+
+
+
+  return {
+
+    currency,
+
+    formatCurrency,  useEffect(() => {  useEffect(() => {
+
+  };
+
+};    // Default to LKR for now, can be made configurable later    const fetchCurrency = async () => {
+
+    setCurrency("LKR");      if (!user) {
+
+    setExchangeRate(1);        setLoading(false);
+
+  }, [user]);        return;
+
+      }
+
+  const formatCurrency = (amount: number) => {
+
+    return new Intl.NumberFormat('en-US', {      const { data, error } = await supabase
+
+      style: 'currency',        .from("profiles")
+
+      currency: currency,        .select("currency_type")
+
+      minimumFractionDigits: 2,        .eq("user_id", user.id)
+
+    }).format(amount * exchangeRate);        .single();
+
+  };
+
+      if (data && !error) {
+
+  return {        setCurrency(data.currency_type || "USD");
+
+    currency,      }
+
+    setCurrency,      setLoading(false);
+
+    exchangeRate,    };
+
+    formatCurrency,
+
+  };    fetchCurrency();
+
+};  }, [user]);
+
+  const formatCurrency = (amount: number | string) => {
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return `${currency} ${numAmount.toFixed(2)}`;
+  };
+
+  return { currency, formatCurrency, loading };
+};

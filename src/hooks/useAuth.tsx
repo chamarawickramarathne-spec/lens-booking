@@ -13,7 +13,7 @@ export const useAuth = () => {
           const response = await apiClient.getProfile();
           setUser(response.user);
         } catch (error) {
-          console.error('Auth check failed:', error);
+          console.error("Auth check failed:", error);
           apiClient.logout();
         }
       }
@@ -38,6 +38,7 @@ export const useAuth = () => {
     password: string;
     full_name: string;
     phone?: string;
+    role?: string;
   }) => {
     try {
       const response = await apiClient.register(userData);
@@ -64,13 +65,13 @@ export const useAuth = () => {
     }
   };
 
-  return { 
-    user, 
-    loading, 
-    login, 
-    register, 
-    logout, 
+  return {
+    user,
+    loading,
+    login,
+    register,
+    logout,
     updateProfile,
-    isAuthenticated: apiClient.isAuthenticated() 
+    isAuthenticated: apiClient.isAuthenticated(),
   };
 };

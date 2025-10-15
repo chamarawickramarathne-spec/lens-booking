@@ -30,6 +30,8 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
     
     const config: RequestInit = {
+      mode: 'cors',
+      credentials: 'omit',
       ...options,
       headers: {
         ...this.getHeaders(),
@@ -38,13 +40,19 @@ class ApiClient {
     };
 
     try {
+      console.log('Making API request to:', url, 'with config:', config);
       const response = await fetch(url, config);
-      const data = await response.json();
-
+      
+      console.log('Response status:', response.status, 'headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(errorText || 'API request failed');
       }
 
+      const data = await response.json();
+      console.log('API Response data:', data);
       return data;
     } catch (error) {
       console.error('API request error:', error);
@@ -266,18 +274,17 @@ export interface User {
 
 export interface Client {
   id: number;
-  user_id: number;
-  full_name: string;
+  photographer_id: number;
+  name: string;
   email?: string;
   phone?: string;
   address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  country?: string;
   notes?: string;
+  status: string;
   created_at: string;
   updated_at: string;
+  second_contact?: string;
+  second_phone?: string;
 }
 
 export interface Booking {

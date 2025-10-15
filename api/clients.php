@@ -1,13 +1,16 @@
 <?php
 /**
  * Clients Controller
- * Handles client CRUD operations
+ * Handles client management endpoints
  */
 
-require_once '../config/database.php';
-require_once '../config/cors.php';
-require_once '../models/Client.php';
-require_once '../middleware/auth.php';
+// Include CORS configuration first
+require_once 'config/cors.php';
+
+require_once 'config/database.php';
+require_once 'config/cors.php';
+require_once 'models/Client.php';
+require_once 'middleware/auth.php';
 
 class ClientsController {
     private $database;
