@@ -42,18 +42,41 @@ class ApiClient {
     try {
       console.log('Making API request to:', url, 'with config:', config);
       const response = await fetch(url, config);
-      
+
       console.log('Response status:', response.status, 'headers:', Object.fromEntries(response.headers.entries()));
-      
+
+      const rawText = await response.text();
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(errorText || 'API request failed');
+        console.error('API Error Response:', rawText);
+        // Attempt to parse JSON error if possible
+        try {
+          const errJson = JSON.parse(rawText);
+          throw new Error(errJson.message || rawText || 'API request failed');
+        } catch {
+          throw new Error(rawText || 'API request failed');
+        }
       }
 
-      const data = await response.json();
-      console.log('API Response data:', data);
-      return data;
+      // Try to parse JSON safely, handling potential BOM or leading warnings
+      try {
+        // Remove BOM and trim
+        const cleaned = rawText.replace(/^\uFEFF/, '').trim();
+        // If there is noise before the first { or [, slice it out
+        const firstBrace = cleaned.indexOf('{');
+        const firstBracket = cleaned.indexOf('[');
+        let candidate = cleaned;
+        if (firstBrace > 0 || firstBracket > 0) {
+          const idx = [firstBrace, firstBracket].filter((i) => i >= 0).sort((a, b) => a - b)[0] ?? 0;
+          candidate = cleaned.slice(idx);
+        }
+        const data = JSON.parse(candidate);
+        console.log('API Response data:', data);
+        return data;
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', rawText);
+        throw new Error('Invalid JSON response from server');
+      }
     } catch (error) {
       console.error('API request error:', error);
       throw error;

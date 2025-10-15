@@ -141,7 +141,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         client_id: parseInt(data.client_id, 10),
         photographer_id: user.id,
         booking_date: format(data.booking_date, "yyyy-MM-dd"),
-        start_time: data.start_time || null,
+  booking_time: data.start_time || null,
         end_time: data.end_time || null,
         location: data.location || null,
         package_type: data.package_type || null,
