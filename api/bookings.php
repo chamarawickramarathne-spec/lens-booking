@@ -84,7 +84,7 @@ class BookingsController {
             return;
         }
 
-        $data = json_decode(file_get_contents("php://input"), true);
+    $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['booking_date']) || !isset($data['client_id'])) {
             http_response_code(400);
@@ -97,17 +97,23 @@ class BookingsController {
         $this->booking->client_id = $data['client_id'];
         $this->booking->package_id = $data['package_id'] ?? null;
         $this->booking->booking_date = $data['booking_date'];
-        $this->booking->booking_time = $data['booking_time'] ?? null;
+        // Accept both booking_time and start_time from frontend
+        $this->booking->booking_time = $data['booking_time'] ?? ($data['start_time'] ?? null);
         $this->booking->end_time = $data['end_time'] ?? null;
         $this->booking->location = $data['location'] ?? '';
         $this->booking->status = $data['status'] ?? 'pending';
-        $this->booking->total_amount = $data['total_amount'] ?? 0;
-        $this->booking->paid_amount = $data['paid_amount'] ?? 0;
+        // Cast numeric/boolean fields safely
+        $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
+            ? floatval($data['total_amount']) : 0;
+        $this->booking->paid_amount = isset($data['paid_amount']) && $data['paid_amount'] !== ''
+            ? floatval($data['paid_amount']) : 0;
         $this->booking->currency = $data['currency'] ?? 'LKR';
-        $this->booking->deposit_amount = $data['deposit_amount'] ?? 0;
-        $this->booking->deposit_paid = $data['deposit_paid'] ?? false;
+        $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
+            ? floatval($data['deposit_amount']) : 0;
+        $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
         $this->booking->special_requirements = $data['special_requirements'] ?? '';
-        $this->booking->notes = $data['notes'] ?? '';
+        // Accept both notes and description from frontend
+        $this->booking->notes = $data['notes'] ?? ($data['description'] ?? '');
 
         if ($this->booking->create()) {
             http_response_code(201);
@@ -147,6 +153,71 @@ class BookingsController {
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Unable to update booking status"]);
+        }
+    }
+
+    /**
+     * Update booking
+     */
+    public function update($id) {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        // Set booking properties
+        $this->booking->id = $id;
+        $this->booking->user_id = $user_data['user_id'];
+        $this->booking->client_id = $data['client_id'] ?? null;
+        $this->booking->package_id = $data['package_id'] ?? null;
+        $this->booking->booking_date = $data['booking_date'] ?? null;
+        $this->booking->booking_time = $data['booking_time'] ?? ($data['start_time'] ?? null);
+        $this->booking->end_time = $data['end_time'] ?? null;
+        $this->booking->location = $data['location'] ?? '';
+        $this->booking->status = $data['status'] ?? 'pending';
+        $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
+            ? floatval($data['total_amount']) : 0;
+        $this->booking->paid_amount = isset($data['paid_amount']) && $data['paid_amount'] !== ''
+            ? floatval($data['paid_amount']) : 0;
+        $this->booking->currency = $data['currency'] ?? 'LKR';
+        $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
+            ? floatval($data['deposit_amount']) : 0;
+        $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
+        $this->booking->special_requirements = $data['special_requirements'] ?? '';
+        $this->booking->notes = $data['notes'] ?? ($data['description'] ?? '');
+
+        if ($this->booking->update()) {
+            http_response_code(200);
+            echo json_encode(["message" => "Booking updated successfully"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to update booking"]);
+        }
+    }
+
+    /**
+     * Delete booking
+     */
+    public function delete($id) {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        if ($this->booking->delete($id, $user_data['user_id'])) {
+            http_response_code(200);
+            echo json_encode(["message" => "Booking deleted successfully"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to delete booking"]);
         }
     }
 }
@@ -193,6 +264,17 @@ switch ($request_method) {
     case 'PUT':
         if ($endpoint === '/{id}/status' && $id) {
             $bookings_controller->updateStatus($id);
+        } elseif ($endpoint === '/{id}' && $id) {
+            $bookings_controller->update($id);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Endpoint not found"]);
+        }
+        break;
+
+    case 'DELETE':
+        if ($endpoint === '/{id}' && $id) {
+            $bookings_controller->delete($id);
         } else {
             http_response_code(404);
             echo json_encode(["message" => "Endpoint not found"]);

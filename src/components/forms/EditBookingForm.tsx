@@ -50,8 +50,18 @@ const editBookingSchema = z.object({
   end_time: z.string().optional(),
   location: z.string().optional(),
   package_type: z.string().optional(),
-  total_amount: z.string().optional(),
-  deposit_amount: z.string().optional(),
+  total_amount: z
+    .string()
+    .optional()
+    .refine((v) => v === undefined || v === "" || !isNaN(Number(v)), {
+      message: "Must be a number",
+    }),
+  deposit_amount: z
+    .string()
+    .optional()
+    .refine((v) => v === undefined || v === "" || !isNaN(Number(v)), {
+      message: "Must be a number",
+    }),
 });
 
 type EditBookingFormData = z.infer<typeof editBookingSchema>;
@@ -100,7 +110,7 @@ const EditBookingForm = ({
       form.reset({
         title: booking.title || "",
         description: booking.description || "",
-        client_id: booking.client_id || "",
+        client_id: booking.client_id ? String(booking.client_id) : "",
         booking_date: new Date(booking.booking_date),
         start_time: booking.start_time || "",
         end_time: booking.end_time || "",
@@ -136,16 +146,20 @@ const EditBookingForm = ({
       const bookingData = {
         title: data.title,
         description: data.description || null,
-        client_id: data.client_id,
+        client_id: parseInt(data.client_id, 10),
         booking_date: format(data.booking_date, "yyyy-MM-dd"),
         start_time: data.start_time || null,
         end_time: data.end_time || null,
         location: data.location || null,
         package_type: data.package_type || null,
-        total_amount: data.total_amount ? parseFloat(data.total_amount) : null,
-        deposit_amount: data.deposit_amount
-          ? parseFloat(data.deposit_amount)
-          : null,
+        total_amount:
+          data.total_amount !== "" && data.total_amount != null
+            ? parseFloat(data.total_amount)
+            : null,
+        deposit_amount:
+          data.deposit_amount !== "" && data.deposit_amount != null
+            ? parseFloat(data.deposit_amount)
+            : null,
       };
 
       await apiClient.updateBooking(booking.id, bookingData);
@@ -207,7 +221,7 @@ const EditBookingForm = ({
                     </FormControl>
                     <SelectContent>
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
+                        <SelectItem key={client.id} value={String(client.id)}>
                           {client.name} ({client.email})
                         </SelectItem>
                       ))}

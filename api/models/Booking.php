@@ -80,7 +80,7 @@ class Booking {
      * Get all bookings for a user with client details
      */
     public function getByUserId($user_id) {
-        $query = "SELECT b.*, c.full_name as client_name, c.email as client_email, c.phone as client_phone,
+        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone,
                          p.package_name
                  FROM " . $this->table_name . " b
                  LEFT JOIN clients c ON b.client_id = c.id
@@ -99,7 +99,7 @@ class Booking {
      * Get booking by ID
      */
     public function getById($id, $user_id) {
-        $query = "SELECT b.*, c.full_name as client_name, c.email as client_email, c.phone as client_phone,
+        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone,
                          p.package_name, p.description as package_description
                  FROM " . $this->table_name . " b
                  LEFT JOIN clients c ON b.client_id = c.id

@@ -54,14 +54,10 @@ const Bookings = () => {
   const { formatCurrency } = useCurrency();
 
   useEffect(() => {
-    fetchBookings();
-  }, [user]);
-
-  useEffect(() => {
     if (user) {
       fetchBookings();
     }
-  }, []);
+  }, [user]);
 
   const fetchBookings = async () => {
     if (!user) return;
@@ -184,10 +180,10 @@ const Bookings = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {booking.clients?.name}
+                              {booking.client_name}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {booking.clients?.email}
+                              {booking.client_email}
                             </div>
                           </div>
                         </TableCell>
@@ -200,12 +196,12 @@ const Bookings = () => {
                                 "MMM dd, yyyy"
                               )}
                             </div>
-                            {(booking.start_time || booking.end_time) && (
+                            {(booking.booking_time || booking.end_time) && (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                {booking.start_time && booking.end_time
-                                  ? `${booking.start_time} - ${booking.end_time}`
-                                  : booking.start_time || booking.end_time}
+                                {booking.booking_time && booking.end_time
+                                  ? `${booking.booking_time} - ${booking.end_time}`
+                                  : booking.booking_time || booking.end_time}
                               </div>
                             )}
                           </div>
