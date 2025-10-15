@@ -130,10 +130,6 @@ class Client {
         $stmt->bindParam(":second_phone", $this->second_phone);
         $stmt->bindParam(":id", $this->id);
         $stmt->bindParam(":photographer_id", $this->photographer_id);
-        $stmt->bindParam(":country", $this->country);
-        $stmt->bindParam(":notes", $this->notes);
-        $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();
     }
@@ -142,14 +138,14 @@ class Client {
      * Delete client
      */
     public function delete($id, $user_id) {
-        $query = "DELETE FROM " . $this->table_name . " 
-                 WHERE id = :id AND user_id = :user_id";
+    $query = "DELETE FROM " . $this->table_name . " 
+         WHERE id = :id AND photographer_id = :photographer_id";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id", $id);
-        $stmt->bindParam(":user_id", $user_id);
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(":id", $id);
+    $stmt->bindParam(":photographer_id", $user_id);
 
-        return $stmt->execute();
+    return $stmt->execute();
     }
 }
 ?>

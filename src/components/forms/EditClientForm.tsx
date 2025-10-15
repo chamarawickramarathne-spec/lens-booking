@@ -79,8 +79,10 @@ const EditClientForm = ({
 
     setIsLoading(true);
     try {
+      // Send both 'name' and 'full_name' for compatibility with PHP backend
       const clientData = {
         name: data.name,
+        full_name: data.name, // for PHP controller compatibility
         email: data.email,
         phone: data.phone || null,
         address: data.address || null,
@@ -88,6 +90,7 @@ const EditClientForm = ({
         second_contact: data.second_contact || null,
         second_phone: data.second_phone || null,
         status: data.status,
+        photographer_id: client.photographer_id || user.id,
       };
 
       await apiClient.updateClient(client.id, clientData);
