@@ -86,23 +86,24 @@ class ClientsController {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['full_name'])) {
+        // Accept either 'name' or 'full_name' from frontend
+        $client_name = $data['name'] ?? $data['full_name'] ?? null;
+        if (!$client_name) {
             http_response_code(400);
             echo json_encode(["message" => "Client name is required"]);
             return;
         }
 
-        // Set client properties
-        $this->client->user_id = $user_data['user_id'];
-        $this->client->full_name = $data['full_name'];
+        // Set client properties for correct DB columns
+        $this->client->photographer_id = $data['photographer_id'] ?? $user_data['user_id'];
+        $this->client->name = $client_name;
         $this->client->email = $data['email'] ?? '';
         $this->client->phone = $data['phone'] ?? '';
         $this->client->address = $data['address'] ?? '';
-        $this->client->city = $data['city'] ?? '';
-        $this->client->state = $data['state'] ?? '';
-        $this->client->zip_code = $data['zip_code'] ?? '';
-        $this->client->country = $data['country'] ?? 'Sri Lanka';
         $this->client->notes = $data['notes'] ?? '';
+        $this->client->status = $data['status'] ?? 'active';
+        $this->client->second_contact = $data['second_contact'] ?? '';
+        $this->client->second_phone = $data['second_phone'] ?? '';
 
         if ($this->client->create()) {
             http_response_code(201);
