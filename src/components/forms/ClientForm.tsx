@@ -75,7 +75,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
         notes: data.notes || null,
         second_contact: data.second_contact || null,
         second_phone: data.second_phone || null,
-        photographer_id: user.id,
+        user_id: user.id,
         status: "active",
       };
 

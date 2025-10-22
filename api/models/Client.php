@@ -9,7 +9,7 @@ class Client {
     private $table_name = "clients";
 
     public $id;
-    public $photographer_id;
+    public $user_id;
     public $name;
     public $email;
     public $phone;
@@ -30,7 +30,7 @@ class Client {
      */
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-                 SET photographer_id=:photographer_id, name=:name, email=:email, phone=:phone,
+                 SET user_id=:user_id, name=:name, email=:email, phone=:phone,
                      address=:address, notes=:notes, status=:status, 
                      second_contact=:second_contact, second_phone=:second_phone";
 
@@ -47,7 +47,7 @@ class Client {
         $this->second_phone = htmlspecialchars(strip_tags($this->second_phone));
 
         // Bind values
-        $stmt->bindParam(":photographer_id", $this->photographer_id);
+        $stmt->bindParam(":user_id", $this->user_id);
         $stmt->bindParam(":name", $this->name);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":phone", $this->phone);
@@ -67,13 +67,13 @@ class Client {
     /**
      * Get all clients for a photographer
      */
-    public function getByUserId($photographer_id) {
+    public function getByUserId($user_id) {
         $query = "SELECT * FROM " . $this->table_name . " 
-                 WHERE photographer_id = :photographer_id 
+                 WHERE user_id = :user_id 
                  ORDER BY created_at DESC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":photographer_id", $photographer_id);
+        $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -82,13 +82,13 @@ class Client {
     /**
      * Get client by ID
      */
-    public function getById($id, $photographer_id) {
+    public function getById($id, $user_id) {
         $query = "SELECT * FROM " . $this->table_name . " 
-                 WHERE id = :id AND photographer_id = :photographer_id";
+                 WHERE id = :id AND user_id = :user_id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
-        $stmt->bindParam(":photographer_id", $photographer_id);
+        $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
@@ -105,7 +105,7 @@ class Client {
                  SET name=:name, email=:email, phone=:phone, address=:address,
                      notes=:notes, status=:status, second_contact=:second_contact,
                      second_phone=:second_phone, updated_at=CURRENT_TIMESTAMP
-                 WHERE id=:id AND photographer_id=:photographer_id";
+                 WHERE id=:id AND user_id=:user_id";
 
         $stmt = $this->conn->prepare($query);
 
@@ -129,7 +129,7 @@ class Client {
         $stmt->bindParam(":second_contact", $this->second_contact);
         $stmt->bindParam(":second_phone", $this->second_phone);
         $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam(":photographer_id", $this->photographer_id);
+        $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();
     }
@@ -139,11 +139,11 @@ class Client {
      */
     public function delete($id, $user_id) {
     $query = "DELETE FROM " . $this->table_name . " 
-         WHERE id = :id AND photographer_id = :photographer_id";
+         WHERE id = :id AND user_id = :user_id";
 
     $stmt = $this->conn->prepare($query);
     $stmt->bindParam(":id", $id);
-    $stmt->bindParam(":photographer_id", $user_id);
+    $stmt->bindParam(":user_id", $user_id);
 
     return $stmt->execute();
     }
