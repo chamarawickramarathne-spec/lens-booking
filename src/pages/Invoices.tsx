@@ -58,7 +58,6 @@ const paymentSchema = z.object({
 const Invoices = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [photographer, setPhotographer] = useState<any>(null);
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -74,53 +73,18 @@ const Invoices = () => {
   useEffect(() => {
     if (user) {
       fetchInvoices();
-      fetchPhotographer();
     }
   }, [user]);
-
-  const fetchPhotographer = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-      setPhotographer(data);
-    } catch (error: any) {
-      console.log("Could not fetch photographer profile");
-    }
-  };
 
   const fetchInvoices = async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          *,
-          clients (
-            name,
-            email,
-            phone,
-            address
-          ),
-          bookings (
-            title,
-            booking_date
-          )
-        `)
-        .eq("photographer_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setInvoices(data || []);
+      const response = await apiClient.getInvoices();
+      setInvoices(response.data || []);
     } catch (error: any) {
+      console.error("Failed to fetch invoices:", error);
       toast({
         title: "Error",
         description: "Failed to load invoices",
@@ -275,7 +239,7 @@ const Invoices = () => {
                               {!["cancelled", "cancel_by_client"].includes(invoice.status) && (
                                 <InvoicePDFDownload 
                                   invoice={invoice}
-                                  photographer={photographer}
+                                  photographer={user}
                                 />
                               )}
                               <Dialog>
@@ -292,7 +256,7 @@ const Invoices = () => {
                                   <InvoiceEmailTemplate
                                     invoice={invoice}
                                     client={invoice.clients}
-                                    photographer={photographer}
+                                    photographer={user}
                                   />
                                 </DialogContent>
                               </Dialog>
