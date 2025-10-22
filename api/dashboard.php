@@ -45,9 +45,9 @@ class DashboardController {
         $recent_bookings = array_slice($recent_bookings, 0, 5); // Get only 5 recent bookings
 
         // Get client count
-        $client_query = "SELECT COUNT(*) as total_clients FROM clients WHERE user_id = :user_id";
+        $client_query = "SELECT COUNT(*) as total_clients FROM clients WHERE photographer_id = :photographer_id";
         $client_stmt = $this->db->prepare($client_query);
-        $client_stmt->bindParam(":user_id", $user_data['user_id']);
+        $client_stmt->bindParam(":photographer_id", $user_data['user_id']);
         $client_stmt->execute();
         $client_stats = $client_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -57,13 +57,13 @@ class DashboardController {
                                     YEAR(booking_date) as year,
                                     SUM(total_amount) as revenue
                                   FROM bookings 
-                                  WHERE user_id = :user_id 
+                                  WHERE photographer_id = :photographer_id 
                                     AND booking_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                                   GROUP BY YEAR(booking_date), MONTH(booking_date)
                                   ORDER BY year DESC, month DESC";
         
         $monthly_stmt = $this->db->prepare($monthly_revenue_query);
-        $monthly_stmt->bindParam(":user_id", $user_data['user_id']);
+        $monthly_stmt->bindParam(":photographer_id", $user_data['user_id']);
         $monthly_stmt->execute();
         $monthly_revenue = $monthly_stmt->fetchAll(PDO::FETCH_ASSOC);
 
