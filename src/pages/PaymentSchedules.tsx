@@ -66,27 +66,10 @@ const PaymentSchedules = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("payment_schedules")
-        .select(`
-          *,
-          bookings!payment_schedules_booking_id_fkey (
-            title,
-            client_id,
-            clients (name)
-          ),
-          invoices!payment_schedules_invoice_id_fkey (
-            invoice_number,
-            client_id,
-            clients (name)
-          )
-        `)
-        .eq("photographer_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setPaymentSchedules((data as PaymentSchedule[]) || []);
+      const response = await apiClient.getPayments();
+      setPaymentSchedules((response.data as PaymentSchedule[]) || []);
     } catch (error: unknown) {
+      console.error("Failed to fetch payment schedules:", error);
       let errorMessage = "Failed to load payment schedules";
       if (error && typeof error === 'object' && 'message' in error) {
         errorMessage = (error as { message: string }).message; 

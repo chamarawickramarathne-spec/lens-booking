@@ -260,6 +260,35 @@ class ApiClient {
     });
   }
 
+  // Payment methods
+  async getPayments() {
+    return this.request('/payments');
+  }
+
+  async getPayment(id: number) {
+    return this.request(`/payments/${id}`);
+  }
+
+  async createPayment(paymentData: any) {
+    return this.request('/payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  async updatePayment(id: number, paymentData: any) {
+    return this.request(`/payments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  async deletePayment(id: number) {
+    return this.request(`/payments/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Dashboard methods
   async getDashboardStats() {
     return this.request('/dashboard');
