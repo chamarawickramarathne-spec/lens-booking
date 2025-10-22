@@ -143,7 +143,69 @@ class BookingsController {
             return;
         }
 
-        if ($this->booking->updateStatus($id, $user_data['user_id'], $data['status'])) {
+        $new_status = $data['status'];
+
+        if ($this->booking->updateStatus($id, $user_data['user_id'], $new_status)) {
+            // If status is being changed to "confirmed", automatically create an invoice
+            if ($new_status === 'confirmed') {
+                try {
+                    // Get the booking details
+                    $booking = $this->booking->getById($id, $user_data['user_id']);
+                    
+                    if ($booking && $booking['client_id']) {
+                        // Check if an invoice already exists for this booking
+                        $check_query = "SELECT id FROM invoices WHERE booking_id = :booking_id LIMIT 1";
+                        $check_stmt = $this->db->prepare($check_query);
+                        $check_stmt->bindParam(":booking_id", $id);
+                        $check_stmt->execute();
+                        
+                        // Only create invoice if one doesn't exist
+                        if ($check_stmt->rowCount() == 0) {
+                            // Generate invoice number
+                            $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+                            
+                            // Create invoice
+                            $invoice_query = "INSERT INTO invoices 
+                                            SET photographer_id=:photographer_id, 
+                                                client_id=:client_id, 
+                                                booking_id=:booking_id,
+                                                invoice_number=:invoice_number, 
+                                                issue_date=:issue_date, 
+                                                due_date=:due_date,
+                                                subtotal=:subtotal, 
+                                                tax_amount=:tax_amount, 
+                                                total_amount=:total_amount,
+                                                deposit_amount=:deposit_amount, 
+                                                status='draft'";
+                            
+                            $invoice_stmt = $this->db->prepare($invoice_query);
+                            
+                            $issue_date = date('Y-m-d');
+                            $due_date = date('Y-m-d', strtotime('+30 days'));
+                            $total_amount = $booking['total_amount'] ?? 0;
+                            $deposit_amount = $booking['deposit_amount'] ?? 0;
+                            $tax_amount = 0;
+                            
+                            $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
+                            $invoice_stmt->bindParam(":client_id", $booking['client_id']);
+                            $invoice_stmt->bindParam(":booking_id", $id);
+                            $invoice_stmt->bindParam(":invoice_number", $invoice_number);
+                            $invoice_stmt->bindParam(":issue_date", $issue_date);
+                            $invoice_stmt->bindParam(":due_date", $due_date);
+                            $invoice_stmt->bindParam(":subtotal", $total_amount);
+                            $invoice_stmt->bindParam(":tax_amount", $tax_amount);
+                            $invoice_stmt->bindParam(":total_amount", $total_amount);
+                            $invoice_stmt->bindParam(":deposit_amount", $deposit_amount);
+                            
+                            $invoice_stmt->execute();
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Log error but don't fail the status update
+                    error_log("Failed to create invoice for booking $id: " . $e->getMessage());
+                }
+            }
+            
             http_response_code(200);
             echo json_encode(["message" => "Booking status updated successfully"]);
         } else {
