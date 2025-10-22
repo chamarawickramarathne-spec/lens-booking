@@ -15,6 +15,7 @@ class User {
     public $phone;
     public $role;
     public $profile_picture;
+    public $currency_type;
     public $is_active;
     public $email_verified;
     public $created_at;
@@ -79,8 +80,8 @@ class User {
      * Login user
      */
     public function login($email, $password) {
-        $query = "SELECT id, email, password, first_name, last_name, phone, 
-                         user_access_level, profile_image, created_at, updated_at
+    $query = "SELECT id, email, password, first_name, last_name, phone, 
+             user_access_level, profile_image, currency_type, created_at, updated_at
                  FROM " . $this->table_name . " 
                  WHERE email = :email";
 
@@ -99,6 +100,7 @@ class User {
                     'phone' => $row['phone'],
                     'role' => $row['user_access_level'],
                     'profile_picture' => $row['profile_image'],
+                    'currency_type' => $row['currency_type'] ?? 'USD',
                     'is_active' => 1, // Assume active if record exists
                     'created_at' => $row['created_at'],
                     'updated_at' => $row['updated_at']
@@ -112,8 +114,8 @@ class User {
      * Get user by ID
      */
     public function getById($id) {
-        $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
-                         profile_image, created_at, updated_at 
+    $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
+             profile_image, currency_type, created_at, updated_at 
                  FROM " . $this->table_name . " 
                  WHERE id = :id";
 
@@ -131,6 +133,7 @@ class User {
                 'phone' => $row['phone'],
                 'role' => $row['user_access_level'],
                 'profile_picture' => $row['profile_image'],
+                'currency_type' => $row['currency_type'] ?? 'USD',
                 'is_active' => 1, // Assume active if record exists
                 'email_verified' => 0, // Default for existing schema
                 'created_at' => $row['created_at'],
@@ -149,9 +152,9 @@ class User {
         $first_name = $name_parts[0];
         $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
 
-        $query = "UPDATE " . $this->table_name . " 
-                 SET first_name=:first_name, last_name=:last_name, phone=:phone, profile_image=:profile_image 
-                 WHERE id=:id";
+    $query = "UPDATE " . $this->table_name . " 
+         SET first_name=:first_name, last_name=:last_name, phone=:phone, profile_image=:profile_image, currency_type=:currency_type 
+         WHERE id=:id";
 
         $stmt = $this->conn->prepare($query);
 
@@ -164,7 +167,8 @@ class User {
         $stmt->bindParam(":first_name", $first_name);
         $stmt->bindParam(":last_name", $last_name);
         $stmt->bindParam(":phone", $this->phone);
-        $stmt->bindParam(":profile_image", $this->profile_picture);
+    $stmt->bindParam(":profile_image", $this->profile_picture);
+    $stmt->bindParam(":currency_type", $this->currency_type);
         $stmt->bindParam(":id", $this->id);
 
         return $stmt->execute();

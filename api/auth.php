@@ -49,7 +49,8 @@ class AuthController {
                     "id" => $user_data['id'],
                     "email" => $user_data['email'],
                     "full_name" => $user_data['full_name'],
-                    "role" => $user_data['role']
+                    "role" => $user_data['role'],
+                    "currency_type" => $user_data['currency_type'] ?? 'USD'
                 ]
             ]);
         } else {
@@ -93,7 +94,8 @@ class AuthController {
                 'id' => $created_user['id'],
                 'email' => $created_user['email'],
                 'full_name' => $created_user['full_name'],
-                'role' => $created_user['role']
+                'role' => $created_user['role'],
+                'currency_type' => $created_user['currency_type'] ?? 'USD'
             ];
 
             $token = $this->auth->generateToken($user_data);
@@ -150,10 +152,11 @@ class AuthController {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $this->user->id = $user_data['user_id'];
-        $this->user->full_name = $data['full_name'] ?? '';
-        $this->user->phone = $data['phone'] ?? '';
-        $this->user->profile_picture = $data['profile_picture'] ?? '';
+    $this->user->id = $user_data['user_id'];
+    $this->user->full_name = $data['full_name'] ?? '';
+    $this->user->phone = $data['phone'] ?? '';
+    $this->user->profile_picture = $data['profile_picture'] ?? '';
+    $this->user->currency_type = $data['currency_type'] ?? 'USD';
 
         if ($this->user->update()) {
             http_response_code(200);

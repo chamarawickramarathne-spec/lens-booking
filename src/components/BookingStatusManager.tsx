@@ -35,7 +35,7 @@ const BookingStatusManager = ({
   const [pendingStatus, setPendingStatus] = useState("");
   const { toast } = useToast();
 
-  const statusOptions = [
+  const baseStatusOptions = [
     { value: "pending", label: "Pending", variant: "secondary" as const },
     { value: "confirmed", label: "Confirmed", variant: "default" as const },
     { value: "completed", label: "Completed", variant: "default" as const },
@@ -46,6 +46,12 @@ const BookingStatusManager = ({
       variant: "destructive" as const,
     },
   ];
+
+  // After a booking has changed status from pending, do not allow going back to pending.
+  const statusOptions =
+    booking.status === "pending"
+      ? baseStatusOptions
+      : baseStatusOptions.filter((opt) => opt.value !== "pending");
 
   const getStatusBadge = (status: string) => {
     const statusOption = statusOptions.find((opt) => opt.value === status);
@@ -67,6 +73,17 @@ const BookingStatusManager = ({
 
   const handleStatusChange = (newStatus: string) => {
     if (newStatus === booking.status) return;
+
+    // Prevent changing back to pending once status is moved away from pending
+    if (newStatus === "pending" && booking.status !== "pending") {
+      toast({
+        title: "Not allowed",
+        description:
+          "You cannot change a booking back to Pending once updated.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Show confirmation for critical status changes
     if (

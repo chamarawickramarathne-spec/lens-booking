@@ -320,6 +320,7 @@ export interface User {
   phone?: string;
   role: 'admin' | 'photographer' | 'client';
   profile_picture?: string;
+  currency_type?: string;
   created_at: string;
   updated_at: string;
 }

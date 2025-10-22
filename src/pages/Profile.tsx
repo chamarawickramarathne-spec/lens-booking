@@ -8,10 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { apiClient } from "@/integrations/api/client";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Building, Mail, Phone, Globe, FileText, DollarSign } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  User,
+  Building,
+  Mail,
+  Phone,
+  Globe,
+  FileText,
+  DollarSign,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -38,7 +51,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -56,69 +69,39 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        form.reset({
-          photographer_name: data.photographer_name || "",
-          business_name: data.business_name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          bio: data.bio || "",
-          website: data.website || "",
-          portfolio_url: data.portfolio_url || "",
-          currency_type: data.currency_type || "USD",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
+      // Map API user to form
+      form.reset({
+        photographer_name: user.full_name || "",
+        business_name: "",
+        email: user.email || "",
+        phone: user.phone || "",
+        bio: "",
+        website: "",
+        portfolio_url: "",
+        currency_type: user.currency_type || "LKR",
       });
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          photographer_name: data.photographer_name,
-          business_name: data.business_name || null,
-          email: data.email,
-          phone: data.phone || null,
-          bio: data.bio || null,
-          website: data.website || null,
-          portfolio_url: data.portfolio_url || null,
-          currency_type: data.currency_type,
-        })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      // Use API auth profile update (maps full_name, phone, currency_type)
+      await updateProfile({
+        full_name: data.photographer_name,
+        phone: data.phone,
+        profile_picture: "",
+        currency_type: data.currency_type,
+      });
 
       toast({
         title: "Success",
         description: "Profile updated successfully!",
       });
-      
+
       setIsEditing(false);
     } catch (error: any) {
       toast({
@@ -142,9 +125,7 @@ const Profile = () => {
             </p>
           </div>
           {!isEditing && (
-            <Button onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </Button>
+            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
           )}
         </div>
 
@@ -157,7 +138,10 @@ const Profile = () => {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -168,11 +152,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="Your full name" 
+                            <Input
+                              placeholder="Your full name"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -190,11 +174,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="Your business name" 
+                            <Input
+                              placeholder="Your business name"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -212,12 +196,12 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              type="email" 
-                              placeholder="your@email.com" 
+                            <Input
+                              type="email"
+                              placeholder="your@email.com"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -235,11 +219,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="+1 (555) 000-0000" 
+                            <Input
+                              placeholder="+1 (555) 000-0000"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -257,11 +241,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="https://yourwebsite.com" 
+                            <Input
+                              placeholder="https://yourwebsite.com"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -279,11 +263,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="https://portfolio.com" 
+                            <Input
+                              placeholder="https://portfolio.com"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -301,11 +285,11 @@ const Profile = () => {
                         <FormControl>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              placeholder="e.g., USD, EUR, INR" 
+                            <Input
+                              placeholder="e.g., USD, EUR, INR"
                               className="pl-10"
                               disabled={!isEditing}
-                              {...field} 
+                              {...field}
                             />
                           </div>
                         </FormControl>
@@ -322,11 +306,11 @@ const Profile = () => {
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Tell us about yourself and your photography..." 
+                        <Textarea
+                          placeholder="Tell us about yourself and your photography..."
                           className="min-h-[120px]"
                           disabled={!isEditing}
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -341,7 +325,18 @@ const Profile = () => {
                       variant="outline"
                       onClick={() => {
                         setIsEditing(false);
-                        fetchProfile();
+                        if (user) {
+                          form.reset({
+                            photographer_name: user.full_name || "",
+                            business_name: "",
+                            email: user.email || "",
+                            phone: user.phone || "",
+                            bio: "",
+                            website: "",
+                            portfolio_url: "",
+                            currency_type: user.currency_type || "LKR",
+                          });
+                        }
                       }}
                     >
                       Cancel

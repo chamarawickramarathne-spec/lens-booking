@@ -97,8 +97,48 @@ export default function Dashboard() {
     return total;
   }, [invoices, stats.monthly_revenue]);
 
-  const recentBookings = (stats.recent_bookings ?? []).slice(0, 5);
-  const recentPendingInvoices = pendingInvoices.slice(0, 5);
+  // Helpers
+  const isActiveBooking = (b: any) =>
+    !["completed", "cancelled", "cancel_by_client"].includes(
+      String(b.status || "").toLowerCase()
+    );
+
+  const parseDateSafe = (d?: string) => {
+    if (!d || d === "0000-00-00") return 0;
+    const t = new Date(d).getTime();
+    return isNaN(t) ? 0 : t;
+  };
+
+  // 1 & 2) Recent bookings: show recent 10; active first; order by booking date (newest first)
+  const recentBookings = useMemo(() => {
+    const arr = [...(stats.recent_bookings ?? [])];
+    arr.sort((a, b) => {
+      const aA = isActiveBooking(a) ? 1 : 0;
+      const bA = isActiveBooking(b) ? 1 : 0;
+      if (bA !== aA) return bA - aA; // active first
+      // booking_date descending (recent first)
+      return parseDateSafe(b.booking_date) - parseDateSafe(a.booking_date);
+    });
+    return arr.slice(0, 10);
+  }, [stats.recent_bookings]);
+
+  // 3 & 4) Recent Pending Invoices: order by due date; active (status 'pending') first; limit 10
+  const recentPendingInvoices = useMemo(() => {
+    const arr = [...pendingInvoices];
+    arr.sort((a, b) => {
+      const aActive = String(a.status).toLowerCase() === "pending" ? 1 : 0;
+      const bActive = String(b.status).toLowerCase() === "pending" ? 1 : 0;
+      if (bActive !== aActive) return bActive - aActive; // pending before draft
+      // Due date ascending (nearest due first); missing dates last
+      const aDue = parseDateSafe(a.due_date);
+      const bDue = parseDateSafe(b.due_date);
+      if (aDue === 0 && bDue === 0) return 0;
+      if (aDue === 0) return 1;
+      if (bDue === 0) return -1;
+      return aDue - bDue;
+    });
+    return arr.slice(0, 10);
+  }, [pendingInvoices]);
 
   return (
     <DashboardLayout>

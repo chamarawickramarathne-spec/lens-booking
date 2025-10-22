@@ -170,9 +170,7 @@ const Bookings = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Title</TableHead>
-                      <TableHead>Client</TableHead>
                       <TableHead>Date & Time</TableHead>
-                      <TableHead>Notes</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -186,21 +184,14 @@ const Bookings = () => {
                             <div className="font-medium">
                               {booking.title || "Untitled Booking"}
                             </div>
-                            {booking.package_type && (
-                              <div className="text-sm text-muted-foreground">
-                                {booking.package_type}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
+                            <div className="text-xs text-muted-foreground">
                               {booking.client_name}
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {booking.client_email}
-                            </div>
+                            {booking.client_email && (
+                              <div className="text-xs text-muted-foreground">
+                                {booking.client_email}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -222,17 +213,7 @@ const Bookings = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {booking.description ? (
-                            <div className="text-sm max-w-[200px] truncate">
-                              {booking.description}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              No notes
-                            </span>
-                          )}
-                        </TableCell>
+
                         <TableCell>
                           {booking.total_amount ? (
                             <div className="flex items-center gap-2">

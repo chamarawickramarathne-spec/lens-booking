@@ -12,6 +12,9 @@ export const useAuth = () => {
         try {
           const response = await apiClient.getProfile();
           setUser(response.user);
+          try {
+            localStorage.setItem("user_data", JSON.stringify(response.user));
+          } catch {}
         } catch (error) {
           console.error("Auth check failed:", error);
           apiClient.logout();
@@ -60,6 +63,9 @@ export const useAuth = () => {
       // Refresh user data
       const response = await apiClient.getProfile();
       setUser(response.user);
+      try {
+        localStorage.setItem("user_data", JSON.stringify(response.user));
+      } catch {}
     } catch (error) {
       throw error;
     }
