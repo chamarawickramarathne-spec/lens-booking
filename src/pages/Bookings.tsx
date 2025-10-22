@@ -112,6 +112,20 @@ const Bookings = () => {
     return booking.status !== "completed";
   };
 
+  // Active bookings: anything not completed/cancelled/cancel_by_client
+  const isActive = (b: any) =>
+    !["completed", "cancelled", "cancel_by_client"].includes(
+      String(b.status).toLowerCase()
+    );
+
+  // Sort: active first, then by booking ID descending
+  const sortedBookings = [...bookings].sort((a, b) => {
+    const aActive = isActive(a) ? 1 : 0;
+    const bActive = isActive(b) ? 1 : 0;
+    if (bActive !== aActive) return bActive - aActive;
+    return Number(b.id) - Number(a.id);
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -165,7 +179,7 @@ const Bookings = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {bookings.map((booking) => (
+                    {sortedBookings.map((booking) => (
                       <TableRow key={booking.id}>
                         <TableCell>
                           <div>

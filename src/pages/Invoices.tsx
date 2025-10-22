@@ -133,13 +133,21 @@ const Invoices = () => {
   );
   const totalRevenue = activeInvoices
     .filter((invoice) => invoice.status === "paid")
-    .reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
+    .reduce(
+      (sum, invoice) =>
+        sum + Number(invoice.total_amount || invoice.amount || 0),
+      0
+    );
   const pendingAmount = activeInvoices
     .filter(
       (invoice) =>
         !["paid", "cancelled", "cancel_by_client"].includes(invoice.status)
     )
-    .reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
+    .reduce(
+      (sum, invoice) =>
+        sum + Number(invoice.total_amount || invoice.amount || 0),
+      0
+    );
 
   return (
     <DashboardLayout>

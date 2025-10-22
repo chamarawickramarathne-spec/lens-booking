@@ -155,6 +155,11 @@ const PaymentSchedules = () => {
     return "No reference";
   };
 
+  // Get invoice number for display under payment name
+  const getInvoiceNumber = (schedule: PaymentSchedule) => {
+    return schedule.invoices?.invoice_number || null;
+  };
+
   // Calculate totals - using nullish coalescing (?? 0) for safety
   const totalAmount = paymentSchedules.reduce(
     (sum, schedule) => sum + (schedule.amount ?? 0),
@@ -168,6 +173,34 @@ const PaymentSchedules = () => {
   const completedSchedules = paymentSchedules.filter(
     (s) => s.status === "completed"
   ).length;
+
+  // Sort by ID descending and group by invoice number
+  const sortedAndGroupedSchedules = () => {
+    // First sort by ID descending
+    const sorted = [...paymentSchedules].sort((a, b) => {
+      return Number(b.id) - Number(a.id);
+    });
+
+    // Group by invoice number
+    const grouped: { [key: string]: PaymentSchedule[] } = {};
+    const noInvoiceGroup: PaymentSchedule[] = [];
+
+    sorted.forEach((schedule) => {
+      const invoiceNumber = getInvoiceNumber(schedule);
+      if (invoiceNumber) {
+        if (!grouped[invoiceNumber]) {
+          grouped[invoiceNumber] = [];
+        }
+        grouped[invoiceNumber].push(schedule);
+      } else {
+        noInvoiceGroup.push(schedule);
+      }
+    });
+
+    return { grouped, noInvoiceGroup };
+  };
+
+  const { grouped, noInvoiceGroup } = sortedAndGroupedSchedules();
 
   return (
     <DashboardLayout>
@@ -274,7 +307,6 @@ const PaymentSchedules = () => {
                       <TableHead>Payment Name</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Reference</TableHead>
-                      <TableHead>Type</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Paid</TableHead>
@@ -283,17 +315,84 @@ const PaymentSchedules = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paymentSchedules.map((schedule) => (
-                      <TableRow key={schedule.id}>
-                        <TableCell className="font-medium">
-                          {schedule.payment_name}
+                    {/* Render grouped invoices */}
+                    {Object.entries(grouped).map(
+                      ([invoiceNumber, schedules]) => (
+                        <>
+                          {schedules.map((schedule, idx) => (
+                            <TableRow
+                              key={schedule.id}
+                              className={
+                                idx === 0 ? "border-t-2 border-primary/20" : ""
+                              }
+                            >
+                              <TableCell>
+                                <div className="font-medium">
+                                  {schedule.payment_name}
+                                </div>
+                                {getInvoiceNumber(schedule) && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {getInvoiceNumber(schedule)}
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>{getClientName(schedule)}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {getReference(schedule)}
+                              </TableCell>
+                              <TableCell>
+                                {schedule.due_date &&
+                                schedule.due_date !== "0000-00-00"
+                                  ? format(
+                                      new Date(schedule.due_date),
+                                      "MMM dd, yyyy"
+                                    )
+                                  : "Not set"}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {formatCurrency(schedule.amount)}
+                              </TableCell>
+                              <TableCell className="font-medium text-success">
+                                {formatCurrency(schedule.paid_amount ?? 0)}
+                              </TableCell>
+                              <TableCell>
+                                {getStatusBadge(schedule.status)}
+                              </TableCell>
+                              <TableCell>
+                                <PaymentManager
+                                  paymentSchedule={schedule}
+                                  onSuccess={fetchPaymentSchedules}
+                                  refreshData={fetchPaymentSchedules}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </>
+                      )
+                    )}
+                    {/* Render schedules without invoice */}
+                    {noInvoiceGroup.map((schedule, idx) => (
+                      <TableRow
+                        key={schedule.id}
+                        className={
+                          idx === 0 && Object.keys(grouped).length > 0
+                            ? "border-t-2 border-muted"
+                            : ""
+                        }
+                      >
+                        <TableCell>
+                          <div className="font-medium">
+                            {schedule.payment_name}
+                          </div>
+                          {getInvoiceNumber(schedule) && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {getInvoiceNumber(schedule)}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>{getClientName(schedule)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {getReference(schedule)}
-                        </TableCell>
-                        <TableCell>
-                          {getScheduleTypeBadge(schedule.schedule_type)}
                         </TableCell>
                         <TableCell>
                           {schedule.due_date &&
@@ -308,7 +407,6 @@ const PaymentSchedules = () => {
                           {formatCurrency(schedule.amount)}
                         </TableCell>
                         <TableCell className="font-medium text-success">
-                          {/* Use nullish coalescing for safe display */}
                           {formatCurrency(schedule.paid_amount ?? 0)}
                         </TableCell>
                         <TableCell>{getStatusBadge(schedule.status)}</TableCell>
