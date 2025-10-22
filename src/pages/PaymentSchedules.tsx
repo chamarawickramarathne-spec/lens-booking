@@ -296,8 +296,13 @@ const PaymentSchedules = () => {
                           {getScheduleTypeBadge(schedule.schedule_type)}
                         </TableCell>
                         <TableCell>
-                          {/* Due date is a string, New Date() handles it */}
-                          {format(new Date(schedule.due_date), "MMM dd, yyyy")}
+                          {schedule.due_date &&
+                          schedule.due_date !== "0000-00-00"
+                            ? format(
+                                new Date(schedule.due_date),
+                                "MMM dd, yyyy"
+                              )
+                            : "Not set"}
                         </TableCell>
                         <TableCell className="font-medium">
                           {formatCurrency(schedule.amount)}

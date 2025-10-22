@@ -10,7 +10,6 @@ import {
   DollarSign,
   Check,
   X,
-  Edit,
   Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +18,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCurrency } from "@/hooks/useCurrency";
 import { format } from "date-fns";
 import InvoiceForm from "@/components/forms/InvoiceForm";
-import EditInvoiceForm from "@/components/forms/EditInvoiceForm";
 import InvoiceEmailTemplate from "@/components/InvoiceEmailTemplate";
 import InvoiceStatusManager from "@/components/InvoiceStatusManager";
 import InvoicePDFDownload from "@/components/InvoicePDFDownload";
@@ -67,7 +65,6 @@ const paymentSchema = z.object({
 const Invoices = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { formatCurrency } = useCurrency();
@@ -259,16 +256,6 @@ const Invoices = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {invoice.status === "draft" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setEditingInvoice(invoice)}
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Edit
-                              </Button>
-                            )}
                             {!["cancelled", "cancel_by_client"].includes(
                               invoice.status
                             ) && (
@@ -307,19 +294,6 @@ const Invoices = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Edit Invoice Form */}
-        {editingInvoice && (
-          <EditInvoiceForm
-            invoice={editingInvoice}
-            isOpen={true}
-            onClose={() => setEditingInvoice(null)}
-            onSuccess={() => {
-              setEditingInvoice(null);
-              fetchInvoices();
-            }}
-          />
-        )}
       </div>
     </DashboardLayout>
   );

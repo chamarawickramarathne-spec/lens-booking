@@ -26,7 +26,10 @@ interface InvoiceStatusManagerProps {
   onStatusChange: () => void;
 }
 
-const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerProps) => {
+const InvoiceStatusManager = ({
+  invoice,
+  onStatusChange,
+}: InvoiceStatusManagerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
@@ -36,36 +39,52 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
     { value: "draft", label: "Draft", variant: "secondary" as const },
     { value: "pending", label: "Pending Payment", variant: "outline" as const },
     { value: "cancelled", label: "Cancel", variant: "destructive" as const },
-    { value: "cancel_by_client", label: "Cancel by Client", variant: "destructive" as const },
+    {
+      value: "cancel_by_client",
+      label: "Cancel by Client",
+      variant: "destructive" as const,
+    },
     { value: "paid", label: "Paid", variant: "default" as const },
   ];
 
   const getStatusOptions = () => {
     const baseOptions = [
-      { value: "pending", label: "Pending Payment", variant: "outline" as const },
+      {
+        value: "pending",
+        label: "Pending Payment",
+        variant: "outline" as const,
+      },
       { value: "cancelled", label: "Cancel", variant: "destructive" as const },
-      { value: "cancel_by_client", label: "Cancel by Client", variant: "destructive" as const },
+      {
+        value: "cancel_by_client",
+        label: "Cancel by Client",
+        variant: "destructive" as const,
+      },
     ];
-    
+
     // Only show "Draft" option if current status is draft
     if (invoice.status === "draft") {
       return [
         { value: "draft", label: "Draft", variant: "secondary" as const },
-        ...baseOptions
+        ...baseOptions,
       ];
     }
-    
+
     return baseOptions;
   };
 
   const getStatusBadge = (status: string) => {
-    const statusOption = allStatusOptions.find(opt => opt.value === status);
+    const statusOption = allStatusOptions.find((opt) => opt.value === status);
     if (!statusOption) return <Badge variant="secondary">{status}</Badge>;
 
     return (
-      <Badge 
+      <Badge
         variant={statusOption.variant}
-        className={statusOption.value === "paid" ? "bg-success text-success-foreground" : ""}
+        className={
+          statusOption.value === "paid"
+            ? "bg-success text-success-foreground"
+            : ""
+        }
       >
         {statusOption.label}
       </Badge>
@@ -74,7 +93,7 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
 
   const handleStatusChange = (newStatus: string) => {
     if (newStatus === invoice.status) return;
-    
+
     // Prevent status changes for paid invoices
     if (invoice.status === "paid") {
       toast({
@@ -84,9 +103,13 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
       });
       return;
     }
-    
+
     // Show confirmation for critical status changes
-    if (newStatus === "cancelled" || newStatus === "cancel_by_client" || newStatus === "paid") {
+    if (
+      newStatus === "cancelled" ||
+      newStatus === "cancel_by_client" ||
+      newStatus === "paid"
+    ) {
       setPendingStatus(newStatus);
       setShowConfirmDialog(true);
     } else {
@@ -97,36 +120,38 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
   const updateStatus = async (newStatus: string) => {
     setIsLoading(true);
     try {
-      const updateData: any = { status: newStatus };
-      
+      const updateData: any = {
+        ...invoice,
+        status: newStatus,
+      };
+
       // Set payment date when marking as paid
       if (newStatus === "paid") {
-        updateData.payment_date = new Date().toISOString().split('T')[0];
+        updateData.payment_date = new Date().toISOString().split("T")[0];
       }
 
-      const { error } = await supabase
-        .from("invoices")
-        .update(updateData)
-        .eq("id", invoice.id);
+      await apiClient.updateInvoice(invoice.id, updateData);
 
-      if (error) throw error;
+      let statusMessage = `Invoice status updated to ${
+        allStatusOptions.find((s) => s.value === newStatus)?.label
+      }`;
 
-      let statusMessage = `Invoice status updated to ${allStatusOptions.find(s => s.value === newStatus)?.label}`;
-      
       if (newStatus === "paid") {
         statusMessage += ". Payment date has been recorded.";
+      } else if (newStatus === "pending") {
+        statusMessage += ". Payment schedules have been created.";
       }
 
       toast({
         title: "Success",
         description: statusMessage,
       });
-      
+
       onStatusChange();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update invoice status",
         variant: "destructive",
       });
     } finally {
@@ -160,11 +185,8 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
   return (
     <div className="flex items-center gap-2">
       {getStatusBadge(invoice.status)}
-      
-      <Select 
-        onValueChange={handleStatusChange} 
-        value={invoice.status}
-      >
+
+      <Select onValueChange={handleStatusChange} value={invoice.status}>
         <SelectTrigger className="w-[150px]">
           <SelectValue />
         </SelectTrigger>
@@ -187,7 +209,7 @@ const InvoiceStatusManager = ({ invoice, onStatusChange }: InvoiceStatusManagerP
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmStatusChange}
               disabled={isLoading}
             >

@@ -256,6 +256,17 @@ class InvoicesController {
         $data = json_decode(file_get_contents("php://input"), true);
 
         try {
+            // Check if status is changing to pending
+            $check_query = "SELECT status, total_amount, deposit_amount, booking_id FROM " . $this->table_name . " 
+                           WHERE id = :id AND photographer_id = :photographer_id";
+            $check_stmt = $this->db->prepare($check_query);
+            $check_stmt->bindParam(":id", $id);
+            $check_stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $check_stmt->execute();
+            $old_invoice = $check_stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $is_status_changing_to_pending = ($old_invoice && $old_invoice['status'] !== 'pending' && $data['status'] === 'pending');
+
             $query = "UPDATE " . $this->table_name . " 
                      SET client_id=:client_id, booking_id=:booking_id, due_date=:due_date,
                          subtotal=:subtotal, tax_amount=:tax_amount, total_amount=:total_amount,
@@ -279,6 +290,11 @@ class InvoicesController {
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
+                // Create payment schedules if status changed to pending
+                if ($is_status_changing_to_pending) {
+                    $this->createPaymentSchedules($id, $old_invoice, $user_data['user_id']);
+                }
+                
                 http_response_code(200);
                 echo json_encode(["message" => "Invoice updated successfully"]);
             } else {
@@ -291,6 +307,66 @@ class InvoicesController {
                 "message" => "Failed to update invoice",
                 "error" => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Create payment schedules when invoice status changes to pending
+     */
+    private function createPaymentSchedules($invoice_id, $invoice_data, $photographer_id) {
+        try {
+            // Calculate remaining amount after deposit
+            $total_amount = floatval($invoice_data['total_amount']);
+            $deposit_amount = floatval($invoice_data['deposit_amount'] ?? 0);
+            $remaining_amount = $total_amount - $deposit_amount;
+            
+            // Delete existing payment schedules for this invoice if any
+            $delete_query = "DELETE FROM payments WHERE invoice_id = :invoice_id";
+            $delete_stmt = $this->db->prepare($delete_query);
+            $delete_stmt->bindParam(":invoice_id", $invoice_id);
+            $delete_stmt->execute();
+            
+            // Create deposit payment if there's a deposit amount
+            if ($deposit_amount > 0) {
+                $deposit_query = "INSERT INTO payments 
+                                (invoice_id, booking_id, photographer_id, payment_name, schedule_type, 
+                                 due_date, amount, paid_amount, status, created_at, updated_at)
+                                VALUES 
+                                (:invoice_id, :booking_id, :photographer_id, 'Deposit Payment', 'deposit',
+                                 CURDATE(), :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                
+                $deposit_stmt = $this->db->prepare($deposit_query);
+                $deposit_stmt->bindParam(":invoice_id", $invoice_id);
+                $deposit_stmt->bindParam(":booking_id", $invoice_data['booking_id']);
+                $deposit_stmt->bindParam(":photographer_id", $photographer_id);
+                $deposit_stmt->bindParam(":amount", $deposit_amount);
+                $deposit_stmt->execute();
+            }
+            
+            // Create final payment schedule for remaining amount
+            if ($remaining_amount > 0) {
+                $final_due_date = date('Y-m-d', strtotime('+30 days'));
+                
+                $final_query = "INSERT INTO payments 
+                               (invoice_id, booking_id, photographer_id, payment_name, schedule_type,
+                                due_date, amount, paid_amount, status, created_at, updated_at)
+                               VALUES 
+                               (:invoice_id, :booking_id, :photographer_id, 'Final Payment', 'final',
+                                :due_date, :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                
+                $final_stmt = $this->db->prepare($final_query);
+                $final_stmt->bindParam(":invoice_id", $invoice_id);
+                $final_stmt->bindParam(":booking_id", $invoice_data['booking_id']);
+                $final_stmt->bindParam(":photographer_id", $photographer_id);
+                $final_stmt->bindParam(":due_date", $final_due_date);
+                $final_stmt->bindParam(":amount", $remaining_amount);
+                $final_stmt->execute();
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to create payment schedules: " . $e->getMessage());
+            return false;
         }
     }
 
