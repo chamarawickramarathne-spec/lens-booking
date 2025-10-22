@@ -90,7 +90,7 @@ const EditClientForm = ({
         second_contact: data.second_contact || null,
         second_phone: data.second_phone || null,
         status: data.status,
-        user_id: client.user_id || user.id,
+        photographer_id: client.photographer_id || user.id,
       };
 
       await apiClient.updateClient(client.id, clientData);

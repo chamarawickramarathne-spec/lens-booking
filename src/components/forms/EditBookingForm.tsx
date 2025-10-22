@@ -148,7 +148,7 @@ const EditBookingForm = ({
         description: data.description || null,
         client_id: parseInt(data.client_id, 10),
         booking_date: format(data.booking_date, "yyyy-MM-dd"),
-        booking_time: data.start_time || null,
+        start_time: data.start_time || null,
         end_time: data.end_time || null,
         location: data.location || null,
         package_type: data.package_type || null,

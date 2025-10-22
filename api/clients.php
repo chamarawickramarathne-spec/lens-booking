@@ -95,7 +95,7 @@ class ClientsController {
         }
 
         // Set client properties for correct DB columns
-        $this->client->user_id = $data['user_id'] ?? $user_data['user_id'];
+        $this->client->photographer_id = $data['photographer_id'] ?? $user_data['user_id'];
         $this->client->name = $client_name;
         $this->client->email = $data['email'] ?? '';
         $this->client->phone = $data['phone'] ?? '';
@@ -141,7 +141,7 @@ class ClientsController {
 
         // Set client properties for correct DB columns
         $this->client->id = $id;
-        $this->client->user_id = $data['user_id'] ?? $user_data['user_id'];
+        $this->client->photographer_id = $data['photographer_id'] ?? $user_data['user_id'];
         $this->client->name = $client_name;
         $this->client->email = $data['email'] ?? '';
         $this->client->phone = $data['phone'] ?? '';

@@ -155,10 +155,10 @@ const Bookings = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Title</TableHead>
+                      <TableHead>Package/Event</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Date & Time</TableHead>
-                      <TableHead>Location</TableHead>
+                      <TableHead>Notes</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -169,10 +169,12 @@ const Bookings = () => {
                       <TableRow key={booking.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{booking.title}</div>
-                            {booking.package_type && (
+                            <div className="font-medium">
+                              {booking.package_name || "Booking"}
+                            </div>
+                            {booking.location && (
                               <div className="text-sm text-muted-foreground">
-                                {booking.package_type}
+                                {booking.location}
                               </div>
                             )}
                           </div>
@@ -207,16 +209,13 @@ const Bookings = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {booking.location ? (
-                            <div className="flex items-center gap-2 text-sm">
-                              <MapPin className="h-3 w-3" />
-                              <span className="max-w-[150px] truncate">
-                                {booking.location}
-                              </span>
+                          {booking.notes ? (
+                            <div className="text-sm max-w-[200px] truncate">
+                              {booking.notes}
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">
-                              No location
+                            <span className="text-muted-foreground text-sm">
+                              No notes
                             </span>
                           )}
                         </TableCell>

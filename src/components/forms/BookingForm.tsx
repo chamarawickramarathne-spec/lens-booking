@@ -139,7 +139,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         title: data.title,
         description: data.description || null,
         client_id: parseInt(data.client_id, 10),
-        user_id: user.id,
+        photographer_id: user.id,
         booking_date: format(data.booking_date, "yyyy-MM-dd"),
         booking_time: data.start_time || null,
         end_time: data.end_time || null,
