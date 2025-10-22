@@ -155,7 +155,7 @@ const Bookings = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Package/Event</TableHead>
+                      <TableHead>Title</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Date & Time</TableHead>
                       <TableHead>Notes</TableHead>
@@ -170,11 +170,11 @@ const Bookings = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {booking.package_name || "Booking"}
+                              {booking.title || "Untitled Booking"}
                             </div>
-                            {booking.location && (
+                            {booking.package_type && (
                               <div className="text-sm text-muted-foreground">
-                                {booking.location}
+                                {booking.package_type}
                               </div>
                             )}
                           </div>
@@ -198,20 +198,20 @@ const Bookings = () => {
                                 "MMM dd, yyyy"
                               )}
                             </div>
-                            {(booking.booking_time || booking.end_time) && (
+                            {(booking.start_time || booking.end_time) && (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                {booking.booking_time && booking.end_time
-                                  ? `${booking.booking_time} - ${booking.end_time}`
-                                  : booking.booking_time || booking.end_time}
+                                {booking.start_time && booking.end_time
+                                  ? `${booking.start_time} - ${booking.end_time}`
+                                  : booking.start_time || booking.end_time}
                               </div>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {booking.notes ? (
+                          {booking.description ? (
                             <div className="text-sm max-w-[200px] truncate">
-                              {booking.notes}
+                              {booking.description}
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-sm">
