@@ -36,8 +36,8 @@ class PaymentsController {
 
         try {
             $query = "SELECT p.*, 
-                             i.invoice_number,
-                             b.title as booking_title,
+                             i.invoice_number, i.client_id as invoice_client_id,
+                             b.title as booking_title, b.client_id as booking_client_id,
                              c1.name as booking_client_name,
                              c2.name as invoice_client_name
                       FROM " . $this->table_name . " p
@@ -46,7 +46,7 @@ class PaymentsController {
                       LEFT JOIN clients c1 ON b.client_id = c1.id
                       LEFT JOIN clients c2 ON i.client_id = c2.id
                       WHERE p.photographer_id = :photographer_id
-                      ORDER BY p.created_at DESC";
+                      ORDER BY p.due_date ASC, p.created_at DESC";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
@@ -56,15 +56,6 @@ class PaymentsController {
 
             // Format the response to match frontend expectations
             $formatted_payments = array_map(function($payment) {
-                $clientName = null;
-                $clientId = null;
-                
-                if ($payment['booking_client_name']) {
-                    $clientName = $payment['booking_client_name'];
-                } elseif ($payment['invoice_client_name']) {
-                    $clientName = $payment['invoice_client_name'];
-                }
-
                 return [
                     'id' => $payment['id'],
                     'photographer_id' => $payment['photographer_id'],
@@ -73,8 +64,8 @@ class PaymentsController {
                     'payment_name' => $payment['payment_name'],
                     'schedule_type' => $payment['schedule_type'],
                     'due_date' => $payment['due_date'],
-                    'amount' => $payment['amount'],
-                    'paid_amount' => $payment['paid_amount'],
+                    'amount' => (float)$payment['amount'],
+                    'paid_amount' => $payment['paid_amount'] ? (float)$payment['paid_amount'] : null,
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
@@ -84,13 +75,17 @@ class PaymentsController {
                     'updated_at' => $payment['updated_at'],
                     'bookings' => $payment['booking_id'] ? [
                         'title' => $payment['booking_title'],
-                        'client_id' => $payment['booking_id'],
-                        'clients' => $clientName ? ['name' => $clientName] : null
+                        'client_id' => $payment['booking_client_id'],
+                        'clients' => $payment['booking_client_name'] ? [
+                            'name' => $payment['booking_client_name']
+                        ] : null
                     ] : null,
                     'invoices' => $payment['invoice_id'] ? [
                         'invoice_number' => $payment['invoice_number'],
-                        'client_id' => $payment['invoice_id'],
-                        'clients' => $clientName ? ['name' => $clientName] : null
+                        'client_id' => $payment['invoice_client_id'],
+                        'clients' => $payment['invoice_client_name'] ? [
+                            'name' => $payment['invoice_client_name']
+                        ] : null
                     ] : null
                 ];
             }, $payments);
@@ -123,8 +118,8 @@ class PaymentsController {
 
         try {
             $query = "SELECT p.*, 
-                             i.invoice_number,
-                             b.title as booking_title,
+                             i.invoice_number, i.client_id as invoice_client_id,
+                             b.title as booking_title, b.client_id as booking_client_id,
                              c1.name as booking_client_name,
                              c2.name as invoice_client_name
                       FROM " . $this->table_name . " p
@@ -141,13 +136,6 @@ class PaymentsController {
 
             if ($stmt->rowCount() > 0) {
                 $payment = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                $clientName = null;
-                if ($payment['booking_client_name']) {
-                    $clientName = $payment['booking_client_name'];
-                } elseif ($payment['invoice_client_name']) {
-                    $clientName = $payment['invoice_client_name'];
-                }
 
                 $formatted_payment = [
                     'id' => $payment['id'],
@@ -157,8 +145,8 @@ class PaymentsController {
                     'payment_name' => $payment['payment_name'],
                     'schedule_type' => $payment['schedule_type'],
                     'due_date' => $payment['due_date'],
-                    'amount' => $payment['amount'],
-                    'paid_amount' => $payment['paid_amount'],
+                    'amount' => (float)$payment['amount'],
+                    'paid_amount' => $payment['paid_amount'] ? (float)$payment['paid_amount'] : null,
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
@@ -168,13 +156,17 @@ class PaymentsController {
                     'updated_at' => $payment['updated_at'],
                     'bookings' => $payment['booking_id'] ? [
                         'title' => $payment['booking_title'],
-                        'client_id' => $payment['booking_id'],
-                        'clients' => $clientName ? ['name' => $clientName] : null
+                        'client_id' => $payment['booking_client_id'],
+                        'clients' => $payment['booking_client_name'] ? [
+                            'name' => $payment['booking_client_name']
+                        ] : null
                     ] : null,
                     'invoices' => $payment['invoice_id'] ? [
                         'invoice_number' => $payment['invoice_number'],
-                        'client_id' => $payment['invoice_id'],
-                        'clients' => $clientName ? ['name' => $clientName] : null
+                        'client_id' => $payment['invoice_client_id'],
+                        'clients' => $payment['invoice_client_name'] ? [
+                            'name' => $payment['invoice_client_name']
+                        ] : null
                     ] : null
                 ];
 
