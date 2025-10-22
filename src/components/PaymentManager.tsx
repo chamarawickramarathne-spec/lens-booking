@@ -35,8 +35,7 @@ const PaymentManager = ({
   refreshData,
 }: PaymentManagerProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  // Ensure paidAmount is number for calculations
-  const [paidAmount, setPaidAmount] = useState(
+  const [paidAmount, setPaidAmount] = useState<number>(
     Number(paymentSchedule.paid_amount) || 0
   );
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(
@@ -48,27 +47,50 @@ const PaymentManager = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
+  const isCompleted =
+    String(paymentSchedule.status).toLowerCase() === "completed";
 
-  // Clamp paidAmount value to max amount
-  const clampedPaidAmount = Math.min(paidAmount, paymentSchedule.amount);
+  // Derived amounts
+  const totalAmount = Number(paymentSchedule.amount) || 0;
+  const alreadyPaid = Number(paymentSchedule.paid_amount) || 0;
+  const clampedPaidAmount = Math.min(
+    Math.max(paidAmount, alreadyPaid),
+    totalAmount
+  );
+  const remainingAmount = Math.max(totalAmount - clampedPaidAmount, 0);
+  const isFullyPaid = clampedPaidAmount >= totalAmount;
 
-  const remainingAmount = paymentSchedule.amount - clampedPaidAmount;
-  const isFullyPaid = clampedPaidAmount >= paymentSchedule.amount;
+  // Validation message
+  const validationError: string | null = (() => {
+    if (Number.isNaN(paidAmount)) return "Enter a valid amount";
+    if (paidAmount < alreadyPaid)
+      return "New total paid amount cannot be less than already paid amount.";
+    if (paidAmount > totalAmount)
+      return `New total paid amount cannot exceed total amount (${formatCurrency(
+        totalAmount
+      )}). You can add up to ${formatCurrency(totalAmount - alreadyPaid)}.`;
+    return null;
+  })();
 
-  // Added input validation and clamping to handle user input exceeding max
-  const handlePaidAmountChange = (e) => {
+  const handlePaidAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = parseFloat(e.target.value);
     const newValue = isNaN(rawValue) ? 0 : rawValue;
     setPaidAmount(newValue);
   };
 
   const handlePaymentUpdate = async () => {
-    // Basic validation before API call
-    if (clampedPaidAmount <= (paymentSchedule.paid_amount || 0)) {
+    if (validationError) {
       toast({
         title: "Validation Error",
-        description:
-          "Paid amount must be greater than the already paid amount.",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (paidAmount === alreadyPaid) {
+      toast({
+        title: "Validation Error",
+        description: "No change detected. Increase the amount to update.",
         variant: "destructive",
       });
       return;
@@ -76,23 +98,22 @@ const PaymentManager = ({
 
     setIsLoading(true);
     try {
-      // Use the clamped amount for the actual update
-      const newStatus = isFullyPaid ? "completed" : "pending";
+      const newStatus = paidAmount >= totalAmount ? "completed" : "pending";
 
       await apiClient.updatePayment(paymentSchedule.id, {
         ...paymentSchedule,
-        paid_amount: clampedPaidAmount,
-        payment_date: paymentDate ? format(paymentDate, "yyyy-MM-dd") : null,
+        paid_amount: paidAmount,
+        payment_date: paymentDate
+          ? format(paymentDate, "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
         status: newStatus,
       });
 
-      // If Final Payment is fully completed and linked to an invoice, update invoice status to paid
       if (
-        isFullyPaid &&
+        paidAmount >= totalAmount &&
         paymentSchedule.invoice_id &&
         paymentSchedule.schedule_type === "final"
       ) {
-        // Get the invoice to update it
         const invoiceResponse = await apiClient.getInvoice(
           paymentSchedule.invoice_id
         );
@@ -110,16 +131,16 @@ const PaymentManager = ({
       toast({
         title: "Success",
         description:
-          isFullyPaid && paymentSchedule.schedule_type === "final"
+          paidAmount >= totalAmount && paymentSchedule.schedule_type === "final"
             ? "Payment completed and invoice marked as paid!"
-            : isFullyPaid
+            : paidAmount >= totalAmount
             ? "Payment completed successfully!"
             : "Payment updated successfully!",
       });
 
       setIsOpen(false);
       onSuccess();
-      refreshData(); // Call to refresh the parent component's data
+      refreshData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -135,7 +156,6 @@ const PaymentManager = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        // Mocking the success colors
         return (
           <Badge variant="default" className="bg-green-600 text-white">
             Completed
@@ -153,7 +173,7 @@ const PaymentManager = ({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <DollarSign className="h-3 w-3 mr-1" />
-          Manage Payment
+          {isCompleted ? "View Payment" : "Manage Payment"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -207,26 +227,35 @@ const PaymentManager = ({
                 id="paid-amount"
                 type="number"
                 step="0.01"
-                // max={paymentSchedule.amount} // Removed max from input to allow user to enter value, then clamped in logic
+                max={totalAmount}
                 value={paidAmount}
                 onChange={handlePaidAmountChange}
                 placeholder={`Enter total paid amount (Max: ${formatCurrency(
-                  paymentSchedule.amount
+                  totalAmount
                 )})`}
-                className={
-                  clampedPaidAmount > paymentSchedule.amount
-                    ? "border-red-500"
-                    : ""
-                }
+                className={validationError ? "border-red-500" : ""}
+                disabled={isCompleted}
               />
-              {clampedPaidAmount > paymentSchedule.amount && (
-                <p className="text-sm text-red-500 mt-1">
-                  Amount entered ({formatCurrency(paidAmount)}) exceeds total.
-                  Only {formatCurrency(paymentSchedule.amount)} will be applied.
-                </p>
+              {validationError && (
+                <p className="text-sm text-red-500 mt-1">{validationError}</p>
               )}
               <p className="text-sm text-gray-500 mt-1">
-                Amount to be recorded: **{formatCurrency(clampedPaidAmount)}**
+                Amount to be recorded:{" "}
+                <strong>
+                  {formatCurrency(
+                    Math.min(Math.max(paidAmount, alreadyPaid), totalAmount)
+                  )}
+                </strong>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Remaining due after update:{" "}
+                {formatCurrency(
+                  Math.max(
+                    totalAmount -
+                      Math.min(Math.max(paidAmount, alreadyPaid), totalAmount),
+                    0
+                  )
+                )}
               </p>
             </div>
 
@@ -240,6 +269,7 @@ const PaymentManager = ({
                       "w-full justify-start text-left font-normal",
                       !paymentDate && "text-gray-500"
                     )}
+                    disabled={isCompleted}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {paymentDate ? (
@@ -253,7 +283,7 @@ const PaymentManager = ({
                   <Calendar
                     mode="single"
                     selected={paymentDate}
-                    onSelect={setPaymentDate}
+                    onSelect={isCompleted ? () => {} : setPaymentDate}
                     initialFocus
                   />
                 </PopoverContent>
@@ -262,7 +292,7 @@ const PaymentManager = ({
           </div>
 
           {/* Status Preview */}
-          {isFullyPaid && (
+          {!isCompleted && isFullyPaid && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700 font-medium">
                 Submitting {formatCurrency(clampedPaidAmount)} will mark the
@@ -276,15 +306,18 @@ const PaymentManager = ({
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handlePaymentUpdate}
-              disabled={
-                isLoading ||
-                clampedPaidAmount <= (paymentSchedule.paid_amount || 0)
-              }
-            >
-              {isLoading ? "Updating..." : "Update Payment"}
-            </Button>
+            {!isCompleted && (
+              <Button
+                onClick={handlePaymentUpdate}
+                disabled={
+                  isLoading ||
+                  Boolean(validationError) ||
+                  paidAmount === alreadyPaid
+                }
+              >
+                {isLoading ? "Updating..." : "Update Payment"}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
