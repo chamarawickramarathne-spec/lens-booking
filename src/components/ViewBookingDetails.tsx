@@ -104,12 +104,18 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <span className="font-medium">Name:</span>
-                <span>{booking.clients?.name || "N/A"}</span>
+                <span>{booking.client_name || "N/A"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{booking.clients?.email || "N/A"}</span>
+                <span>{booking.client_email || "N/A"}</span>
               </div>
+              {booking.client_phone && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Phone:</span>
+                  <span>{booking.client_phone}</span>
+                </div>
+              )}
             </div>
           </div>
 
