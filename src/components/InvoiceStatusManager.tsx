@@ -4,13 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -66,13 +59,19 @@ const InvoiceStatusManager = ({
   };
 
   const getStatusOptions = () => {
-    // Only allow manual selection of Draft and Pending
-    // Other statuses (Paid, Cancelled) are changed automatically by the system
-    const manualStatusOptions = allStatusOptions.filter((option) => {
-      return option.value === "draft" || option.value === "pending";
+    const currentOrder = getCurrentStatusOrder();
+
+    // Filter to show only current status and future statuses, plus cancel options
+    const statusOptions = allStatusOptions.filter((option) => {
+      // Always show cancel options
+      if (option.value === "cancelled" || option.value === "cancel_by_client") {
+        return true;
+      }
+      // Show current and future statuses
+      return option.order >= currentOrder;
     });
 
-    return manualStatusOptions;
+    return statusOptions;
   };
 
   const getStatusBadge = (status: string) => {
@@ -199,39 +198,34 @@ const InvoiceStatusManager = ({
     }
   };
 
-  // Don't show dropdown for completed invoices
-  if (invoice.status === "paid") {
-    return getStatusBadge(invoice.status);
-  }
-
-  // Don't show dropdown for cancelled invoices
-  if (invoice.status === "cancelled" || invoice.status === "cancel_by_client") {
-    return getStatusBadge(invoice.status);
-  }
+  const handleSendInvoice = () => {
+    if (invoice.status === "draft") {
+      setPendingStatus("pending");
+      setShowConfirmDialog(true);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
       {getStatusBadge(invoice.status)}
 
-      <Select onValueChange={handleStatusChange} value={invoice.status}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {getStatusOptions().map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {invoice.status === "draft" && (
+        <Button
+          size="sm"
+          variant="default"
+          onClick={handleSendInvoice}
+          disabled={isLoading}
+        >
+          {isLoading ? "Sending..." : "Send Invoice"}
+        </Button>
+      )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+            <AlertDialogTitle>Send Invoice</AlertDialogTitle>
             <AlertDialogDescription>
-              {getConfirmationMessage()}
+              This will change the invoice status to "Pending Payment" and create payment schedules. Are you sure you want to send this invoice?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -240,7 +234,7 @@ const InvoiceStatusManager = ({
               onClick={confirmStatusChange}
               disabled={isLoading}
             >
-              {isLoading ? "Updating..." : "Confirm"}
+              {isLoading ? "Sending..." : "Send Invoice"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
