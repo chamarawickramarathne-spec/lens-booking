@@ -227,8 +227,7 @@ const Invoices = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Client</TableHead>
+                      <TableHead>Invoice</TableHead>
                       <TableHead>Issue Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
@@ -239,12 +238,17 @@ const Invoices = () => {
                   <TableBody>
                     {invoices.map((invoice) => (
                       <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">
-                          {invoice.invoice_number}
-                        </TableCell>
                         <TableCell>
                           <div className="font-medium">
-                            {invoice.clients?.name}
+                            {invoice.invoice_number}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {invoice.bookings?.title && (
+                              <div>{invoice.bookings.title}</div>
+                            )}
+                            {invoice.clients?.name && (
+                              <div>{invoice.clients.name}</div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

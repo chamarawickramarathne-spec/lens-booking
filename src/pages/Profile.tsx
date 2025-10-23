@@ -322,7 +322,7 @@ const Profile = () => {
                     <h3 className="text-lg font-semibold text-foreground border-b pb-2">
                       Personal Details
                     </h3>
-                    
+
                     <FormField
                       control={form.control}
                       name="photographer_name"
@@ -440,7 +440,7 @@ const Profile = () => {
                     <h3 className="text-lg font-semibold text-foreground border-b pb-2">
                       Business Details
                     </h3>
-                    
+
                     <FormField
                       control={form.control}
                       name="business_name"
@@ -561,7 +561,9 @@ const Profile = () => {
                     name="bio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">Bio</FormLabel>
+                        <FormLabel className="text-base font-semibold">
+                          Bio
+                        </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Tell us about yourself and your photography..."
