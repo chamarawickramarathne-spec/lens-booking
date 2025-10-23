@@ -109,7 +109,7 @@ const Bookings = () => {
   };
 
   const canEditOrDelete = (booking: any) => {
-    return booking.status !== "completed" && booking.status !== "shoot_completed";
+    return booking.status === "pending";
   };
 
   // Active bookings: anything not completed/cancelled/cancel_by_client
@@ -234,9 +234,52 @@ const Bookings = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {booking.status === "confirmed" ||
-                            booking.status === "shoot_completed" ||
-                            booking.status === "completed" ? (
+                            {booking.status === "pending" ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditBooking(booking)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-destructive hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete Booking
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this
+                                        booking? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleDeleteBooking(booking.id)
+                                        }
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
+                            ) : (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -245,53 +288,6 @@ const Bookings = () => {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </Button>
-                            ) : (
-                              canEditOrDelete(booking) && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEditBooking(booking)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="text-destructive hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Delete Booking
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete this
-                                          booking? This action cannot be undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Cancel
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() =>
-                                            handleDeleteBooking(booking.id)
-                                          }
-                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        >
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </>
-                              )
                             )}
                           </div>
                         </TableCell>
