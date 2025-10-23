@@ -133,7 +133,9 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
   useEffect(() => {
     if (watchPackageType === "Wedding" && watchWeddingDate) {
       // Sync booking_date with wedding_date for backend compatibility
-      form.setValue("booking_date", watchWeddingDate as any, { shouldValidate: true });
+      form.setValue("booking_date", watchWeddingDate as any, {
+        shouldValidate: true,
+      });
     }
   }, [watchPackageType, watchWeddingDate]);
 
@@ -185,7 +187,9 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         client_id: parseInt(data.client_id, 10),
         photographer_id: user.id,
         booking_date: format(
-          (isWedding && data.wedding_date ? (data.wedding_date as Date) : data.booking_date) as Date,
+          (isWedding && data.wedding_date
+            ? (data.wedding_date as Date)
+            : data.booking_date) as Date,
           "yyyy-MM-dd"
         ),
         booking_time: data.start_time || null,
@@ -220,7 +224,9 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         bookingData.family_album = !!data.family_album;
         bookingData.group_photo_size = data.group_photo_size || null;
         bookingData.homecoming_photo_size = data.homecoming_photo_size || null;
-        bookingData.wedding_photo_sizes = (data.wedding_photo_sizes || []).join(",");
+        bookingData.wedding_photo_sizes = (data.wedding_photo_sizes || []).join(
+          ","
+        );
         bookingData.extra_thank_you_cards_qty = data.extra_thank_you_cards_qty
           ? Number(data.extra_thank_you_cards_qty as any)
           : 0;
@@ -296,7 +302,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Client</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a client" />
@@ -304,7 +313,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                         </FormControl>
                         <SelectContent>
                           {clients.map((client) => (
-                            <SelectItem key={client.id} value={String(client.id)}>
+                            <SelectItem
+                              key={client.id}
+                              value={String(client.id)}
+                            >
                               {client.name} ({client.email})
                             </SelectItem>
                           ))}
@@ -334,7 +346,9 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                         <SelectContent>
                           <SelectItem value="Wedding">Wedding</SelectItem>
                           <SelectItem value="Birthday">Birthday</SelectItem>
-                          <SelectItem value="Anniversary">Anniversary</SelectItem>
+                          <SelectItem value="Anniversary">
+                            Anniversary
+                          </SelectItem>
                           <SelectItem value="Corporate">Corporate</SelectItem>
                           <SelectItem value="Party">Party</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
@@ -350,7 +364,6 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
               {/* Wedding-specific section when Wedding selected */}
               {watchPackageType === "Wedding" && (
                 <div className="space-y-4 border rounded-md p-3">
-                  <h4 className="text-sm font-semibold">Wedding Details</h4>
                   <div className="grid grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
@@ -392,7 +405,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
                                   selected={field.value}
@@ -451,7 +467,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
                                   selected={field.value}
@@ -527,7 +546,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Group Photo Size</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select size" />
@@ -551,7 +573,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Homecoming Photo Size</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select size" />
@@ -575,7 +600,16 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   <div className="space-y-2">
                     <Label>Wedding Photo Sizes (choose one or more)</Label>
                     <div className="grid grid-cols-3 gap-2">
-                      {["4x6","5x7","6x8","8x12","10x15","12x18","16x20","20x30"].map((size) => (
+                      {[
+                        "4x6",
+                        "5x7",
+                        "6x8",
+                        "8x12",
+                        "10x15",
+                        "12x18",
+                        "16x20",
+                        "20x30",
+                      ].map((size) => (
                         <FormField
                           key={size}
                           control={form.control}
@@ -610,7 +644,12 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       <FormItem>
                         <FormLabel>Extra Thank You Cards Qty</FormLabel>
                         <FormControl>
-                          <Input type="number" min={0} placeholder="0" {...field} />
+                          <Input
+                            type="number"
+                            min={0}
+                            placeholder="0"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -627,7 +666,8 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       control={form.control}
                       name="booking_date"
                       render={({ field }) => {
-                        const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+                        const [isCalendarOpen, setIsCalendarOpen] =
+                          useState(false);
 
                         return (
                           <FormItem className="flex flex-col min-w-0">
@@ -654,7 +694,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                   </Button>
                                 </FormControl>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
                                   selected={field.value}
@@ -746,7 +789,6 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   </div>
                 </>
               )}
-
 
               {/* Event Type moved next to Client above */}
 
