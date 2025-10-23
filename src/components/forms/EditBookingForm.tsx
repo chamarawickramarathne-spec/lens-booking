@@ -207,7 +207,7 @@ const EditBookingForm = ({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Title and Job ID</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Wedding Photography Session"
