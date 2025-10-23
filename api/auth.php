@@ -170,6 +170,89 @@ class AuthController {
             echo json_encode(["message" => "Unable to update profile"]);
         }
     }
+
+    /**
+     * Upload profile image
+     */
+    public function uploadProfileImage() {
+        $user_data = $this->auth->getUserFromHeader();
+        
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        // Check if file was uploaded
+        if (!isset($_FILES['profile_image'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "No file uploaded"]);
+            return;
+        }
+
+        $file = $_FILES['profile_image'];
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $max_file_size = 5242880; // 5MB
+
+        // Check for upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(["message" => "Upload error"]);
+            return;
+        }
+
+        // Validate file type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_types)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Invalid file type. Only images are allowed."]);
+            return;
+        }
+
+        // Validate file size
+        if ($file['size'] > $max_file_size) {
+            http_response_code(400);
+            echo json_encode(["message" => "File too large. Maximum size is 5MB."]);
+            return;
+        }
+
+        // Set upload directory
+        $upload_dir = dirname(__DIR__) . '/uploads/profiles/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'profile_' . $user_data['user_id'] . '_' . time() . '.' . $extension;
+        $filepath = $upload_dir . $filename;
+
+        // Delete old profile images for this user
+        $pattern = $upload_dir . 'profile_' . $user_data['user_id'] . '_*';
+        foreach (glob($pattern) as $old_file) {
+            if (file_exists($old_file)) {
+                unlink($old_file);
+            }
+        }
+
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            $web_path = '/lens-booking/uploads/profiles/' . $filename;
+            
+            http_response_code(200);
+            echo json_encode([
+                "message" => "Image uploaded successfully",
+                "file_path" => $web_path,
+                "filename" => $filename
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Failed to save file"]);
+        }
+    }
 }
 
 // Handle request
@@ -189,6 +272,8 @@ switch ($request_method) {
             $auth_controller->login();
         } elseif ($endpoint === '/register') {
             $auth_controller->register();
+        } elseif ($endpoint === '/upload-profile-image') {
+            $auth_controller->uploadProfileImage();
         } else {
             http_response_code(404);
             echo json_encode([

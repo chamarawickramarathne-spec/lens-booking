@@ -18,6 +18,8 @@ import {
   Globe,
   FileText,
   DollarSign,
+  Upload,
+  X,
 } from "lucide-react";
 import {
   Select,
@@ -34,6 +36,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const profileSchema = z.object({
   photographer_name: z.string().min(1, "Name is required"),
@@ -52,6 +55,9 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [accessLevel, setAccessLevel] = useState<string>("Free");
+  const [profileImage, setProfileImage] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const { toast } = useToast();
   const { user, updateProfile } = useAuth();
 
@@ -83,6 +89,10 @@ const Profile = () => {
         currency_type: user.currency_type || "LKR",
       });
 
+      // Set profile image
+      setProfileImage(user.profile_picture || "");
+      setImagePreview(user.profile_picture || "");
+
       // Fetch user access level
       fetchAccessLevel();
     }
@@ -100,22 +110,72 @@ const Profile = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "Image size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(profileImage);
+  };
+
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
     setIsLoading(true);
     try {
+      let uploadedImageUrl = profileImage;
+
+      // Upload image if a new one was selected
+      if (imageFile) {
+        const uploadResponse = await apiClient.uploadProfileImage(imageFile);
+        uploadedImageUrl = uploadResponse.file_path;
+      }
+
       // Use API auth profile update with all fields
       await updateProfile({
         full_name: data.photographer_name,
         phone: data.phone,
-        profile_picture: "",
+        profile_picture: uploadedImageUrl,
         currency_type: data.currency_type,
         business_name: data.business_name,
         bio: data.bio,
         website: data.website,
         portfolio_url: data.portfolio_url,
       });
+
+      setProfileImage(uploadedImageUrl);
+      setImageFile(null);
 
       toast({
         title: "Success",
@@ -162,6 +222,55 @@ const Profile = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
+                {/* Profile Image Upload Section */}
+                <div className="flex flex-col items-center gap-4 pb-6 border-b">
+                  <Avatar className="h-32 w-32">
+                    <AvatarImage src={imagePreview} alt="Profile" />
+                    <AvatarFallback className="text-4xl">
+                      {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  {isEditing && (
+                    <div className="flex gap-2">
+                      <label htmlFor="profile-image-upload">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('profile-image-upload')?.click()}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Photo
+                        </Button>
+                      </label>
+                      <input
+                        id="profile-image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                      {imageFile && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  {imageFile && (
+                    <p className="text-sm text-muted-foreground">
+                      New image selected: {imageFile.name}
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
