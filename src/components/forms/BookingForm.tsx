@@ -364,7 +364,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
               {/* Wedding-specific section when Wedding selected */}
               {watchPackageType === "Wedding" && (
                 <div className="space-y-4 border rounded-md p-3">
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="wedding_hotel_name"
@@ -427,6 +427,9 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                         );
                       }}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="homecoming_hotel_name"
