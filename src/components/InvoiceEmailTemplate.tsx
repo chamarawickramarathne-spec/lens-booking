@@ -12,10 +12,31 @@ interface InvoiceEmailTemplateProps {
 const InvoiceEmailTemplate = ({ invoice, client, photographer }: InvoiceEmailTemplateProps) => {
   const { formatCurrency } = useCurrency();
   
+  // Construct full image URL if needed
+  const getImageUrl = (imagePath: string | undefined) => {
+    if (!imagePath) return "";
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost${imagePath}`;
+  };
+
+  const profileImageUrl = getImageUrl(photographer?.profile_picture);
+  
   return (
     <div className="max-w-2xl mx-auto bg-background p-6 space-y-6">
       {/* Header */}
       <div className="text-center border-b pb-6">
+        {profileImageUrl && (
+          <div className="flex justify-center mb-4">
+            <img 
+              src={profileImageUrl} 
+              alt="Profile" 
+              className="w-24 h-24 rounded-full object-cover border-4 border-primary/10"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-primary">{photographer?.business_name || photographer?.photographer_name}</h1>
         <p className="text-muted-foreground">{photographer?.email}</p>
         {photographer?.phone && <p className="text-muted-foreground">{photographer?.phone}</p>}

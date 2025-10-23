@@ -14,11 +14,49 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
   const { toast } = useToast();
   const { currency } = useCurrency();
 
-  const generatePDF = () => {
+  const loadImageAsBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Failed to load image:', error);
+      return '';
+    }
+  };
+
+  const getImageUrl = (imagePath: string | undefined) => {
+    if (!imagePath) return "";
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost${imagePath}`;
+  };
+
+  const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let yPosition = 20;
+
+      // Add profile image if available
+      const profileImageUrl = getImageUrl(photographer?.profile_picture);
+      if (profileImageUrl) {
+        try {
+          const imageData = await loadImageAsBase64(profileImageUrl);
+          if (imageData) {
+            const imgSize = 25;
+            const imgX = (pageWidth - imgSize) / 2;
+            doc.addImage(imageData, 'JPEG', imgX, yPosition, imgSize, imgSize, undefined, 'FAST');
+            yPosition += imgSize + 5;
+          }
+        } catch (error) {
+          console.error('Failed to add profile image to PDF:', error);
+        }
+      }
 
       // Header - Business Name
       doc.setFontSize(22);
@@ -192,8 +230,12 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
     }
   };
 
+  const handleGeneratePDF = async () => {
+    await generatePDF();
+  };
+
   return (
-    <Button size="sm" variant="outline" onClick={generatePDF}>
+    <Button size="sm" variant="outline" onClick={handleGeneratePDF}>
       <Download className="h-3 w-3 mr-1" />
       PDF
     </Button>
