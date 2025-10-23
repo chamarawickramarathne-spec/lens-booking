@@ -364,12 +364,12 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
               {/* Wedding-specific section when Wedding selected */}
               {watchPackageType === "Wedding" && (
                 <div className="space-y-4 border rounded-md p-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     <FormField
                       control={form.control}
                       name="wedding_hotel_name"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="min-w-0">
                           <FormLabel>Wedding Hotel Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Wedding hotel" {...field} />
@@ -384,7 +384,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       render={({ field }) => {
                         const [isCal, setIsCal] = useState(false);
                         return (
-                          <FormItem className="flex flex-col">
+                          <FormItem className="flex flex-col min-w-0">
                             <FormLabel>Wedding Date</FormLabel>
                             <Popover open={isCal} onOpenChange={setIsCal}>
                               <PopoverTrigger asChild>
@@ -392,7 +392,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                   <Button
                                     variant="outline"
                                     className={cn(
-                                      "w-full pl-3 text-left font-normal",
+                                      "w-full h-10 pl-3 text-left font-normal",
                                       !field.value && "text-muted-foreground"
                                     )}
                                   >
@@ -429,12 +429,12 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     <FormField
                       control={form.control}
                       name="homecoming_hotel_name"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="min-w-0">
                           <FormLabel>Homecoming Hotel Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Homecoming hotel" {...field} />
@@ -449,7 +449,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                       render={({ field }) => {
                         const [isCal2, setIsCal2] = useState(false);
                         return (
-                          <FormItem className="flex flex-col">
+                          <FormItem className="flex flex-col min-w-0">
                             <FormLabel>Homecoming Date</FormLabel>
                             <Popover open={isCal2} onOpenChange={setIsCal2}>
                               <PopoverTrigger asChild>
@@ -457,7 +457,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                   <Button
                                     variant="outline"
                                     className={cn(
-                                      "w-full pl-3 text-left font-normal",
+                                      "w-full h-10 pl-3 text-left font-normal",
                                       !field.value && "text-muted-foreground"
                                     )}
                                   >
