@@ -89,9 +89,17 @@ const Profile = () => {
         currency_type: user.currency_type || "LKR",
       });
 
-      // Set profile image
-      setProfileImage(user.profile_picture || "");
-      setImagePreview(user.profile_picture || "");
+      // Set profile image - construct full URL if it's a relative path
+      const imagePath = user.profile_picture || "";
+      let imageUrl = imagePath;
+      
+      if (imagePath && !imagePath.startsWith('http')) {
+        // If it's a relative path, construct full URL
+        imageUrl = `http://localhost${imagePath}`;
+      }
+      
+      setProfileImage(imageUrl);
+      setImagePreview(imageUrl);
 
       // Fetch user access level
       fetchAccessLevel();
@@ -114,7 +122,7 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast({
           title: "Error",
           description: "Please select an image file",
@@ -134,7 +142,7 @@ const Profile = () => {
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -160,6 +168,11 @@ const Profile = () => {
       if (imageFile) {
         const uploadResponse = await apiClient.uploadProfileImage(imageFile);
         uploadedImageUrl = uploadResponse.file_path;
+        
+        // Construct full URL if needed
+        if (uploadedImageUrl && !uploadedImageUrl.startsWith('http')) {
+          uploadedImageUrl = `http://localhost${uploadedImageUrl}`;
+        }
       }
 
       // Use API auth profile update with all fields
@@ -174,7 +187,9 @@ const Profile = () => {
         portfolio_url: data.portfolio_url,
       });
 
+      // Update local state with new image URL
       setProfileImage(uploadedImageUrl);
+      setImagePreview(uploadedImageUrl);
       setImageFile(null);
 
       toast({
@@ -224,13 +239,23 @@ const Profile = () => {
               >
                 {/* Profile Image Upload Section */}
                 <div className="flex flex-col items-center gap-4 pb-6 border-b">
-                  <Avatar className="h-32 w-32">
-                    <AvatarImage src={imagePreview} alt="Profile" />
+                  <Avatar className="h-32 w-32" key={imagePreview}>
+                    <AvatarImage 
+                      src={imagePreview} 
+                      alt="Profile"
+                      onError={(e) => {
+                        console.error('Failed to load image:', imagePreview);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', imagePreview);
+                      }}
+                    />
                     <AvatarFallback className="text-4xl">
                       {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   {isEditing && (
                     <div className="flex gap-2">
                       <label htmlFor="profile-image-upload">
@@ -238,7 +263,11 @@ const Profile = () => {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => document.getElementById('profile-image-upload')?.click()}
+                          onClick={() =>
+                            document
+                              .getElementById("profile-image-upload")
+                              ?.click()
+                          }
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Upload Photo
