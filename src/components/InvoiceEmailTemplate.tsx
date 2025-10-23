@@ -44,9 +44,18 @@ const InvoiceEmailTemplate = ({
         <h1 className="text-3xl font-bold text-primary">
           {photographer?.business_name || photographer?.photographer_name}
         </h1>
-        <p className="text-muted-foreground">{photographer?.email}</p>
-        {photographer?.phone && (
-          <p className="text-muted-foreground">{photographer?.phone}</p>
+        <p className="text-muted-foreground">
+          {photographer?.business_email || photographer?.email}
+        </p>
+        {(photographer?.business_phone || photographer?.phone) && (
+          <p className="text-muted-foreground">
+            {photographer?.business_phone || photographer?.phone}
+          </p>
+        )}
+        {photographer?.business_address && (
+          <p className="text-muted-foreground text-sm mt-1">
+            {photographer?.business_address}
+          </p>
         )}
       </div>
 

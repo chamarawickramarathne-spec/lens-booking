@@ -158,6 +158,9 @@ class AuthController {
     $this->user->profile_picture = $data['profile_picture'] ?? '';
     $this->user->currency_type = $data['currency_type'] ?? 'USD';
     $this->user->business_name = $data['business_name'] ?? '';
+    $this->user->business_email = $data['business_email'] ?? '';
+    $this->user->business_phone = $data['business_phone'] ?? '';
+    $this->user->business_address = $data['business_address'] ?? '';
     $this->user->bio = $data['bio'] ?? '';
     $this->user->website = $data['website'] ?? '';
     $this->user->portfolio_url = $data['portfolio_url'] ?? '';

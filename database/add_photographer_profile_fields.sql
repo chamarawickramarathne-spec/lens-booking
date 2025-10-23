@@ -9,9 +9,21 @@ ADD COLUMN IF NOT EXISTS business_name VARCHAR(255) DEFAULT NULL AFTER last_name
 ALTER TABLE photographers 
 ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT NULL AFTER business_name;
 
+-- Add business_email column
+ALTER TABLE photographers 
+ADD COLUMN IF NOT EXISTS business_email VARCHAR(255) DEFAULT NULL AFTER bio;
+
+-- Add business_phone column
+ALTER TABLE photographers 
+ADD COLUMN IF NOT EXISTS business_phone VARCHAR(20) DEFAULT NULL AFTER business_email;
+
+-- Add business_address column
+ALTER TABLE photographers 
+ADD COLUMN IF NOT EXISTS business_address TEXT DEFAULT NULL AFTER business_phone;
+
 -- Add website column
 ALTER TABLE photographers 
-ADD COLUMN IF NOT EXISTS website VARCHAR(500) DEFAULT NULL AFTER bio;
+ADD COLUMN IF NOT EXISTS website VARCHAR(500) DEFAULT NULL AFTER business_address;
 
 -- Add portfolio_url column
 ALTER TABLE photographers 

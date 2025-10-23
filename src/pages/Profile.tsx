@@ -43,6 +43,9 @@ const profileSchema = z.object({
   business_name: z.string().optional(),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
+  business_email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  business_phone: z.string().optional(),
+  business_address: z.string().optional(),
   bio: z.string().optional(),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
   portfolio_url: z.string().url("Invalid URL").optional().or(z.literal("")),
@@ -68,6 +71,9 @@ const Profile = () => {
       business_name: "",
       email: "",
       phone: "",
+      business_email: "",
+      business_phone: "",
+      business_address: "",
       bio: "",
       website: "",
       portfolio_url: "",
@@ -83,6 +89,9 @@ const Profile = () => {
         business_name: user.business_name || "",
         email: user.email || "",
         phone: user.phone || "",
+        business_email: user.business_email || "",
+        business_phone: user.business_phone || "",
+        business_address: user.business_address || "",
         bio: user.bio || "",
         website: user.website || "",
         portfolio_url: user.portfolio_url || "",
@@ -182,6 +191,9 @@ const Profile = () => {
         profile_picture: uploadedImageUrl,
         currency_type: data.currency_type,
         business_name: data.business_name,
+        business_email: data.business_email,
+        business_phone: data.business_phone,
+        business_address: data.business_address,
         bio: data.bio,
         website: data.website,
         portfolio_url: data.portfolio_url,
@@ -379,6 +391,73 @@ const Profile = () => {
                             <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                               placeholder="+1 (555) 000-0000"
+                              className="pl-10"
+                              disabled={!isEditing}
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="business_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="email"
+                              placeholder="business@company.com"
+                              className="pl-10"
+                              disabled={!isEditing}
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="business_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Phone</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="+1 (555) 000-0000"
+                              className="pl-10"
+                              disabled={!isEditing}
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="business_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Address</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="123 Business St, City, State"
                               className="pl-10"
                               disabled={!isEditing}
                               {...field}

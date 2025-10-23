@@ -17,6 +17,9 @@ class User {
     public $profile_picture;
     public $currency_type;
     public $business_name;
+    public $business_email;
+    public $business_phone;
+    public $business_address;
     public $bio;
     public $website;
     public $portfolio_url;
@@ -86,7 +89,8 @@ class User {
     public function login($email, $password) {
     $query = "SELECT id, email, password, first_name, last_name, phone, 
              user_access_level, profile_image, currency_type, 
-             business_name, bio, website, portfolio_url, created_at, updated_at
+             business_name, business_email, business_phone, business_address,
+             bio, website, portfolio_url, created_at, updated_at
                  FROM " . $this->table_name . " 
                  WHERE email = :email";
 
@@ -107,6 +111,9 @@ class User {
                     'profile_picture' => $row['profile_image'],
                     'currency_type' => $row['currency_type'] ?? 'USD',
                     'business_name' => $row['business_name'] ?? '',
+                    'business_email' => $row['business_email'] ?? '',
+                    'business_phone' => $row['business_phone'] ?? '',
+                    'business_address' => $row['business_address'] ?? '',
                     'bio' => $row['bio'] ?? '',
                     'website' => $row['website'] ?? '',
                     'portfolio_url' => $row['portfolio_url'] ?? '',
@@ -124,7 +131,8 @@ class User {
      */
     public function getById($id) {
     $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
-             profile_image, currency_type, business_name, bio, website, 
+             profile_image, currency_type, business_name, business_email, 
+             business_phone, business_address, bio, website, 
              portfolio_url, created_at, updated_at 
                  FROM " . $this->table_name . " 
                  WHERE id = :id";
@@ -145,6 +153,9 @@ class User {
                 'profile_picture' => $row['profile_image'],
                 'currency_type' => $row['currency_type'] ?? 'USD',
                 'business_name' => $row['business_name'] ?? '',
+                'business_email' => $row['business_email'] ?? '',
+                'business_phone' => $row['business_phone'] ?? '',
+                'business_address' => $row['business_address'] ?? '',
                 'bio' => $row['bio'] ?? '',
                 'website' => $row['website'] ?? '',
                 'portfolio_url' => $row['portfolio_url'] ?? '',
@@ -169,7 +180,9 @@ class User {
     $query = "UPDATE " . $this->table_name . " 
          SET first_name=:first_name, last_name=:last_name, phone=:phone, 
              profile_image=:profile_image, currency_type=:currency_type,
-             business_name=:business_name, bio=:bio, website=:website, 
+             business_name=:business_name, business_email=:business_email,
+             business_phone=:business_phone, business_address=:business_address,
+             bio=:bio, website=:website, 
              portfolio_url=:portfolio_url
          WHERE id=:id";
 
@@ -180,6 +193,9 @@ class User {
         $last_name = htmlspecialchars(strip_tags($last_name));
         $this->phone = htmlspecialchars(strip_tags($this->phone ?? ''));
         $this->business_name = htmlspecialchars(strip_tags($this->business_name ?? ''));
+        $this->business_email = htmlspecialchars(strip_tags($this->business_email ?? ''));
+        $this->business_phone = htmlspecialchars(strip_tags($this->business_phone ?? ''));
+        $this->business_address = htmlspecialchars(strip_tags($this->business_address ?? ''));
         $this->bio = htmlspecialchars(strip_tags($this->bio ?? ''));
         $this->website = htmlspecialchars(strip_tags($this->website ?? ''));
         $this->portfolio_url = htmlspecialchars(strip_tags($this->portfolio_url ?? ''));
@@ -191,6 +207,9 @@ class User {
     $stmt->bindParam(":profile_image", $this->profile_picture);
     $stmt->bindParam(":currency_type", $this->currency_type);
         $stmt->bindParam(":business_name", $this->business_name);
+        $stmt->bindParam(":business_email", $this->business_email);
+        $stmt->bindParam(":business_phone", $this->business_phone);
+        $stmt->bindParam(":business_address", $this->business_address);
         $stmt->bindParam(":bio", $this->bio);
         $stmt->bindParam(":website", $this->website);
         $stmt->bindParam(":portfolio_url", $this->portfolio_url);

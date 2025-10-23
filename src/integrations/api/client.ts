@@ -384,6 +384,9 @@ export interface User {
   profile_picture?: string;
   currency_type?: string;
   business_name?: string;
+  business_email?: string;
+  business_phone?: string;
+  business_address?: string;
   bio?: string;
   website?: string;
   portfolio_url?: string;
