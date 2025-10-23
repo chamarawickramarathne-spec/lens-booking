@@ -13,6 +13,7 @@ import {
   Package,
   User,
   Mail,
+  Phone,
   FileText,
   Check,
 } from "lucide-react";
@@ -123,19 +124,52 @@ const ViewBookingDetails = ({
               <User className="h-4 w-4" />
               Client Information
             </h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Name:</span>
-                <span>{booking.client_name || "N/A"}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Primary Contact */}
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Primary Contact
+                </div>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="font-medium">{booking.client_name || "N/A"}</span>
+                  </div>
+                  {booking.client_email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="break-all">{booking.client_email}</span>
+                    </div>
+                  )}
+                  {booking.client_phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span>{booking.client_phone}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{booking.client_email || "N/A"}</span>
-              </div>
-              {booking.client_phone && (
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Phone:</span>
-                  <span>{booking.client_phone}</span>
+
+              {/* Secondary Contact */}
+              {(booking.second_contact || booking.second_phone) && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Secondary Contact
+                  </div>
+                  <div className="space-y-1.5 text-sm">
+                    {booking.second_contact && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium">{booking.second_contact}</span>
+                      </div>
+                    )}
+                    {booking.second_phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span>{booking.second_phone}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -171,7 +205,10 @@ const ViewBookingDetails = ({
                       <span className="font-medium">Homecoming Date</span>
                     </div>
                     <p className="text-sm">
-                      {format(new Date(booking.homecoming_date), "MMMM dd, yyyy")}
+                      {format(
+                        new Date(booking.homecoming_date),
+                        "MMMM dd, yyyy"
+                      )}
                     </p>
                   </div>
                 )}
@@ -187,18 +224,26 @@ const ViewBookingDetails = ({
               </div>
 
               {/* Albums */}
-              {(booking.wedding_album || booking.pre_shoot_album || booking.family_album) && (
+              {(booking.wedding_album ||
+                booking.pre_shoot_album ||
+                booking.family_album) && (
                 <div className="space-y-2">
                   <div className="font-semibold">Albums</div>
                   <div className="flex flex-wrap gap-2">
                     {booking.wedding_album ? (
-                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Wedding Album</Badge>
+                      <Badge variant="secondary" className="gap-1">
+                        <Check className="h-3 w-3" /> Wedding Album
+                      </Badge>
                     ) : null}
                     {booking.pre_shoot_album ? (
-                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Pre-shoot Album</Badge>
+                      <Badge variant="secondary" className="gap-1">
+                        <Check className="h-3 w-3" /> Pre-shoot Album
+                      </Badge>
                     ) : null}
                     {booking.family_album ? (
-                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Family Album</Badge>
+                      <Badge variant="secondary" className="gap-1">
+                        <Check className="h-3 w-3" /> Family Album
+                      </Badge>
                     ) : null}
                   </div>
                 </div>
@@ -206,41 +251,50 @@ const ViewBookingDetails = ({
 
               {/* Sizes and extras */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(booking.group_photo_size || booking.homecoming_photo_size) && (
+                {(booking.group_photo_size ||
+                  booking.homecoming_photo_size) && (
                   <div className="space-y-2">
                     <div className="font-semibold">Selected Sizes</div>
                     <div className="flex flex-wrap gap-2 text-sm">
                       {booking.group_photo_size && (
-                        <Badge variant="outline">Group: {booking.group_photo_size}</Badge>
+                        <Badge variant="outline">
+                          Group: {booking.group_photo_size}
+                        </Badge>
                       )}
                       {booking.homecoming_photo_size && (
-                        <Badge variant="outline">Homecoming: {booking.homecoming_photo_size}</Badge>
+                        <Badge variant="outline">
+                          Homecoming: {booking.homecoming_photo_size}
+                        </Badge>
                       )}
                     </div>
                   </div>
                 )}
-                {booking.wedding_photo_sizes && String(booking.wedding_photo_sizes).trim() !== "" && (
-                  <div className="space-y-2">
-                    <div className="font-semibold">Wedding Photo Sizes</div>
-                    <div className="flex flex-wrap gap-2">
-                      {String(booking.wedding_photo_sizes)
-                        .split(",")
-                        .map((s: string) => s.trim())
-                        .filter(Boolean)
-                        .map((size: string) => (
-                          <Badge key={size} variant="outline">{size}</Badge>
-                        ))}
+                {booking.wedding_photo_sizes &&
+                  String(booking.wedding_photo_sizes).trim() !== "" && (
+                    <div className="space-y-2">
+                      <div className="font-semibold">Wedding Photo Sizes</div>
+                      <div className="flex flex-wrap gap-2">
+                        {String(booking.wedding_photo_sizes)
+                          .split(",")
+                          .map((s: string) => s.trim())
+                          .filter(Boolean)
+                          .map((size: string) => (
+                            <Badge key={size} variant="outline">
+                              {size}
+                            </Badge>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
 
-              {booking.extra_thank_you_cards_qty && Number(booking.extra_thank_you_cards_qty) > 0 && (
-                <div className="text-sm">
-                  <span className="font-medium">Extra Thank You Cards:</span>{" "}
-                  {booking.extra_thank_you_cards_qty}
-                </div>
-              )}
+              {booking.extra_thank_you_cards_qty &&
+                Number(booking.extra_thank_you_cards_qty) > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium">Extra Thank You Cards:</span>{" "}
+                    {booking.extra_thank_you_cards_qty}
+                  </div>
+                )}
             </div>
           ) : (
             <>
