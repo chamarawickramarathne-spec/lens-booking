@@ -21,12 +21,34 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
         return "bg-green-500/10 text-green-600 border-green-500/20";
       case "pending":
         return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+      case "shoot_completed":
+        return "bg-purple-500/10 text-purple-600 border-purple-500/20";
       case "completed":
         return "bg-blue-500/10 text-blue-600 border-blue-500/20";
       case "cancelled":
+      case "cancel_by_client":
         return "bg-red-500/10 text-red-600 border-red-500/20";
       default:
         return "bg-gray-500/10 text-gray-600 border-gray-500/20";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Pending";
+      case "confirmed":
+        return "Confirmed";
+      case "shoot_completed":
+        return "Shoot Completed";
+      case "completed":
+        return "Completed and Photos Delivered";
+      case "cancelled":
+        return "Cancelled";
+      case "cancel_by_client":
+        return "Cancel by Client";
+      default:
+        return status;
     }
   };
 
@@ -40,17 +62,36 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
         <div className="space-y-6">
           {/* Title and Status */}
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <h3 className="text-xl font-semibold">{booking.title}</h3>
-              {booking.package_type && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                  <Package className="h-4 w-4" />
-                  {booking.package_type}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-3 mt-2">
+                {booking.package_type && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Package className="h-4 w-4" />
+                    <span className="font-medium">Event:</span> {booking.package_type}
+                  </div>
+                )}
+                {booking.package_name && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <span className="font-medium">Package:</span> {booking.package_name}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 mt-1">
+                {booking.pre_shoot && (
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium">Pre-shoot:</span> {booking.pre_shoot}
+                  </div>
+                )}
+                {booking.album && (
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium">Album:</span> {booking.album}
+                  </div>
+                )}
+              </div>
             </div>
             <Badge className={getStatusColor(booking.status)} variant="outline">
-              {booking.status}
+              {getStatusLabel(booking.status)}
             </Badge>
           </div>
 

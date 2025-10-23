@@ -341,7 +341,11 @@ const EditBookingForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Event Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} defaultValue="Birthday">
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue="Birthday"
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select event type" />
@@ -385,7 +389,11 @@ const EditBookingForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pre-shoot</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue="Photography">
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue="Photography"
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select pre-shoot type" />
@@ -408,7 +416,11 @@ const EditBookingForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Album</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue="No">
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue="No"
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select option" />

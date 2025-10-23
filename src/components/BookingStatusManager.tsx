@@ -38,7 +38,8 @@ const BookingStatusManager = ({
   const baseStatusOptions = [
     { value: "pending", label: "Pending", variant: "secondary" as const },
     { value: "confirmed", label: "Confirmed", variant: "default" as const },
-    { value: "completed", label: "Completed", variant: "default" as const },
+    { value: "shoot_completed", label: "Shoot Completed", variant: "default" as const },
+    { value: "completed", label: "Completed and Photos Delivered", variant: "default" as const },
     { value: "cancelled", label: "Cancelled", variant: "destructive" as const },
     {
       value: "cancel_by_client",

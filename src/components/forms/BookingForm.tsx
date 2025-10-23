@@ -350,7 +350,11 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Event Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue="Birthday">
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      defaultValue="Birthday"
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select event type" />
@@ -394,15 +398,23 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Pre-shoot</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} defaultValue="Photography">
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        defaultValue="Photography"
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select pre-shoot type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Photography">Photography</SelectItem>
-                          <SelectItem value="Videography">Videography</SelectItem>
+                          <SelectItem value="Photography">
+                            Photography
+                          </SelectItem>
+                          <SelectItem value="Videography">
+                            Videography
+                          </SelectItem>
                           <SelectItem value="Both">Both</SelectItem>
                         </SelectContent>
                       </Select>
@@ -417,7 +429,11 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Album</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} defaultValue="No">
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        defaultValue="No"
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select option" />
