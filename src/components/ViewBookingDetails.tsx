@@ -14,6 +14,7 @@ import {
   User,
   Mail,
   FileText,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -140,42 +141,147 @@ const ViewBookingDetails = ({
             </div>
           </div>
 
-          {/* Date and Time */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Date
-              </h4>
-              <p className="text-sm">
-                {format(new Date(booking.booking_date), "MMMM dd, yyyy")}
-              </p>
-            </div>
-
-            {(booking.start_time || booking.end_time) && (
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <h4 className="font-semibold flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Time
-                </h4>
-                <p className="text-sm">
-                  {booking.start_time && booking.end_time
-                    ? `${booking.start_time} - ${booking.end_time}`
-                    : booking.start_time || booking.end_time}
-                </p>
+          {/* Event-specific details */}
+          {String(booking.package_type).toLowerCase() === "wedding" ? (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+              <h4 className="font-semibold">Wedding Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium">Wedding Date</span>
+                  </div>
+                  <p className="text-sm">
+                    {booking.wedding_date
+                      ? format(new Date(booking.wedding_date), "MMMM dd, yyyy")
+                      : "-"}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span className="font-medium">Wedding Hotel</span>
+                  </div>
+                  <p className="text-sm">{booking.wedding_hotel_name || "-"}</p>
+                </div>
+                {booking.homecoming_date && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-medium">Homecoming Date</span>
+                    </div>
+                    <p className="text-sm">
+                      {format(new Date(booking.homecoming_date), "MMMM dd, yyyy")}
+                    </p>
+                  </div>
+                )}
+                {booking.homecoming_hotel_name && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">Homecoming Hotel</span>
+                    </div>
+                    <p className="text-sm">{booking.homecoming_hotel_name}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Location */}
-          {booking.location && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Location
-              </h4>
-              <p className="text-sm">{booking.location}</p>
+              {/* Albums */}
+              {(booking.wedding_album || booking.pre_shoot_album || booking.family_album) && (
+                <div className="space-y-2">
+                  <div className="font-semibold">Albums</div>
+                  <div className="flex flex-wrap gap-2">
+                    {booking.wedding_album ? (
+                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Wedding Album</Badge>
+                    ) : null}
+                    {booking.pre_shoot_album ? (
+                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Pre-shoot Album</Badge>
+                    ) : null}
+                    {booking.family_album ? (
+                      <Badge variant="secondary" className="gap-1"><Check className="h-3 w-3" /> Family Album</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* Sizes and extras */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(booking.group_photo_size || booking.homecoming_photo_size) && (
+                  <div className="space-y-2">
+                    <div className="font-semibold">Selected Sizes</div>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      {booking.group_photo_size && (
+                        <Badge variant="outline">Group: {booking.group_photo_size}</Badge>
+                      )}
+                      {booking.homecoming_photo_size && (
+                        <Badge variant="outline">Homecoming: {booking.homecoming_photo_size}</Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {booking.wedding_photo_sizes && String(booking.wedding_photo_sizes).trim() !== "" && (
+                  <div className="space-y-2">
+                    <div className="font-semibold">Wedding Photo Sizes</div>
+                    <div className="flex flex-wrap gap-2">
+                      {String(booking.wedding_photo_sizes)
+                        .split(",")
+                        .map((s: string) => s.trim())
+                        .filter(Boolean)
+                        .map((size: string) => (
+                          <Badge key={size} variant="outline">{size}</Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {booking.extra_thank_you_cards_qty && Number(booking.extra_thank_you_cards_qty) > 0 && (
+                <div className="text-sm">
+                  <span className="font-medium">Extra Thank You Cards:</span>{" "}
+                  {booking.extra_thank_you_cards_qty}
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              {/* Date and Time */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date
+                  </h4>
+                  <p className="text-sm">
+                    {format(new Date(booking.booking_date), "MMMM dd, yyyy")}
+                  </p>
+                </div>
+
+                {(booking.start_time || booking.end_time) && (
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Time
+                    </h4>
+                    <p className="text-sm">
+                      {booking.start_time && booking.end_time
+                        ? `${booking.start_time} - ${booking.end_time}`
+                        : booking.start_time || booking.end_time}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Location */}
+              {booking.location && (
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </h4>
+                  <p className="text-sm">{booking.location}</p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Pricing */}
