@@ -92,12 +92,12 @@ const Profile = () => {
       // Set profile image - construct full URL if it's a relative path
       const imagePath = user.profile_picture || "";
       let imageUrl = imagePath;
-      
-      if (imagePath && !imagePath.startsWith('http')) {
+
+      if (imagePath && !imagePath.startsWith("http")) {
         // If it's a relative path, construct full URL
         imageUrl = `http://localhost${imagePath}`;
       }
-      
+
       setProfileImage(imageUrl);
       setImagePreview(imageUrl);
 
@@ -168,9 +168,9 @@ const Profile = () => {
       if (imageFile) {
         const uploadResponse = await apiClient.uploadProfileImage(imageFile);
         uploadedImageUrl = uploadResponse.file_path;
-        
+
         // Construct full URL if needed
-        if (uploadedImageUrl && !uploadedImageUrl.startsWith('http')) {
+        if (uploadedImageUrl && !uploadedImageUrl.startsWith("http")) {
           uploadedImageUrl = `http://localhost${uploadedImageUrl}`;
         }
       }
@@ -240,15 +240,15 @@ const Profile = () => {
                 {/* Profile Image Upload Section */}
                 <div className="flex flex-col items-center gap-4 pb-6 border-b">
                   <Avatar className="h-32 w-32" key={imagePreview}>
-                    <AvatarImage 
-                      src={imagePreview} 
+                    <AvatarImage
+                      src={imagePreview}
                       alt="Profile"
                       onError={(e) => {
-                        console.error('Failed to load image:', imagePreview);
-                        e.currentTarget.style.display = 'none';
+                        console.error("Failed to load image:", imagePreview);
+                        e.currentTarget.style.display = "none";
                       }}
                       onLoad={() => {
-                        console.log('Image loaded successfully:', imagePreview);
+                        console.log("Image loaded successfully:", imagePreview);
                       }}
                     />
                     <AvatarFallback className="text-4xl">

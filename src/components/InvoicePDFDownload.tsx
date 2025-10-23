@@ -10,7 +10,10 @@ interface InvoicePDFDownloadProps {
   photographer: any;
 }
 
-const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) => {
+const InvoicePDFDownload = ({
+  invoice,
+  photographer,
+}: InvoicePDFDownloadProps) => {
   const { toast } = useToast();
   const { currency } = useCurrency();
 
@@ -25,14 +28,14 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Failed to load image:', error);
-      return '';
+      console.error("Failed to load image:", error);
+      return "";
     }
   };
 
   const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return "";
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith("http")) return imagePath;
     return `http://localhost${imagePath}`;
   };
 
@@ -50,33 +53,55 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
           if (imageData) {
             const imgSize = 25;
             const imgX = (pageWidth - imgSize) / 2;
-            doc.addImage(imageData, 'JPEG', imgX, yPosition, imgSize, imgSize, undefined, 'FAST');
+            doc.addImage(
+              imageData,
+              "JPEG",
+              imgX,
+              yPosition,
+              imgSize,
+              imgSize,
+              undefined,
+              "FAST"
+            );
             yPosition += imgSize + 5;
           }
         } catch (error) {
-          console.error('Failed to add profile image to PDF:', error);
+          console.error("Failed to add profile image to PDF:", error);
         }
       }
 
       // Header - Business Name
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text(photographer?.business_name || photographer?.photographer_name || "Photography Studio", pageWidth / 2, yPosition, { align: "center" });
+      doc.text(
+        photographer?.business_name ||
+          photographer?.photographer_name ||
+          "Photography Studio",
+        pageWidth / 2,
+        yPosition,
+        { align: "center" }
+      );
       yPosition += 10;
 
       // Contact Info
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       if (photographer?.email) {
-        doc.text(photographer.email, pageWidth / 2, yPosition, { align: "center" });
+        doc.text(photographer.email, pageWidth / 2, yPosition, {
+          align: "center",
+        });
         yPosition += 5;
       }
       if (photographer?.phone) {
-        doc.text(photographer.phone, pageWidth / 2, yPosition, { align: "center" });
+        doc.text(photographer.phone, pageWidth / 2, yPosition, {
+          align: "center",
+        });
         yPosition += 5;
       }
       if (photographer?.website) {
-        doc.text(photographer.website, pageWidth / 2, yPosition, { align: "center" });
+        doc.text(photographer.website, pageWidth / 2, yPosition, {
+          align: "center",
+        });
         yPosition += 10;
       } else {
         yPosition += 5;
@@ -104,13 +129,21 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
       doc.setFont("helvetica", "bold");
       doc.text("Issue Date:", 15, yPosition);
       doc.setFont("helvetica", "normal");
-      doc.text(format(new Date(invoice.issue_date), "MMM dd, yyyy"), 55, yPosition);
+      doc.text(
+        format(new Date(invoice.issue_date), "MMM dd, yyyy"),
+        55,
+        yPosition
+      );
       yPosition += 6;
 
       doc.setFont("helvetica", "bold");
       doc.text("Due Date:", 15, yPosition);
       doc.setFont("helvetica", "normal");
-      doc.text(format(new Date(invoice.due_date), "MMM dd, yyyy"), 55, yPosition);
+      doc.text(
+        format(new Date(invoice.due_date), "MMM dd, yyyy"),
+        55,
+        yPosition
+      );
       yPosition += 6;
 
       doc.setFont("helvetica", "bold");
@@ -146,7 +179,7 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
       // Table Header
       doc.setFillColor(240, 240, 240);
       doc.rect(15, yPosition, pageWidth - 30, 8, "F");
-      
+
       doc.setFont("helvetica", "bold");
       doc.text("Description", 20, yPosition + 5);
       doc.text("Amount", pageWidth - 45, yPosition + 5, { align: "right" });
@@ -155,33 +188,57 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
       // Table Content
       doc.setFont("helvetica", "normal");
       if (invoice.bookings?.title) {
-        doc.text(`Photography Service - ${invoice.bookings.title}`, 20, yPosition);
+        doc.text(
+          `Photography Service - ${invoice.bookings.title}`,
+          20,
+          yPosition
+        );
       } else {
         doc.text("Photography Services", 20, yPosition);
       }
-      doc.text(`${currency} ${invoice.subtotal.toFixed(2)}`, pageWidth - 45, yPosition, { align: "right" });
+      doc.text(
+        `${currency} ${invoice.subtotal.toFixed(2)}`,
+        pageWidth - 45,
+        yPosition,
+        { align: "right" }
+      );
       yPosition += 10;
 
       // Subtotal, Tax, Total Section
       const startX = pageWidth - 80;
-      
+
       doc.setFont("helvetica", "bold");
       doc.text("Subtotal:", startX, yPosition);
       doc.setFont("helvetica", "normal");
-      doc.text(`${currency} ${invoice.subtotal.toFixed(2)}`, pageWidth - 20, yPosition, { align: "right" });
+      doc.text(
+        `${currency} ${invoice.subtotal.toFixed(2)}`,
+        pageWidth - 20,
+        yPosition,
+        { align: "right" }
+      );
       yPosition += 6;
 
       doc.setFont("helvetica", "bold");
       doc.text("Tax:", startX, yPosition);
       doc.setFont("helvetica", "normal");
-      doc.text(`${currency} ${(invoice.tax_amount || 0).toFixed(2)}`, pageWidth - 20, yPosition, { align: "right" });
+      doc.text(
+        `${currency} ${(invoice.tax_amount || 0).toFixed(2)}`,
+        pageWidth - 20,
+        yPosition,
+        { align: "right" }
+      );
       yPosition += 6;
 
       if (invoice.deposit_amount && invoice.deposit_amount > 0) {
         doc.setFont("helvetica", "bold");
         doc.text("Deposit:", startX, yPosition);
         doc.setFont("helvetica", "normal");
-        doc.text(`-${currency} ${invoice.deposit_amount.toFixed(2)}`, pageWidth - 20, yPosition, { align: "right" });
+        doc.text(
+          `-${currency} ${invoice.deposit_amount.toFixed(2)}`,
+          pageWidth - 20,
+          yPosition,
+          { align: "right" }
+        );
         yPosition += 6;
       }
 
@@ -193,7 +250,12 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text("Total:", startX, yPosition);
-      doc.text(`${currency} ${invoice.total_amount.toFixed(2)}`, pageWidth - 20, yPosition, { align: "right" });
+      doc.text(
+        `${currency} ${invoice.total_amount.toFixed(2)}`,
+        pageWidth - 20,
+        yPosition,
+        { align: "right" }
+      );
       yPosition += 12;
 
       // Notes Section
@@ -202,7 +264,7 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
         doc.setFont("helvetica", "bold");
         doc.text("Notes:", 15, yPosition);
         yPosition += 5;
-        
+
         doc.setFont("helvetica", "normal");
         const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - 30);
         doc.text(splitNotes, 15, yPosition);
@@ -212,7 +274,9 @@ const InvoicePDFDownload = ({ invoice, photographer }: InvoicePDFDownloadProps) 
       const footerY = doc.internal.pageSize.getHeight() - 20;
       doc.setFontSize(8);
       doc.setFont("helvetica", "italic");
-      doc.text("Thank you for your business!", pageWidth / 2, footerY, { align: "center" });
+      doc.text("Thank you for your business!", pageWidth / 2, footerY, {
+        align: "center",
+      });
 
       // Save the PDF
       doc.save(`Invoice_${invoice.invoice_number}.pdf`);
