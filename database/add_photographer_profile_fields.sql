@@ -19,4 +19,4 @@ ADD COLUMN IF NOT EXISTS portfolio_url VARCHAR(500) DEFAULT NULL AFTER website;
 
 -- Add expire_date column for access level expiry tracking
 ALTER TABLE photographers 
-ADD COLUMN IF NOT EXISTS expire_date DATE DEFAULT NULL AFTER user_access_level_id;
+ADD COLUMN IF NOT EXISTS expire_date DATE DEFAULT NULL AFTER user_access_level;

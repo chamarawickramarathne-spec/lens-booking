@@ -15,11 +15,6 @@ INSERT INTO access_levels (level_name, max_clients, max_bookings) VALUES
 ('Premium', 15, 30),
 ('Unlimited', NULL, NULL);
 
--- Add user_access_level_id column to photographers table
-ALTER TABLE photographers
-ADD COLUMN user_access_level_id INT DEFAULT 1 AFTER role,
-ADD CONSTRAINT fk_users_access_level 
-FOREIGN KEY (user_access_level_id) REFERENCES access_levels(id);
-
--- Set default access level for existing photographers (Free)
-UPDATE photographers SET user_access_level_id = 1 WHERE user_access_level_id IS NULL;
+-- Note: The photographers table already has 'user_access_level' column
+-- which stores the access_levels.id as an integer
+-- No need to add a new column, just ensure existing data is valid
