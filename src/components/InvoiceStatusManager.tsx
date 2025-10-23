@@ -13,6 +13,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Label } from "@/components/ui/label";
 
 interface InvoiceStatusManagerProps {
   invoice: any;
@@ -25,6 +43,13 @@ const InvoiceStatusManager = ({
 }: InvoiceStatusManagerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPaymentDatesDialog, setShowPaymentDatesDialog] = useState(false);
+  const [depositDueDate, setDepositDueDate] = useState<Date | undefined>(
+    new Date()
+  );
+  const [finalDueDate, setFinalDueDate] = useState<Date | undefined>(
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  );
   const [pendingStatus, setPendingStatus] = useState("");
   const { toast } = useToast();
 
@@ -151,6 +176,11 @@ const InvoiceStatusManager = ({
         updateData.payment_date = new Date().toISOString().split("T")[0];
       }
 
+      // Set final due date when sending invoice (status to pending)
+      if (newStatus === "pending" && finalDueDate) {
+        updateData.due_date = format(finalDueDate, "yyyy-MM-dd");
+      }
+
       await apiClient.updateInvoice(invoice.id, updateData);
 
       let statusMessage = `Invoice status updated to ${
@@ -200,9 +230,24 @@ const InvoiceStatusManager = ({
 
   const handleSendInvoice = () => {
     if (invoice.status === "draft") {
-      setPendingStatus("pending");
-      setShowConfirmDialog(true);
+      // Check if invoice has deposit amount
+      const hasDeposit = invoice.deposit_amount && invoice.deposit_amount > 0;
+      
+      if (hasDeposit) {
+        // Show payment dates dialog
+        setShowPaymentDatesDialog(true);
+      } else {
+        // No deposit, just show confirmation
+        setPendingStatus("pending");
+        setShowConfirmDialog(true);
+      }
     }
+  };
+
+  const handleConfirmPaymentDates = () => {
+    setShowPaymentDatesDialog(false);
+    setPendingStatus("pending");
+    setShowConfirmDialog(true);
   };
 
   return (
@@ -220,6 +265,104 @@ const InvoiceStatusManager = ({
         </Button>
       )}
 
+      {/* Payment Dates Dialog */}
+      <Dialog
+        open={showPaymentDatesDialog}
+        onOpenChange={setShowPaymentDatesDialog}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Set Payment Due Dates</DialogTitle>
+            <DialogDescription>
+              Select the due dates for deposit and final payments. The final
+              payment date will be set as the invoice due date.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Deposit Due Date */}
+            {invoice.deposit_amount && invoice.deposit_amount > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="deposit-date" className="font-semibold">
+                  Deposit Payment Due Date
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !depositDueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {depositDueDate ? (
+                        format(depositDueDate, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={depositDueDate}
+                      onSelect={setDepositDueDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {/* Final Payment Due Date */}
+            <div className="space-y-2">
+              <Label htmlFor="final-date" className="font-semibold">
+                Final Payment Due Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !finalDueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {finalDueDate ? (
+                      format(finalDueDate, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={finalDueDate}
+                    onSelect={setFinalDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground">
+                This will be set as the invoice due date
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPaymentDatesDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmPaymentDates}>Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

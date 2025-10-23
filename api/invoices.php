@@ -294,7 +294,9 @@ class InvoicesController {
             if ($stmt->execute()) {
                 // Create payment schedules if status changed to pending
                 if ($is_status_changing_to_pending) {
-                    $this->createPaymentSchedules($id, $old_invoice, $user_data['user_id']);
+                    // Fetch updated invoice data to get the latest due_date
+                    $updated_invoice = $this->getById($id, $user_data['user_id']);
+                    $this->createPaymentSchedules($id, $updated_invoice, $user_data['user_id']);
                 }
                 
                 // Cancel payment schedules if status changed to cancelled
@@ -335,24 +337,29 @@ class InvoicesController {
             
             // Create deposit payment if there's a deposit amount
             if ($deposit_amount > 0) {
+                // Use today's date or a custom date for deposit
+                $deposit_due_date = date('Y-m-d');
+                
                 $deposit_query = "INSERT INTO payments 
                                 (invoice_id, booking_id, photographer_id, payment_name, schedule_type, 
                                  due_date, amount, paid_amount, status, created_at, updated_at)
                                 VALUES 
                                 (:invoice_id, :booking_id, :photographer_id, 'Deposit Payment', 'deposit',
-                                 CURDATE(), :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                                 :due_date, :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
                 
                 $deposit_stmt = $this->db->prepare($deposit_query);
                 $deposit_stmt->bindParam(":invoice_id", $invoice_id);
                 $deposit_stmt->bindParam(":booking_id", $invoice_data['booking_id']);
                 $deposit_stmt->bindParam(":photographer_id", $photographer_id);
+                $deposit_stmt->bindParam(":due_date", $deposit_due_date);
                 $deposit_stmt->bindParam(":amount", $deposit_amount);
                 $deposit_stmt->execute();
             }
             
             // Create final payment schedule for remaining amount
             if ($remaining_amount > 0) {
-                $final_due_date = date('Y-m-d', strtotime('+30 days'));
+                // Use invoice due_date for final payment, or default to +30 days
+                $final_due_date = $invoice_data['due_date'] ?? date('Y-m-d', strtotime('+30 days'));
                 
                 $final_query = "INSERT INTO payments 
                                (invoice_id, booking_id, photographer_id, payment_name, schedule_type,
