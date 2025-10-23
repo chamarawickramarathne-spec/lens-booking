@@ -225,7 +225,9 @@ const InvoiceStatusManager = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Send Invoice</AlertDialogTitle>
             <AlertDialogDescription>
-              This will change the invoice status to "Pending Payment" and create payment schedules. Are you sure you want to send this invoice?
+              This will change the invoice status to "Pending Payment" and
+              create payment schedules. Are you sure you want to send this
+              invoice?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

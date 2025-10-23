@@ -43,7 +43,11 @@ const profileSchema = z.object({
   business_name: z.string().optional(),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  business_email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  business_email: z
+    .string()
+    .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
   business_phone: z.string().optional(),
   business_address: z.string().optional(),
   bio: z.string().optional(),
@@ -312,248 +316,265 @@ const Profile = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="photographer_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Photographer Name *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Your full name"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Personal Details - Left Side */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-foreground border-b pb-2">
+                      Personal Details
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="photographer_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Photographer Name *</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Your full name"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="business_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Name</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Your business name"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email *</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="your@email.com"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="email"
-                              placeholder="your@email.com"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="+1 (555) 000-0000"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="+1 (555) 000-0000"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="portfolio_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Portfolio URL</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="https://portfolio.com"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="business_email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Email</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="email"
-                              placeholder="business@company.com"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="currency_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Currency Type *</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="e.g., USD, EUR, INR"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="business_phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Phone</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="+1 (555) 000-0000"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Business Details - Right Side */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-foreground border-b pb-2">
+                      Business Details
+                    </h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="business_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Your business name"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="business_address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Address</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="123 Business St, City, State"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="business_phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Phone</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="+1 (555) 000-0000"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="https://yourwebsite.com"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="business_email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="email"
+                                placeholder="business@company.com"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="portfolio_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Portfolio URL</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="https://portfolio.com"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="business_address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="123 Business St, City, State"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
+                    <FormField
+                      control={form.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="https://yourwebsite.com"
+                                className="pl-10"
+                                disabled={!isEditing}
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Bio Section - Full Width at Bottom */}
+                <div className="space-y-4 pt-4 border-t">
                   <FormField
                     control={form.control}
-                    name="currency_type"
+                    name="bio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Currency Type *</FormLabel>
+                        <FormLabel className="text-base font-semibold">Bio</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="e.g., USD, EUR, INR"
-                              className="pl-10"
-                              disabled={!isEditing}
-                              {...field}
-                            />
-                          </div>
+                          <Textarea
+                            placeholder="Tell us about yourself and your photography..."
+                            className="min-h-[120px]"
+                            disabled={!isEditing}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Tell us about yourself and your photography..."
-                          className="min-h-[120px]"
-                          disabled={!isEditing}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 {isEditing && (
                   <div className="flex justify-end space-x-2">
