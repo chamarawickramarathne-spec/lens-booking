@@ -479,7 +479,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Special Requests / Notes</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Additional details about the booking"

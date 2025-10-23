@@ -49,7 +49,6 @@ class AuthController {
                     "id" => $user_data['id'],
                     "email" => $user_data['email'],
                     "full_name" => $user_data['full_name'],
-                    "business_name" => $user_data['business_name'],
                     "role" => $user_data['role'],
                     "currency_type" => $user_data['currency_type'] ?? 'USD'
                 ]
@@ -95,7 +94,6 @@ class AuthController {
                 'id' => $created_user['id'],
                 'email' => $created_user['email'],
                 'full_name' => $created_user['full_name'],
-                'business_name' => $created_user['business_name'],
                 'role' => $created_user['role'],
                 'currency_type' => $created_user['currency_type'] ?? 'USD'
             ];
@@ -156,7 +154,6 @@ class AuthController {
 
     $this->user->id = $user_data['user_id'];
     $this->user->full_name = $data['full_name'] ?? '';
-    $this->user->business_name = $data['business_name'] ?? '';
     $this->user->phone = $data['phone'] ?? '';
     $this->user->profile_picture = $data['profile_picture'] ?? '';
     $this->user->currency_type = $data['currency_type'] ?? 'USD';

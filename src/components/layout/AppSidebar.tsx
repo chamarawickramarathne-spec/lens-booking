@@ -41,11 +41,10 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const currentPath = location.pathname;
   const { toast } = useToast();
   const collapsed = state === "collapsed";
-  const displayName = user?.business_name || "PhotoStudio Manager";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -80,7 +79,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary font-semibold px-4 py-3">
-            {!collapsed && displayName}
+            {!collapsed && "PhotoStudio Manager"}
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
