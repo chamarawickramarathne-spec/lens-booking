@@ -632,7 +632,7 @@ const EditBookingForm = ({
                       const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
                       return (
-                        <FormItem className="flex flex-col">
+                        <FormItem>
                           <FormLabel>Booking Date</FormLabel>
                           <Popover
                             open={isCalendarOpen}
