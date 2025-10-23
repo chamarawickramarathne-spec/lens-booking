@@ -295,7 +295,7 @@ class InvoicesController {
                 // Create payment schedules if status changed to pending
                 if ($is_status_changing_to_pending) {
                     // Fetch updated invoice data to get the latest due_date
-                    $updated_invoice = $this->getById($id, $user_data['user_id']);
+                    $updated_invoice = $this->getInvoiceData($id, $user_data['user_id']);
                     $this->createPaymentSchedules($id, $updated_invoice, $user_data['user_id']);
                 }
                 
@@ -316,6 +316,26 @@ class InvoicesController {
                 "message" => "Failed to update invoice",
                 "error" => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Private helper method to get invoice data
+     */
+    private function getInvoiceData($id, $photographer_id) {
+        try {
+            $query = "SELECT * FROM " . $this->table_name . " 
+                     WHERE id = :id AND photographer_id = :photographer_id";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(":id", $id);
+            $stmt->bindParam(":photographer_id", $photographer_id);
+            $stmt->execute();
+            
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Failed to get invoice data: " . $e->getMessage());
+            return null;
         }
     }
 
