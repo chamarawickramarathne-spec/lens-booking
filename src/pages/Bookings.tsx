@@ -109,7 +109,7 @@ const Bookings = () => {
   };
 
   const canEditOrDelete = (booking: any) => {
-    return booking.status !== "completed";
+    return booking.status !== "completed" && booking.status !== "shoot_completed";
   };
 
   // Active bookings: anything not completed/cancelled/cancel_by_client
@@ -235,6 +235,7 @@ const Bookings = () => {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {booking.status === "confirmed" ||
+                            booking.status === "shoot_completed" ||
                             booking.status === "completed" ? (
                               <Button
                                 size="sm"
