@@ -50,7 +50,10 @@ const bookingSchema = z.object({
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   location: z.string().optional(),
-  package_type: z.string().optional(),
+  package_type: z.string().default("Birthday"),
+  package_name: z.string().optional(),
+  pre_shoot: z.string().default("Photography"),
+  album: z.string().default("No"),
   total_amount: z
     .string()
     .optional()
@@ -88,7 +91,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
       start_time: "",
       end_time: "",
       location: "",
-      package_type: "",
+      package_type: "Birthday",
+      package_name: "",
+      pre_shoot: "Photography",
+      album: "No",
       total_amount: "",
       deposit_amount: "",
     },
@@ -144,7 +150,10 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         booking_time: data.start_time || null,
         end_time: data.end_time || null,
         location: data.location || null,
-        package_type: data.package_type || null,
+        package_type: data.package_type || "Birthday",
+        package_name: data.package_name || null,
+        pre_shoot: data.pre_shoot || "Photography",
+        album: data.album || "No",
         total_amount:
           data.total_amount !== "" && data.total_amount != null
             ? parseFloat(data.total_amount)
@@ -340,7 +349,33 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                 name="package_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Package Type</FormLabel>
+                    <FormLabel>Event Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue="Birthday">
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Wedding">Wedding</SelectItem>
+                        <SelectItem value="Birthday">Birthday</SelectItem>
+                        <SelectItem value="Anniversary">Anniversary</SelectItem>
+                        <SelectItem value="Corporate">Corporate</SelectItem>
+                        <SelectItem value="Party">Party</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="package_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Package Name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Wedding Premium, Portrait Basic"
@@ -351,6 +386,53 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pre_shoot"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pre-shoot</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue="Photography">
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select pre-shoot type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Photography">Photography</SelectItem>
+                          <SelectItem value="Videography">Videography</SelectItem>
+                          <SelectItem value="Both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="album"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Album</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue="No">
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select option" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Yes">Yes</SelectItem>
+                          <SelectItem value="No">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
