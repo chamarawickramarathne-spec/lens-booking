@@ -103,10 +103,21 @@ class BookingsController {
 
     $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['booking_date']) || !isset($data['client_id'])) {
+        if (!isset($data['client_id'])) {
             http_response_code(400);
-            echo json_encode(["message" => "Booking date and client are required"]);
+            echo json_encode(["message" => "Client is required"]);
             return;
+        }
+
+        // If wedding, allow booking_date to be derived from wedding_date
+        if (!isset($data['booking_date']) || empty($data['booking_date'])) {
+            if (isset($data['package_type']) && strtolower($data['package_type']) === 'wedding' && !empty($data['wedding_date'])) {
+                $data['booking_date'] = $data['wedding_date'];
+            } else {
+                http_response_code(400);
+                echo json_encode(["message" => "Booking date is required"]);
+                return;
+            }
         }
 
         // Set booking properties
@@ -127,6 +138,20 @@ class BookingsController {
         $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
             ? floatval($data['deposit_amount']) : 0;
         $this->booking->status = $data['status'] ?? 'pending';
+
+        // Wedding-specific fields
+        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
+        $this->booking->wedding_date = $data['wedding_date'] ?? null;
+        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
+        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
+        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
+        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
+        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
+        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
+        $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
+        $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null; // expect comma-separated string
+        $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
+            ? intval($data['extra_thank_you_cards_qty']) : 0;
 
         if ($this->booking->create()) {
             http_response_code(201);
@@ -303,6 +328,20 @@ class BookingsController {
         $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
             ? floatval($data['deposit_amount']) : 0;
         $this->booking->status = $data['status'] ?? 'pending';
+
+        // Wedding-specific fields
+        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
+        $this->booking->wedding_date = $data['wedding_date'] ?? null;
+        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
+        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
+        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
+        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
+        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
+        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
+        $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
+        $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null;
+        $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
+            ? intval($data['extra_thank_you_cards_qty']) : 0;
 
         if ($this->booking->update()) {
             http_response_code(200);
