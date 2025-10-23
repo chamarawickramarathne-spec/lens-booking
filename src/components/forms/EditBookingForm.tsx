@@ -375,102 +375,99 @@ const EditBookingForm = ({
                   Wedding Booking Details
                 </h4>
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="wedding_hotel_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Wedding Hotel Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Wedding hotel" {...field} />
-                          </FormControl>
+                  <FormField
+                    control={form.control}
+                    name="wedding_hotel_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Wedding Hotel Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Wedding hotel" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="wedding_date"
+                    render={({ field }) => {
+                      const [isCal, setIsCal] = useState(false);
+                      return (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Wedding Date</FormLabel>
+                          <Popover open={isCal} onOpenChange={setIsCal}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  setIsCal(false);
+                                }}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="wedding_date"
-                      render={({ field }) => {
-                        const [isCal, setIsCal] = useState(false);
-                        return (
-                          <FormItem>
-                            <FormLabel>Wedding Date</FormLabel>
-                            <Popover open={isCal} onOpenChange={setIsCal}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP")
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={(date) => {
-                                    field.onChange(date);
-                                    setIsCal(false);
-                                  }}
-                                  disabled={(date) => date < new Date()}
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="homecoming_hotel_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Homecoming Hotel Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Homecoming hotel" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="homecoming_date"
-                      render={({ field }) => {
-                        const [isCal2, setIsCal2] = useState(false);
-                        return (
-                          <FormItem>
-                            <FormLabel>Homecoming Date</FormLabel>
-                            <Popover open={isCal2} onOpenChange={setIsCal2}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
+                      );
+                    }}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="homecoming_hotel_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Homecoming Hotel Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Homecoming hotel" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="homecoming_date"
+                    render={({ field }) => {
+                      const [isCal2, setIsCal2] = useState(false);
+                      return (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Homecoming Date</FormLabel>
+                          <Popover open={isCal2} onOpenChange={setIsCal2}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
@@ -502,7 +499,6 @@ const EditBookingForm = ({
                       );
                     }}
                   />
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -673,10 +669,10 @@ const EditBookingForm = ({
             )}
 
             {/* Non-Wedding basic details */}
-            {watchPackageType !== "Wedding" && (
+            {watchPackageType === "Wedding" && (
               <div className="space-y-4 border rounded-md p-3">
-                <h4 className="text-sm font-semibold">Booking Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h4 className="text-sm font-semibold">Wedding Booking Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="booking_date"
