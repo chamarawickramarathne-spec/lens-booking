@@ -206,6 +206,45 @@ class BookingsController {
                 }
             }
             
+            // Handle cascade cancellation for related invoices and payments
+            if ($new_status === 'cancelled' || $new_status === 'cancel_by_client') {
+                try {
+                    // Find all invoices related to this booking (except already paid ones)
+                    $invoice_query = "SELECT id FROM invoices WHERE booking_id = :booking_id AND status != 'paid'";
+                    $invoice_stmt = $this->db->prepare($invoice_query);
+                    $invoice_stmt->bindParam(':booking_id', $id);
+                    $invoice_stmt->execute();
+                    $invoices = $invoice_stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    if (!empty($invoices)) {
+                        $invoice_ids = array_column($invoices, 'id');
+                        
+                        // Cancel all non-paid invoices
+                        $placeholders = implode(',', array_fill(0, count($invoice_ids), '?'));
+                        $update_invoice_query = "UPDATE invoices SET status = 'cancelled' WHERE id IN ($placeholders)";
+                        $update_invoice_stmt = $this->db->prepare($update_invoice_query);
+                        $update_invoice_stmt->execute($invoice_ids);
+                        
+                        // Cancel payment schedules related to these invoices (except completed ones)
+                        $payment_query = "SELECT id FROM payments WHERE invoice_id IN ($placeholders) AND status != 'completed'";
+                        $payment_stmt = $this->db->prepare($payment_query);
+                        $payment_stmt->execute($invoice_ids);
+                        $payments = $payment_stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        if (!empty($payments)) {
+                            $payment_ids = array_column($payments, 'id');
+                            $payment_placeholders = implode(',', array_fill(0, count($payment_ids), '?'));
+                            $update_payment_query = "UPDATE payments SET status = 'cancelled' WHERE id IN ($payment_placeholders)";
+                            $update_payment_stmt = $this->db->prepare($update_payment_query);
+                            $update_payment_stmt->execute($payment_ids);
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Log error but don't fail the status update
+                    error_log("Failed to cancel related invoices/payments for booking $id: " . $e->getMessage());
+                }
+            }
+            
             http_response_code(200);
             echo json_encode(["message" => "Booking status updated successfully"]);
         } else {

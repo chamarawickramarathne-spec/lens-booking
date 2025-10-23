@@ -266,6 +266,8 @@ class InvoicesController {
             $old_invoice = $check_stmt->fetch(PDO::FETCH_ASSOC);
             
             $is_status_changing_to_pending = ($old_invoice && $old_invoice['status'] !== 'pending' && $data['status'] === 'pending');
+            $is_status_changing_to_cancelled = ($old_invoice && 
+                ($data['status'] === 'cancelled' || $data['status'] === 'cancel_by_client'));
 
             $query = "UPDATE " . $this->table_name . " 
                      SET client_id=:client_id, booking_id=:booking_id, due_date=:due_date,
@@ -293,6 +295,11 @@ class InvoicesController {
                 // Create payment schedules if status changed to pending
                 if ($is_status_changing_to_pending) {
                     $this->createPaymentSchedules($id, $old_invoice, $user_data['user_id']);
+                }
+                
+                // Cancel payment schedules if status changed to cancelled
+                if ($is_status_changing_to_cancelled) {
+                    $this->cancelPaymentSchedules($id);
                 }
                 
                 http_response_code(200);
@@ -366,6 +373,27 @@ class InvoicesController {
             return true;
         } catch (Exception $e) {
             error_log("Failed to create payment schedules: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cancel payment schedules when invoice is cancelled
+     */
+    private function cancelPaymentSchedules($invoice_id) {
+        try {
+            // Update all payment schedules for this invoice to cancelled (except completed ones)
+            $update_query = "UPDATE payments 
+                           SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP 
+                           WHERE invoice_id = :invoice_id AND status != 'completed'";
+            
+            $update_stmt = $this->db->prepare($update_query);
+            $update_stmt->bindParam(":invoice_id", $invoice_id);
+            $update_stmt->execute();
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to cancel payment schedules: " . $e->getMessage());
             return false;
         }
     }

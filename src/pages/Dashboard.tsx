@@ -109,6 +109,14 @@ export default function Dashboard() {
     return isNaN(t) ? 0 : t;
   };
 
+  const getStatusLabel = (status: string) => {
+    const statusLower = String(status || "").toLowerCase();
+    if (statusLower === "completed") return "Completed & Delivered";
+    if (statusLower === "shoot_completed") return "Shoot Completed";
+    if (statusLower === "cancel_by_client") return "Cancelled by Client";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   // 1 & 2) Recent bookings: show recent 10; active first; order by booking date (newest first)
   const recentBookings = useMemo(() => {
     const arr = [...(stats.recent_bookings ?? [])];
@@ -246,12 +254,18 @@ export default function Dashboard() {
                   </div>
                   <Badge
                     className={
-                      String(b.status).toLowerCase() === "confirmed"
+                      String(b.status).toLowerCase() === "confirmed" ||
+                      String(b.status).toLowerCase() === "shoot_completed"
                         ? "bg-green-600 text-white"
+                        : String(b.status).toLowerCase() === "cancelled" ||
+                          String(b.status).toLowerCase() === "cancel_by_client"
+                        ? "bg-red-600 text-white"
+                        : String(b.status).toLowerCase() === "completed"
+                        ? "bg-blue-600 text-white"
                         : ""
                     }
                   >
-                    {String(b.status || "").toLowerCase()}
+                    {getStatusLabel(b.status)}
                   </Badge>
                 </div>
               ))}

@@ -106,6 +106,8 @@ const PaymentSchedules = () => {
         );
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }

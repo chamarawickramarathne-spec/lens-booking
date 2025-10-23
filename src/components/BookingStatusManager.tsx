@@ -36,11 +36,36 @@ const BookingStatusManager = ({
   const { toast } = useToast();
 
   const baseStatusOptions = [
-    { value: "pending", label: "Pending", variant: "secondary" as const, order: 1 },
-    { value: "confirmed", label: "Confirmed", variant: "default" as const, order: 2 },
-    { value: "shoot_completed", label: "Shoot Completed", variant: "default" as const, order: 3 },
-    { value: "completed", label: "Completed and Photos Delivered", variant: "default" as const, order: 4 },
-    { value: "cancelled", label: "Cancelled", variant: "destructive" as const, order: 99 },
+    {
+      value: "pending",
+      label: "Pending",
+      variant: "secondary" as const,
+      order: 1,
+    },
+    {
+      value: "confirmed",
+      label: "Confirmed",
+      variant: "default" as const,
+      order: 2,
+    },
+    {
+      value: "shoot_completed",
+      label: "Shoot Completed",
+      variant: "default" as const,
+      order: 3,
+    },
+    {
+      value: "completed",
+      label: "Completed and Photos Delivered",
+      variant: "default" as const,
+      order: 4,
+    },
+    {
+      value: "cancelled",
+      label: "Cancelled",
+      variant: "destructive" as const,
+      order: 99,
+    },
     {
       value: "cancel_by_client",
       label: "Cancel by Client",
@@ -56,7 +81,7 @@ const BookingStatusManager = ({
   };
 
   const currentOrder = getCurrentStatusOrder(booking.status);
-  
+
   // Only show current status, future statuses, and cancel options
   const statusOptions = baseStatusOptions.filter((opt) => {
     // Always include cancel options
@@ -96,8 +121,7 @@ const BookingStatusManager = ({
       if (newOrder < currentStatusOrder) {
         toast({
           title: "Not allowed",
-          description:
-            "You cannot change a booking back to a previous status.",
+          description: "You cannot change a booking back to a previous status.",
           variant: "destructive",
         });
         return;
@@ -171,11 +195,17 @@ const BookingStatusManager = ({
     (booking.status === "completed" &&
       (pendingStatus === "cancelled" || pendingStatus === "cancel_by_client"));
 
+  // Hide dropdown if booking is cancelled or cancel_by_client
+  const showDropdown =
+    booking.status !== "cancelled" &&
+    booking.status !== "cancel_by_client" &&
+    canChangeStatus;
+
   return (
     <div className="flex items-center gap-2">
       {getStatusBadge(booking.status)}
 
-      {canChangeStatus && (
+      {showDropdown && (
         <Select onValueChange={handleStatusChange} value={booking.status}>
           <SelectTrigger className="w-[140px]">
             <SelectValue />

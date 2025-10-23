@@ -36,41 +36,49 @@ const InvoiceStatusManager = ({
   const { toast } = useToast();
 
   const allStatusOptions = [
-    { value: "draft", label: "Draft", variant: "secondary" as const },
-    { value: "pending", label: "Pending Payment", variant: "outline" as const },
-    { value: "cancelled", label: "Cancel", variant: "destructive" as const },
+    { value: "draft", label: "Draft", variant: "secondary" as const, order: 1 },
+    {
+      value: "pending",
+      label: "Pending Payment",
+      variant: "outline" as const,
+      order: 2,
+    },
+    { value: "paid", label: "Paid", variant: "default" as const, order: 3 },
+    {
+      value: "cancelled",
+      label: "Cancelled",
+      variant: "destructive" as const,
+      order: 99,
+    },
     {
       value: "cancel_by_client",
-      label: "Cancel by Client",
+      label: "Cancelled by Client",
       variant: "destructive" as const,
+      order: 99,
     },
-    { value: "paid", label: "Paid", variant: "default" as const },
   ];
 
+  const getCurrentStatusOrder = () => {
+    const currentStatus = allStatusOptions.find(
+      (opt) => opt.value === invoice.status
+    );
+    return currentStatus?.order || 0;
+  };
+
   const getStatusOptions = () => {
-    const baseOptions = [
-      {
-        value: "pending",
-        label: "Pending Payment",
-        variant: "outline" as const,
-      },
-      { value: "cancelled", label: "Cancel", variant: "destructive" as const },
-      {
-        value: "cancel_by_client",
-        label: "Cancel by Client",
-        variant: "destructive" as const,
-      },
-    ];
+    const currentOrder = getCurrentStatusOrder();
 
-    // Only show "Draft" option if current status is draft
-    if (invoice.status === "draft") {
-      return [
-        { value: "draft", label: "Draft", variant: "secondary" as const },
-        ...baseOptions,
-      ];
-    }
+    // Filter to show only current status and future statuses, plus cancel options
+    const statusOptions = allStatusOptions.filter((option) => {
+      // Always show cancel options
+      if (option.value === "cancelled" || option.value === "cancel_by_client") {
+        return true;
+      }
+      // Show current and future statuses
+      return option.order >= currentOrder;
+    });
 
-    return baseOptions;
+    return statusOptions;
   };
 
   const getStatusBadge = (status: string) => {
@@ -99,6 +107,26 @@ const InvoiceStatusManager = ({
       toast({
         title: "Cannot Change Status",
         description: "Paid invoices cannot be modified.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent backward status changes (except cancellations)
+    const currentOrder = getCurrentStatusOrder();
+    const newStatusOption = allStatusOptions.find(
+      (opt) => opt.value === newStatus
+    );
+    const newOrder = newStatusOption?.order || 0;
+
+    if (
+      newOrder < currentOrder &&
+      newStatus !== "cancelled" &&
+      newStatus !== "cancel_by_client"
+    ) {
+      toast({
+        title: "Invalid Status Change",
+        description: "Cannot move to a previous status.",
         variant: "destructive",
       });
       return;
@@ -179,6 +207,11 @@ const InvoiceStatusManager = ({
 
   // Don't show dropdown for completed invoices
   if (invoice.status === "paid") {
+    return getStatusBadge(invoice.status);
+  }
+
+  // Don't show dropdown for cancelled invoices
+  if (invoice.status === "cancelled" || invoice.status === "cancel_by_client") {
     return getStatusBadge(invoice.status);
   }
 

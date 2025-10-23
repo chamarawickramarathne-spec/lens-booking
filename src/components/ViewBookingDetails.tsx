@@ -1,6 +1,20 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, DollarSign, Package, User, Mail, FileText } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  DollarSign,
+  Package,
+  User,
+  Mail,
+  FileText,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -10,9 +24,13 @@ interface ViewBookingDetailsProps {
   onClose: () => void;
 }
 
-const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProps) => {
+const ViewBookingDetails = ({
+  booking,
+  isOpen,
+  onClose,
+}: ViewBookingDetailsProps) => {
   const { formatCurrency } = useCurrency();
-  
+
   if (!booking) return null;
 
   const getStatusColor = (status: string) => {
@@ -68,19 +86,22 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
                 {booking.package_type && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Package className="h-4 w-4" />
-                    <span className="font-medium">Event:</span> {booking.package_type}
+                    <span className="font-medium">Event:</span>{" "}
+                    {booking.package_type}
                   </div>
                 )}
                 {booking.package_name && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <span className="font-medium">Package:</span> {booking.package_name}
+                    <span className="font-medium">Package:</span>{" "}
+                    {booking.package_name}
                   </div>
                 )}
               </div>
               <div className="flex flex-wrap gap-3 mt-1">
                 {booking.pre_shoot && (
                   <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">Pre-shoot:</span> {booking.pre_shoot}
+                    <span className="font-medium">Pre-shoot:</span>{" "}
+                    {booking.pre_shoot}
                   </div>
                 )}
                 {booking.album && (
@@ -167,13 +188,17 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
               {booking.deposit_amount && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Deposit Amount:</span>
-                  <span className="font-medium">{formatCurrency(booking.deposit_amount)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(booking.deposit_amount)}
+                  </span>
                 </div>
               )}
               {booking.total_amount && (
                 <div className="flex justify-between border-t pt-2">
                   <span className="font-semibold">Total Amount:</span>
-                  <span className="font-semibold text-lg">{formatCurrency(booking.total_amount)}</span>
+                  <span className="font-semibold text-lg">
+                    {formatCurrency(booking.total_amount)}
+                  </span>
                 </div>
               )}
             </div>
@@ -186,14 +211,18 @@ const ViewBookingDetails = ({ booking, isOpen, onClose }: ViewBookingDetailsProp
                 <FileText className="h-4 w-4" />
                 Description
               </h4>
-              <p className="text-sm whitespace-pre-wrap">{booking.description}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {booking.description}
+              </p>
             </div>
           )}
 
           {/* Timestamps */}
           <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
             <div>Created: {format(new Date(booking.created_at), "PPpp")}</div>
-            <div>Last Updated: {format(new Date(booking.updated_at), "PPpp")}</div>
+            <div>
+              Last Updated: {format(new Date(booking.updated_at), "PPpp")}
+            </div>
           </div>
         </div>
       </DialogContent>

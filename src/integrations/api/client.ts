@@ -166,6 +166,10 @@ class ApiClient {
     });
   }
 
+  async getClientDeletionInfo(id: number) {
+    return this.request(`/clients/${id}/deletion-info`);
+  }
+
   // Booking methods
   async getBookings() {
     return this.request('/bookings');

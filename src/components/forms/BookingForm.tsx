@@ -258,11 +258,14 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                 name="booking_date"
                 render={({ field }) => {
                   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-                  
+
                   return (
                     <FormItem className="flex flex-col">
                       <FormLabel>Booking Date</FormLabel>
-                      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <Popover
+                        open={isCalendarOpen}
+                        onOpenChange={setIsCalendarOpen}
+                      >
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
