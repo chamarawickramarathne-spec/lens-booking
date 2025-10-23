@@ -317,6 +317,7 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
+  business_name?: string;
   phone?: string;
   role: 'admin' | 'photographer' | 'client';
   profile_picture?: string;

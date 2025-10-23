@@ -12,6 +12,7 @@ class User {
     public $email;
     public $password_hash;
     public $full_name;
+    public $business_name;
     public $phone;
     public $role;
     public $profile_picture;
@@ -36,7 +37,7 @@ class User {
 
         $query = "INSERT INTO " . $this->table_name . " 
                  SET email=:email, password=:password, first_name=:first_name, 
-                     last_name=:last_name, phone=:phone, user_access_level=:user_access_level, 
+                     last_name=:last_name, business_name=:business_name, phone=:phone, user_access_level=:user_access_level, 
                      profile_image=:profile_image, currency_type=:currency_type, active_date=:active_date";
 
         $stmt = $this->conn->prepare($query);
@@ -45,6 +46,7 @@ class User {
         $this->email = htmlspecialchars(strip_tags($this->email));
         $first_name = htmlspecialchars(strip_tags($first_name));
         $last_name = htmlspecialchars(strip_tags($last_name));
+        $this->business_name = htmlspecialchars(strip_tags($this->business_name ?? ''));
         $this->phone = htmlspecialchars(strip_tags($this->phone));
         
         // Set user_access_level to 'free' for all new photographers
@@ -63,6 +65,7 @@ class User {
         $stmt->bindParam(":password", $password_hash);
         $stmt->bindParam(":first_name", $first_name);
         $stmt->bindParam(":last_name", $last_name);
+        $stmt->bindParam(":business_name", $this->business_name);
         $stmt->bindParam(":phone", $this->phone);
         $stmt->bindParam(":user_access_level", $user_access_level);
         $stmt->bindParam(":profile_image", $profile_image);
@@ -80,7 +83,7 @@ class User {
      * Login user
      */
     public function login($email, $password) {
-    $query = "SELECT id, email, password, first_name, last_name, phone, 
+    $query = "SELECT id, email, password, first_name, last_name, business_name, phone, 
              user_access_level, profile_image, currency_type, created_at, updated_at
                  FROM " . $this->table_name . " 
                  WHERE email = :email";
@@ -97,6 +100,7 @@ class User {
                     'id' => $row['id'],
                     'email' => $row['email'],
                     'full_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+                    'business_name' => $row['business_name'],
                     'phone' => $row['phone'],
                     'role' => $row['user_access_level'],
                     'profile_picture' => $row['profile_image'],
@@ -114,7 +118,7 @@ class User {
      * Get user by ID
      */
     public function getById($id) {
-    $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
+    $query = "SELECT id, email, first_name, last_name, business_name, phone, user_access_level, 
              profile_image, currency_type, created_at, updated_at 
                  FROM " . $this->table_name . " 
                  WHERE id = :id";
@@ -130,6 +134,7 @@ class User {
                 'id' => $row['id'],
                 'email' => $row['email'],
                 'full_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+                'business_name' => $row['business_name'],
                 'phone' => $row['phone'],
                 'role' => $row['user_access_level'],
                 'profile_picture' => $row['profile_image'],
@@ -153,7 +158,7 @@ class User {
         $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
 
     $query = "UPDATE " . $this->table_name . " 
-         SET first_name=:first_name, last_name=:last_name, phone=:phone, profile_image=:profile_image, currency_type=:currency_type 
+         SET first_name=:first_name, last_name=:last_name, business_name=:business_name, phone=:phone, profile_image=:profile_image, currency_type=:currency_type 
          WHERE id=:id";
 
         $stmt = $this->conn->prepare($query);
@@ -161,11 +166,13 @@ class User {
         // Sanitize inputs
         $first_name = htmlspecialchars(strip_tags($first_name));
         $last_name = htmlspecialchars(strip_tags($last_name));
+        $this->business_name = htmlspecialchars(strip_tags($this->business_name ?? ''));
         $this->phone = htmlspecialchars(strip_tags($this->phone));
 
         // Bind values
         $stmt->bindParam(":first_name", $first_name);
         $stmt->bindParam(":last_name", $last_name);
+        $stmt->bindParam(":business_name", $this->business_name);
         $stmt->bindParam(":phone", $this->phone);
     $stmt->bindParam(":profile_image", $this->profile_picture);
     $stmt->bindParam(":currency_type", $this->currency_type);

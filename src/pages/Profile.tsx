@@ -72,7 +72,7 @@ const Profile = () => {
       // Map API user to form
       form.reset({
         photographer_name: user.full_name || "",
-        business_name: "",
+        business_name: user.business_name || "",
         email: user.email || "",
         phone: user.phone || "",
         bio: "",
@@ -92,6 +92,7 @@ const Profile = () => {
       // Use API auth profile update (maps full_name, phone, currency_type)
       await updateProfile({
         full_name: data.photographer_name,
+        business_name: data.business_name,
         phone: data.phone,
         profile_picture: "",
         currency_type: data.currency_type,
