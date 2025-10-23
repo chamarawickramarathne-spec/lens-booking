@@ -36,23 +36,36 @@ const BookingStatusManager = ({
   const { toast } = useToast();
 
   const baseStatusOptions = [
-    { value: "pending", label: "Pending", variant: "secondary" as const },
-    { value: "confirmed", label: "Confirmed", variant: "default" as const },
-    { value: "shoot_completed", label: "Shoot Completed", variant: "default" as const },
-    { value: "completed", label: "Completed and Photos Delivered", variant: "default" as const },
-    { value: "cancelled", label: "Cancelled", variant: "destructive" as const },
+    { value: "pending", label: "Pending", variant: "secondary" as const, order: 1 },
+    { value: "confirmed", label: "Confirmed", variant: "default" as const, order: 2 },
+    { value: "shoot_completed", label: "Shoot Completed", variant: "default" as const, order: 3 },
+    { value: "completed", label: "Completed and Photos Delivered", variant: "default" as const, order: 4 },
+    { value: "cancelled", label: "Cancelled", variant: "destructive" as const, order: 99 },
     {
       value: "cancel_by_client",
       label: "Cancel by Client",
       variant: "destructive" as const,
+      order: 99,
     },
   ];
 
-  // After a booking has changed status from pending, do not allow going back to pending.
-  const statusOptions =
-    booking.status === "pending"
-      ? baseStatusOptions
-      : baseStatusOptions.filter((opt) => opt.value !== "pending");
+  // Filter out previous status options based on current status
+  const getCurrentStatusOrder = (status: string) => {
+    const currentOption = baseStatusOptions.find((opt) => opt.value === status);
+    return currentOption?.order || 0;
+  };
+
+  const currentOrder = getCurrentStatusOrder(booking.status);
+  
+  // Only show current status, future statuses, and cancel options
+  const statusOptions = baseStatusOptions.filter((opt) => {
+    // Always include cancel options
+    if (opt.value === "cancelled" || opt.value === "cancel_by_client") {
+      return true;
+    }
+    // Include current status and future statuses (higher order)
+    return opt.order >= currentOrder;
+  });
 
   const getStatusBadge = (status: string) => {
     const statusOption = statusOptions.find((opt) => opt.value === status);
@@ -75,15 +88,20 @@ const BookingStatusManager = ({
   const handleStatusChange = (newStatus: string) => {
     if (newStatus === booking.status) return;
 
-    // Prevent changing back to pending once status is moved away from pending
-    if (newStatus === "pending" && booking.status !== "pending") {
-      toast({
-        title: "Not allowed",
-        description:
-          "You cannot change a booking back to Pending once updated.",
-        variant: "destructive",
-      });
-      return;
+    const newOrder = getCurrentStatusOrder(newStatus);
+    const currentStatusOrder = getCurrentStatusOrder(booking.status);
+
+    // Prevent changing back to previous statuses (except cancel options)
+    if (newStatus !== "cancelled" && newStatus !== "cancel_by_client") {
+      if (newOrder < currentStatusOrder) {
+        toast({
+          title: "Not allowed",
+          description:
+            "You cannot change a booking back to a previous status.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Show confirmation for critical status changes
