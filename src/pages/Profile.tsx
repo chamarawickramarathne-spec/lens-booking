@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/integrations/api/client";
 import {
   User,
   Building,
@@ -50,6 +51,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [accessLevel, setAccessLevel] = useState<string>("Free");
   const { toast } = useToast();
   const { user, updateProfile } = useAuth();
 
@@ -72,29 +74,47 @@ const Profile = () => {
       // Map API user to form
       form.reset({
         photographer_name: user.full_name || "",
-        business_name: "",
+        business_name: user.business_name || "",
         email: user.email || "",
         phone: user.phone || "",
-        bio: "",
-        website: "",
-        portfolio_url: "",
+        bio: user.bio || "",
+        website: user.website || "",
+        portfolio_url: user.portfolio_url || "",
         currency_type: user.currency_type || "LKR",
       });
+
+      // Fetch user access level
+      fetchAccessLevel();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const fetchAccessLevel = async () => {
+    try {
+      const response = await apiClient.getUserAccessInfo();
+      if (response?.access_level?.name) {
+        setAccessLevel(response.access_level.name);
+      }
+    } catch (error) {
+      console.error("Failed to fetch access level:", error);
+    }
+  };
 
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
     setIsLoading(true);
     try {
-      // Use API auth profile update (maps full_name, phone, currency_type)
+      // Use API auth profile update with all fields
       await updateProfile({
         full_name: data.photographer_name,
         phone: data.phone,
         profile_picture: "",
         currency_type: data.currency_type,
+        business_name: data.business_name,
+        bio: data.bio,
+        website: data.website,
+        portfolio_url: data.portfolio_url,
       });
 
       toast({
@@ -133,7 +153,7 @@ const Profile = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Profile Information
+              Profile Information - {accessLevel}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -328,12 +348,12 @@ const Profile = () => {
                         if (user) {
                           form.reset({
                             photographer_name: user.full_name || "",
-                            business_name: "",
+                            business_name: user.business_name || "",
                             email: user.email || "",
                             phone: user.phone || "",
-                            bio: "",
-                            website: "",
-                            portfolio_url: "",
+                            bio: user.bio || "",
+                            website: user.website || "",
+                            portfolio_url: user.portfolio_url || "",
                             currency_type: user.currency_type || "LKR",
                           });
                         }

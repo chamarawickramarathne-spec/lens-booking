@@ -10,18 +10,21 @@ require_once 'config/cors.php';
 require_once 'config/database.php';
 require_once 'config/cors.php';
 require_once 'models/Booking.php';
+require_once 'models/AccessLevel.php';
 require_once 'middleware/auth.php';
 
 class BookingsController {
     private $database;
     private $db;
     private $booking;
+    private $access_level;
     private $auth;
 
     public function __construct() {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->booking = new Booking($this->db);
+        $this->access_level = new AccessLevel($this->db);
         $this->auth = new JWTAuth();
     }
 
@@ -81,6 +84,20 @@ class BookingsController {
         if (!$user_data) {
             http_response_code(401);
             echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        // Check if user can create more bookings
+        if (!$this->access_level->canCreateBooking($user_data['user_id'])) {
+            $access_info = $this->access_level->getUserAccessInfo($user_data['user_id']);
+            $max_bookings = $access_info['access_level']['max_bookings'];
+            $plan_name = $access_info['access_level']['name'];
+            
+            http_response_code(403);
+            echo json_encode([
+                "message" => "You've reached your limit of " . $max_bookings . " booking" . ($max_bookings > 1 ? "s" : "") . ".",
+                "details" => "Upgrade from " . $plan_name . " to add more bookings."
+            ]);
             return;
         }
 

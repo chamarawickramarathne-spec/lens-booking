@@ -52,8 +52,18 @@ class ApiClient {
         // Attempt to parse JSON error if possible
         try {
           const errJson = JSON.parse(rawText);
-          throw new Error(errJson.message || rawText || 'API request failed');
-        } catch {
+          const errorMessage = errJson.details 
+            ? `${errJson.message} ${errJson.details}` 
+            : (errJson.message || rawText || 'API request failed');
+          const error = new Error(errorMessage);
+          (error as any).statusCode = response.status;
+          throw error;
+        } catch (parseError) {
+          // If parsing fails, check if parseError is the Error we just threw
+          if (parseError instanceof Error && (parseError as any).statusCode) {
+            throw parseError;
+          }
+          // Otherwise it's a real parsing error, use raw text
           throw new Error(rawText || 'API request failed');
         }
       }
@@ -298,6 +308,23 @@ class ApiClient {
     return this.request('/dashboard');
   }
 
+  // Access Level methods
+  async getUserAccessInfo() {
+    return this.request('/access-levels/user-info');
+  }
+
+  async getAccessLevels() {
+    return this.request('/access-levels');
+  }
+
+  async checkClientPermission() {
+    return this.request('/access-levels/check-client');
+  }
+
+  async checkBookingPermission() {
+    return this.request('/access-levels/check-booking');
+  }
+
   // Utility methods
   isAuthenticated(): boolean {
     return !!this.token;
@@ -325,6 +352,10 @@ export interface User {
   role: 'admin' | 'photographer' | 'client';
   profile_picture?: string;
   currency_type?: string;
+  business_name?: string;
+  bio?: string;
+  website?: string;
+  portfolio_url?: string;
   created_at: string;
   updated_at: string;
 }

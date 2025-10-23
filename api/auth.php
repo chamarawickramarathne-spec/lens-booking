@@ -157,6 +157,10 @@ class AuthController {
     $this->user->phone = $data['phone'] ?? '';
     $this->user->profile_picture = $data['profile_picture'] ?? '';
     $this->user->currency_type = $data['currency_type'] ?? 'USD';
+    $this->user->business_name = $data['business_name'] ?? '';
+    $this->user->bio = $data['bio'] ?? '';
+    $this->user->website = $data['website'] ?? '';
+    $this->user->portfolio_url = $data['portfolio_url'] ?? '';
 
         if ($this->user->update()) {
             http_response_code(200);

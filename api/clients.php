@@ -10,18 +10,21 @@ require_once 'config/cors.php';
 require_once 'config/database.php';
 require_once 'config/cors.php';
 require_once 'models/Client.php';
+require_once 'models/AccessLevel.php';
 require_once 'middleware/auth.php';
 
 class ClientsController {
     private $database;
     private $db;
     private $client;
+    private $access_level;
     private $auth;
 
     public function __construct() {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->client = new Client($this->db);
+        $this->access_level = new AccessLevel($this->db);
         $this->auth = new JWTAuth();
     }
 
@@ -81,6 +84,20 @@ class ClientsController {
         if (!$user_data) {
             http_response_code(401);
             echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        // Check if user can create more clients
+        if (!$this->access_level->canCreateClient($user_data['user_id'])) {
+            $access_info = $this->access_level->getUserAccessInfo($user_data['user_id']);
+            $max_clients = $access_info['access_level']['max_clients'];
+            $plan_name = $access_info['access_level']['name'];
+            
+            http_response_code(403);
+            echo json_encode([
+                "message" => "You've reached your limit of " . $max_clients . " client" . ($max_clients > 1 ? "s" : "") . ".",
+                "details" => "Upgrade from " . $plan_name . " to add more clients."
+            ]);
             return;
         }
 

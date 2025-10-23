@@ -16,6 +16,10 @@ class User {
     public $role;
     public $profile_picture;
     public $currency_type;
+    public $business_name;
+    public $bio;
+    public $website;
+    public $portfolio_url;
     public $is_active;
     public $email_verified;
     public $created_at;
@@ -81,7 +85,8 @@ class User {
      */
     public function login($email, $password) {
     $query = "SELECT id, email, password, first_name, last_name, phone, 
-             user_access_level, profile_image, currency_type, created_at, updated_at
+             user_access_level, profile_image, currency_type, 
+             business_name, bio, website, portfolio_url, created_at, updated_at
                  FROM " . $this->table_name . " 
                  WHERE email = :email";
 
@@ -101,6 +106,10 @@ class User {
                     'role' => $row['user_access_level'],
                     'profile_picture' => $row['profile_image'],
                     'currency_type' => $row['currency_type'] ?? 'USD',
+                    'business_name' => $row['business_name'] ?? '',
+                    'bio' => $row['bio'] ?? '',
+                    'website' => $row['website'] ?? '',
+                    'portfolio_url' => $row['portfolio_url'] ?? '',
                     'is_active' => 1, // Assume active if record exists
                     'created_at' => $row['created_at'],
                     'updated_at' => $row['updated_at']
@@ -115,7 +124,8 @@ class User {
      */
     public function getById($id) {
     $query = "SELECT id, email, first_name, last_name, phone, user_access_level, 
-             profile_image, currency_type, created_at, updated_at 
+             profile_image, currency_type, business_name, bio, website, 
+             portfolio_url, created_at, updated_at 
                  FROM " . $this->table_name . " 
                  WHERE id = :id";
 
@@ -134,6 +144,10 @@ class User {
                 'role' => $row['user_access_level'],
                 'profile_picture' => $row['profile_image'],
                 'currency_type' => $row['currency_type'] ?? 'USD',
+                'business_name' => $row['business_name'] ?? '',
+                'bio' => $row['bio'] ?? '',
+                'website' => $row['website'] ?? '',
+                'portfolio_url' => $row['portfolio_url'] ?? '',
                 'is_active' => 1, // Assume active if record exists
                 'email_verified' => 0, // Default for existing schema
                 'created_at' => $row['created_at'],
@@ -153,7 +167,10 @@ class User {
         $last_name = isset($name_parts[1]) ? $name_parts[1] : '';
 
     $query = "UPDATE " . $this->table_name . " 
-         SET first_name=:first_name, last_name=:last_name, phone=:phone, profile_image=:profile_image, currency_type=:currency_type 
+         SET first_name=:first_name, last_name=:last_name, phone=:phone, 
+             profile_image=:profile_image, currency_type=:currency_type,
+             business_name=:business_name, bio=:bio, website=:website, 
+             portfolio_url=:portfolio_url
          WHERE id=:id";
 
         $stmt = $this->conn->prepare($query);
@@ -161,7 +178,11 @@ class User {
         // Sanitize inputs
         $first_name = htmlspecialchars(strip_tags($first_name));
         $last_name = htmlspecialchars(strip_tags($last_name));
-        $this->phone = htmlspecialchars(strip_tags($this->phone));
+        $this->phone = htmlspecialchars(strip_tags($this->phone ?? ''));
+        $this->business_name = htmlspecialchars(strip_tags($this->business_name ?? ''));
+        $this->bio = htmlspecialchars(strip_tags($this->bio ?? ''));
+        $this->website = htmlspecialchars(strip_tags($this->website ?? ''));
+        $this->portfolio_url = htmlspecialchars(strip_tags($this->portfolio_url ?? ''));
 
         // Bind values
         $stmt->bindParam(":first_name", $first_name);
@@ -169,6 +190,10 @@ class User {
         $stmt->bindParam(":phone", $this->phone);
     $stmt->bindParam(":profile_image", $this->profile_picture);
     $stmt->bindParam(":currency_type", $this->currency_type);
+        $stmt->bindParam(":business_name", $this->business_name);
+        $stmt->bindParam(":bio", $this->bio);
+        $stmt->bindParam(":website", $this->website);
+        $stmt->bindParam(":portfolio_url", $this->portfolio_url);
         $stmt->bindParam(":id", $this->id);
 
         return $stmt->execute();
