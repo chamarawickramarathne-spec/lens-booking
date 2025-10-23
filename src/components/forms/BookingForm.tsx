@@ -622,58 +622,58 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
               {/* Non-Wedding basic details */}
               {watchPackageType !== "Wedding" && (
                 <>
-                  <FormField
-                    control={form.control}
-                    name="booking_date"
-                    render={({ field }) => {
-                      const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="booking_date"
+                      render={({ field }) => {
+                        const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-                      return (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Booking Date</FormLabel>
-                          <Popover
-                            open={isCalendarOpen}
-                            onOpenChange={setIsCalendarOpen}
-                          >
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                  setIsCalendarOpen(false);
-                                }}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
-                  />
+                        return (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Booking Date</FormLabel>
+                            <Popover
+                              open={isCalendarOpen}
+                              onOpenChange={setIsCalendarOpen}
+                            >
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={(date) => {
+                                    field.onChange(date);
+                                    setIsCalendarOpen(false);
+                                  }}
+                                  disabled={(date) => date < new Date()}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
 
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="start_time"
@@ -703,43 +703,71 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Event location" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Event location" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="album"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Album</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue="No"
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select option" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Yes">Yes</SelectItem>
+                              <SelectItem value="No">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </>
               )}
 
 
               {/* Event Type moved next to Client above */}
 
-              <FormField
-                control={form.control}
-                name="package_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Package Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Wedding Premium, Portrait Basic"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="package_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Package Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Wedding Premium, Portrait Basic"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="pre_shoot"
@@ -764,32 +792,6 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                             Videography
                           </SelectItem>
                           <SelectItem value="Both">Both</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="album"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Album</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue="No"
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select option" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Yes">Yes</SelectItem>
-                          <SelectItem value="No">No</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
