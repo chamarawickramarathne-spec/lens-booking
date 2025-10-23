@@ -307,7 +307,6 @@ const PaymentSchedules = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Payment Name</TableHead>
-                      <TableHead>Client</TableHead>
                       <TableHead>Reference</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
@@ -337,8 +336,10 @@ const PaymentSchedules = () => {
                                     {getInvoiceNumber(schedule)}
                                   </div>
                                 )}
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {getClientName(schedule)}
+                                </div>
                               </TableCell>
-                              <TableCell>{getClientName(schedule)}</TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {getReference(schedule)}
                               </TableCell>
@@ -391,8 +392,10 @@ const PaymentSchedules = () => {
                               {getInvoiceNumber(schedule)}
                             </div>
                           )}
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {getClientName(schedule)}
+                          </div>
                         </TableCell>
-                        <TableCell>{getClientName(schedule)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {getReference(schedule)}
                         </TableCell>

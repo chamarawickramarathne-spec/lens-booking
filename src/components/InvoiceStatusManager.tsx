@@ -232,7 +232,7 @@ const InvoiceStatusManager = ({
     if (invoice.status === "draft") {
       // Check if invoice has deposit amount
       const hasDeposit = invoice.deposit_amount && invoice.deposit_amount > 0;
-      
+
       if (hasDeposit) {
         // Show payment dates dialog
         setShowPaymentDatesDialog(true);
