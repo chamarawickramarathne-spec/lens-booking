@@ -39,23 +39,45 @@ const InvoicePDFDownload = ({
     return `http://localhost${imagePath}`;
   };
 
+  // Load image and detect format for jsPDF (PNG or JPEG)
+  const loadImageWithFormat = async (
+    url: string
+  ): Promise<{ dataUrl: string; format: "PNG" | "JPEG" }> => {
+    try {
+      const response = await fetch(url, { mode: "cors" });
+      const blob = await response.blob();
+      const format: "PNG" | "JPEG" = blob.type.includes("png") ? "PNG" : "JPEG";
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      return { dataUrl, format };
+    } catch (e) {
+      console.error("Failed to load logo:", e);
+      return { dataUrl: "", format: "PNG" };
+    }
+  };
+
   const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let yPosition = 20;
 
-      // Add profile image if available
-      const profileImageUrl = getImageUrl(photographer?.profile_picture);
-      if (profileImageUrl) {
+      // Add logo/profile image (same as Email Preview)
+      const logoPath = photographer?.profile_picture;
+      const logoUrl = getImageUrl(logoPath);
+      if (logoUrl) {
         try {
-          const imageData = await loadImageAsBase64(profileImageUrl);
-          if (imageData) {
-            const imgSize = 25;
+          const { dataUrl, format } = await loadImageWithFormat(logoUrl);
+          if (dataUrl) {
+            const imgSize = 40; // larger for visibility, similar to email preview
             const imgX = (pageWidth - imgSize) / 2;
             doc.addImage(
-              imageData,
-              "JPEG",
+              dataUrl,
+              format,
               imgX,
               yPosition,
               imgSize,
@@ -63,10 +85,10 @@ const InvoicePDFDownload = ({
               undefined,
               "FAST"
             );
-            yPosition += imgSize + 5;
+            yPosition += imgSize + 8;
           }
         } catch (error) {
-          console.error("Failed to add profile image to PDF:", error);
+          console.error("Failed to add logo to PDF:", error);
         }
       }
 
