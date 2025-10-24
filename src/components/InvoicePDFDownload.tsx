@@ -15,7 +15,7 @@ const InvoicePDFDownload = ({
   photographer,
 }: InvoicePDFDownloadProps) => {
   const { toast } = useToast();
-  const { currency } = useCurrency();
+  const { formatCurrency } = useCurrency();
 
   const loadImageAsBase64 = async (url: string): Promise<string> => {
     try {
@@ -197,7 +197,7 @@ const InvoicePDFDownload = ({
         doc.text("Photography Services", 20, yPosition);
       }
       doc.text(
-        `${currency} ${invoice.subtotal.toFixed(2)}`,
+        formatCurrency(invoice.subtotal),
         pageWidth - 45,
         yPosition,
         { align: "right" }
@@ -211,7 +211,7 @@ const InvoicePDFDownload = ({
       doc.text("Subtotal:", startX, yPosition);
       doc.setFont("helvetica", "normal");
       doc.text(
-        `${currency} ${invoice.subtotal.toFixed(2)}`,
+        formatCurrency(invoice.subtotal),
         pageWidth - 20,
         yPosition,
         { align: "right" }
@@ -222,7 +222,7 @@ const InvoicePDFDownload = ({
       doc.text("Tax:", startX, yPosition);
       doc.setFont("helvetica", "normal");
       doc.text(
-        `${currency} ${(invoice.tax_amount || 0).toFixed(2)}`,
+        formatCurrency(invoice.tax_amount || 0),
         pageWidth - 20,
         yPosition,
         { align: "right" }
@@ -234,7 +234,7 @@ const InvoicePDFDownload = ({
         doc.text("Deposit:", startX, yPosition);
         doc.setFont("helvetica", "normal");
         doc.text(
-          `-${currency} ${invoice.deposit_amount.toFixed(2)}`,
+          `-${formatCurrency(invoice.deposit_amount)}`,
           pageWidth - 20,
           yPosition,
           { align: "right" }
@@ -251,7 +251,7 @@ const InvoicePDFDownload = ({
       doc.setFont("helvetica", "bold");
       doc.text("Total:", startX, yPosition);
       doc.text(
-        `${currency} ${invoice.total_amount.toFixed(2)}`,
+        formatCurrency(invoice.total_amount),
         pageWidth - 20,
         yPosition,
         { align: "right" }
