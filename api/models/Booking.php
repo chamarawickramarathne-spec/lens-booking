@@ -116,7 +116,8 @@ class Booking {
      * Get all bookings for a user with client details
      */
     public function getByUserId($photographer_id) {
-        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone
+        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone,
+                         c.second_contact, c.second_phone
                  FROM " . $this->table_name . " b
                  LEFT JOIN clients c ON b.client_id = c.id
                  WHERE b.photographer_id = :photographer_id 
@@ -133,7 +134,8 @@ class Booking {
      * Get booking by ID
      */
     public function getById($id, $photographer_id) {
-        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone
+        $query = "SELECT b.*, c.name as client_name, c.email as client_email, c.phone as client_phone,
+                         c.second_contact, c.second_phone
                  FROM " . $this->table_name . " b
                  LEFT JOIN clients c ON b.client_id = c.id
                  WHERE b.id = :id AND b.photographer_id = :photographer_id";
