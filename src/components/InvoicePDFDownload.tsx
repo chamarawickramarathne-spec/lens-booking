@@ -86,106 +86,126 @@ const InvoicePDFDownload = ({
       // Contact Info
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      if (photographer?.email) {
-        doc.text(photographer.email, pageWidth / 2, yPosition, {
+      const contactEmail = photographer?.business_email || photographer?.email;
+      if (contactEmail) {
+        doc.text(contactEmail, pageWidth / 2, yPosition, {
           align: "center",
         });
         yPosition += 5;
       }
-      if (photographer?.phone) {
-        doc.text(photographer.phone, pageWidth / 2, yPosition, {
+      const contactPhone = photographer?.business_phone || photographer?.phone;
+      if (contactPhone) {
+        doc.text(contactPhone, pageWidth / 2, yPosition, {
           align: "center",
         });
         yPosition += 5;
       }
-      if (photographer?.website) {
-        doc.text(photographer.website, pageWidth / 2, yPosition, {
-          align: "center",
-        });
-        yPosition += 10;
-      } else {
-        yPosition += 5;
+      if (photographer?.business_address) {
+        const splitAddress = doc.splitTextToSize(
+          photographer.business_address,
+          pageWidth - 40
+        );
+        doc.text(splitAddress, pageWidth / 2, yPosition, { align: "center" });
+        yPosition += splitAddress.length * 5;
       }
+      yPosition += 5;
 
       // Divider Line
       doc.setDrawColor(200, 200, 200);
       doc.line(15, yPosition, pageWidth - 15, yPosition);
-      yPosition += 10;
-
-      // Invoice Title
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.text("INVOICE", 15, yPosition);
-      yPosition += 10;
-
-      // Invoice Details - Left Side
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.text("Invoice Number:", 15, yPosition);
-      doc.setFont("helvetica", "normal");
-      doc.text(invoice.invoice_number, 55, yPosition);
-      yPosition += 6;
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Issue Date:", 15, yPosition);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        format(new Date(invoice.issue_date), "MMM dd, yyyy"),
-        55,
-        yPosition
-      );
-      yPosition += 6;
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Due Date:", 15, yPosition);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        format(new Date(invoice.due_date), "MMM dd, yyyy"),
-        55,
-        yPosition
-      );
-      yPosition += 6;
-
-      doc.setFont("helvetica", "bold");
-      doc.text("Status:", 15, yPosition);
-      doc.setFont("helvetica", "normal");
-      doc.text(invoice.status.toUpperCase(), 55, yPosition);
       yPosition += 12;
 
-      // Bill To Section
+      // Two column layout: Bill To (left) and Invoice Details (right)
+      const leftColX = 15;
+      const rightColX = pageWidth / 2 + 10;
+      const sectionStartY = yPosition;
+
+      // Left Column - Bill To Section
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("Bill To:", 15, yPosition);
-      yPosition += 6;
+      doc.text("Bill To:", leftColX, yPosition);
+      yPosition += 8;
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(invoice.clients?.name || "N/A", 15, yPosition);
+      doc.text(invoice.clients?.name || "N/A", leftColX, yPosition);
       yPosition += 5;
       if (invoice.clients?.email) {
-        doc.text(invoice.clients.email, 15, yPosition);
+        doc.text(invoice.clients.email, leftColX, yPosition);
         yPosition += 5;
       }
       if (invoice.clients?.phone) {
-        doc.text(invoice.clients.phone, 15, yPosition);
+        doc.text(invoice.clients.phone, leftColX, yPosition);
         yPosition += 5;
       }
       if (invoice.clients?.address) {
-        doc.text(invoice.clients.address, 15, yPosition);
-        yPosition += 5;
+        const splitAddress = doc.splitTextToSize(
+          invoice.clients.address,
+          pageWidth / 2 - 20
+        );
+        doc.text(splitAddress, leftColX, yPosition);
+        yPosition += splitAddress.length * 5;
       }
-      yPosition += 10;
+
+      // Right Column - Invoice Details
+      let rightYPosition = sectionStartY;
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("INVOICE", rightColX, rightYPosition);
+      rightYPosition += 10;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Invoice #:", rightColX, rightYPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(invoice.invoice_number, rightColX + 25, rightYPosition);
+      rightYPosition += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Issue Date:", rightColX, rightYPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        format(new Date(invoice.issue_date), "MMM dd, yyyy"),
+        rightColX + 25,
+        rightYPosition
+      );
+      rightYPosition += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Due Date:", rightColX, rightYPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        format(new Date(invoice.due_date), "MMM dd, yyyy"),
+        rightColX + 25,
+        rightYPosition
+      );
+      rightYPosition += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Status:", rightColX, rightYPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(invoice.status.toUpperCase(), rightColX + 25, rightYPosition);
+
+      // Use the larger yPosition from either column
+      yPosition = Math.max(yPosition, rightYPosition) + 12;
+
+      // Invoice Details Section
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Invoice Details", 15, yPosition);
+      yPosition += 8;
 
       // Table Header
       doc.setFillColor(240, 240, 240);
       doc.rect(15, yPosition, pageWidth - 30, 8, "F");
 
+      doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text("Description", 20, yPosition + 5);
       doc.text("Amount", pageWidth - 45, yPosition + 5, { align: "right" });
       yPosition += 12;
 
-      // Table Content
+      // Table Content - Photography Service
       doc.setFont("helvetica", "normal");
       if (invoice.bookings?.title) {
         doc.text(
@@ -196,45 +216,39 @@ const InvoicePDFDownload = ({
       } else {
         doc.text("Photography Services", 20, yPosition);
       }
-      doc.text(
-        formatCurrency(invoice.subtotal),
-        pageWidth - 45,
-        yPosition,
-        { align: "right" }
-      );
-      yPosition += 10;
+      doc.text(formatCurrency(invoice.subtotal), pageWidth - 45, yPosition, {
+        align: "right",
+      });
+      yPosition += 8;
+
+      // Deposit Amount (if exists)
+      if (invoice.deposit_amount && invoice.deposit_amount > 0) {
+        doc.setTextColor(100, 100, 100);
+        doc.text("Deposit Amount", 20, yPosition);
+        doc.text(
+          formatCurrency(invoice.deposit_amount),
+          pageWidth - 45,
+          yPosition,
+          { align: "right" }
+        );
+        doc.setTextColor(0, 0, 0);
+        yPosition += 8;
+      }
 
       // Subtotal, Tax, Total Section
       const startX = pageWidth - 80;
 
-      doc.setFont("helvetica", "bold");
-      doc.text("Subtotal:", startX, yPosition);
       doc.setFont("helvetica", "normal");
-      doc.text(
-        formatCurrency(invoice.subtotal),
-        pageWidth - 20,
-        yPosition,
-        { align: "right" }
-      );
+      doc.text("Subtotal", startX, yPosition);
+      doc.text(formatCurrency(invoice.subtotal), pageWidth - 20, yPosition, {
+        align: "right",
+      });
       yPosition += 6;
 
-      doc.setFont("helvetica", "bold");
-      doc.text("Tax:", startX, yPosition);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        formatCurrency(invoice.tax_amount || 0),
-        pageWidth - 20,
-        yPosition,
-        { align: "right" }
-      );
-      yPosition += 6;
-
-      if (invoice.deposit_amount && invoice.deposit_amount > 0) {
-        doc.setFont("helvetica", "bold");
-        doc.text("Deposit:", startX, yPosition);
-        doc.setFont("helvetica", "normal");
+      if (invoice.tax_amount && invoice.tax_amount > 0) {
+        doc.text("Tax", startX, yPosition);
         doc.text(
-          `-${formatCurrency(invoice.deposit_amount)}`,
+          formatCurrency(invoice.tax_amount),
           pageWidth - 20,
           yPosition,
           { align: "right" }
@@ -249,34 +263,61 @@ const InvoicePDFDownload = ({
 
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("Total:", startX, yPosition);
+      doc.text("Total Amount", startX, yPosition);
       doc.text(
         formatCurrency(invoice.total_amount),
         pageWidth - 20,
         yPosition,
         { align: "right" }
       );
-      yPosition += 12;
+      yPosition += 15;
 
-      // Notes Section
+      // Payment Instructions Section
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Payment Instructions", 15, yPosition);
+      yPosition += 8;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const instructions = doc.splitTextToSize(
+        "Please make payment by the due date listed above. Contact us if you have any questions about this invoice.",
+        pageWidth - 30
+      );
+      doc.text(instructions, 15, yPosition);
+      yPosition += instructions.length * 5 + 5;
+
+      // Additional Notes Section
       if (invoice.notes) {
-        doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("Notes:", 15, yPosition);
+        doc.text("Additional Notes:", 15, yPosition);
         yPosition += 5;
 
         doc.setFont("helvetica", "normal");
         const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - 30);
         doc.text(splitNotes, 15, yPosition);
+        yPosition += splitNotes.length * 5;
       }
 
       // Footer
       const footerY = doc.internal.pageSize.getHeight() - 20;
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "italic");
-      doc.text("Thank you for your business!", pageWidth / 2, footerY, {
-        align: "center",
-      });
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "Thank you for choosing our photography services!",
+        pageWidth / 2,
+        footerY,
+        { align: "center" }
+      );
+      if (photographer?.website) {
+        doc.setFontSize(8);
+        doc.text(
+          `Visit us at: ${photographer.website}`,
+          pageWidth / 2,
+          footerY + 5,
+          { align: "center" }
+        );
+      }
 
       // Save the PDF
       doc.save(`Invoice_${invoice.invoice_number}.pdf`);
