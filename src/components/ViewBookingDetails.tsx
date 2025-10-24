@@ -31,7 +31,7 @@ const ViewBookingDetails = ({
   isOpen,
   onClose,
 }: ViewBookingDetailsProps) => {
-  const { formatCurrency } = useCurrency();
+  const { currency, formatCurrency } = useCurrency();
 
   if (!booking) return null;
 
@@ -74,314 +74,359 @@ const ViewBookingDetails = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Booking Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Title and Status */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold">{booking.title}</h3>
-              <div className="flex flex-wrap gap-3 mt-2">
-                {booking.package_type && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Package className="h-4 w-4" />
-                    <span className="font-medium">Event:</span>{" "}
-                    {booking.package_type}
-                  </div>
-                )}
-                {booking.package_name && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <span className="font-medium">Package:</span>{" "}
-                    {booking.package_name}
-                  </div>
-                )}
+          {/* Header: Title + Status + Meta */}
+          <div className="rounded-lg border bg-background p-5">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-semibold truncate">
+                  {booking.title}
+                </h3>
+                <div className="mt-1 text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                  {booking.package_type && (
+                    <div className="flex items-center gap-1">
+                      <Package className="h-4 w-4" />
+                      <span className="font-medium">Event:</span>
+                      <span>{booking.package_type}</span>
+                    </div>
+                  )}
+                  {booking.package_name && (
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">Package:</span>
+                      <span>{booking.package_name}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1 text-xs md:text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                  {booking.pre_shoot && (
+                    <div>
+                      <span className="font-medium">Pre-shoot:</span>{" "}
+                      {booking.pre_shoot}
+                    </div>
+                  )}
+                  {booking.album && (
+                    <div>
+                      <span className="font-medium">Album:</span>{" "}
+                      {booking.album}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3 mt-1">
-                {booking.pre_shoot && (
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">Pre-shoot:</span>{" "}
-                    {booking.pre_shoot}
-                  </div>
-                )}
-                {booking.album && (
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">Album:</span> {booking.album}
-                  </div>
-                )}
-              </div>
+              <Badge
+                className={getStatusColor(booking.status)}
+                variant="outline"
+              >
+                {getStatusLabel(booking.status)}
+              </Badge>
             </div>
-            <Badge className={getStatusColor(booking.status)} variant="outline">
-              {getStatusLabel(booking.status)}
-            </Badge>
           </div>
 
-          {/* Client Information */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Client Information
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Primary Contact */}
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Primary Contact
-                </div>
-                <div className="space-y-1.5 text-sm">
+          {/* Main grid: left content + right pricing */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Left column (spans 2) */}
+            <div className="md:col-span-2 space-y-4">
+              {/* Client Information */}
+              <div className="rounded-lg border bg-background p-4 space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <User className="h-4 w-4" /> Client Information
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <span className="font-medium">{booking.client_name || "N/A"}</span>
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Name</div>
+                      <div className="font-medium">
+                        {booking.client_name || "N/A"}
+                      </div>
+                    </div>
                   </div>
-                  {booking.client_email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <span className="break-all">{booking.client_email}</span>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground">Email</div>
+                      <div className="truncate">
+                        {booking.client_email || "N/A"}
+                      </div>
                     </div>
-                  )}
-                  {booking.client_phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <span>{booking.client_phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Phone</div>
+                      <div>{booking.client_phone || "-"}</div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Secondary Contact */}
-              {(booking.second_contact || booking.second_phone) && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Secondary Contact
-                  </div>
-                  <div className="space-y-1.5 text-sm">
+                {(booking.second_contact || booking.second_phone) && (
+                  <div className="pt-2 border-t grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     {booking.second_contact && (
                       <div className="flex items-center gap-2">
-                        <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="font-medium">{booking.second_contact}</span>
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Secondary Contact
+                          </div>
+                          <div className="font-medium">
+                            {booking.second_contact}
+                          </div>
+                        </div>
                       </div>
                     )}
                     {booking.second_phone && (
                       <div className="flex items-center gap-2">
-                        <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        <span>{booking.second_phone}</span>
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Secondary Phone
+                          </div>
+                          <div>{booking.second_phone}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Event schedule & locations (Wedding) or Date/Time/Location */}
+              {String(booking.package_type).toLowerCase() === "wedding" ? (
+                <div className="rounded-lg border bg-background p-4 space-y-4">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Event Schedule & Locations
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Wedding Date
+                      </div>
+                      <div className="font-medium">
+                        {booking.wedding_date
+                          ? format(
+                              new Date(booking.wedding_date),
+                              "MMMM dd, yyyy"
+                            )
+                          : "-"}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Wedding Hotel
+                      </div>
+                      <div className="font-medium">
+                        {booking.wedding_hotel_name || "-"}
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 my-1 border-t" />
+
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Homecoming Date
+                      </div>
+                      <div className="font-medium">
+                        {booking.homecoming_date
+                          ? format(
+                              new Date(booking.homecoming_date),
+                              "MMMM dd, yyyy"
+                            )
+                          : "-"}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Homecoming Hotel
+                      </div>
+                      <div className="font-medium">
+                        {booking.homecoming_hotel_name || "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border bg-background p-4 space-y-4">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Event Schedule & Locations
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Date
+                      </div>
+                      <div className="font-medium">
+                        {booking.booking_date
+                          ? format(
+                              new Date(booking.booking_date),
+                              "MMMM dd, yyyy"
+                            )
+                          : "-"}
+                      </div>
+                    </div>
+                    {(booking.start_time || booking.end_time) && (
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Time
+                        </div>
+                        <div className="font-medium">
+                          {booking.start_time && booking.end_time
+                            ? `${booking.start_time} - ${booking.end_time}`
+                            : booking.start_time || booking.end_time}
+                        </div>
+                      </div>
+                    )}
+                    {booking.location && (
+                      <div className="space-y-1 md:col-span-2">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Location
+                        </div>
+                        <div className="font-medium flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          {booking.location}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Event-specific details */}
-          {String(booking.package_type).toLowerCase() === "wedding" ? (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-4">
-              <h4 className="font-semibold">Wedding Details</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span className="font-medium">Wedding Date</span>
-                  </div>
-                  <p className="text-sm">
-                    {booking.wedding_date
-                      ? format(new Date(booking.wedding_date), "MMMM dd, yyyy")
-                      : "-"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">Wedding Hotel</span>
-                  </div>
-                  <p className="text-sm">{booking.wedding_hotel_name || "-"}</p>
-                </div>
-                {booking.homecoming_date && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span className="font-medium">Homecoming Date</span>
-                    </div>
-                    <p className="text-sm">
-                      {format(
-                        new Date(booking.homecoming_date),
-                        "MMMM dd, yyyy"
-                      )}
-                    </p>
-                  </div>
-                )}
-                {booking.homecoming_hotel_name && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span className="font-medium">Homecoming Hotel</span>
-                    </div>
-                    <p className="text-sm">{booking.homecoming_hotel_name}</p>
-                  </div>
-                )}
-              </div>
+              {/* Album & Product selections */}
+              <div className="rounded-lg border bg-background p-4 space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Package className="h-4 w-4" /> Album & Product Selections
+                </h4>
 
-              {/* Albums */}
-              {(booking.wedding_album ||
-                booking.pre_shoot_album ||
-                booking.family_album) && (
-                <div className="space-y-2">
-                  <div className="font-semibold">Albums</div>
-                  <div className="flex flex-wrap gap-2">
-                    {booking.wedding_album ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" /> Wedding Album
-                      </Badge>
-                    ) : null}
-                    {booking.pre_shoot_album ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" /> Pre-shoot Album
-                      </Badge>
-                    ) : null}
-                    {booking.family_album ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <Check className="h-3 w-3" /> Family Album
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-
-              {/* Sizes and extras */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(booking.group_photo_size ||
-                  booking.homecoming_photo_size) && (
+                {(booking.wedding_album ||
+                  booking.pre_shoot_album ||
+                  booking.family_album) && (
                   <div className="space-y-2">
-                    <div className="font-semibold">Selected Sizes</div>
-                    <div className="flex flex-wrap gap-2 text-sm">
-                      {booking.group_photo_size && (
-                        <Badge variant="outline">
-                          Group: {booking.group_photo_size}
+                    <div className="text-sm text-muted-foreground">
+                      Included Albums:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {booking.wedding_album && (
+                        <Badge variant="secondary" className="gap-1">
+                          <Check className="h-3 w-3" /> Wedding Album
                         </Badge>
                       )}
-                      {booking.homecoming_photo_size && (
-                        <Badge variant="outline">
-                          Homecoming: {booking.homecoming_photo_size}
+                      {booking.pre_shoot_album && (
+                        <Badge variant="secondary" className="gap-1">
+                          <Check className="h-3 w-3" /> Pre-shoot Album
+                        </Badge>
+                      )}
+                      {booking.family_album && (
+                        <Badge variant="secondary" className="gap-1">
+                          <Check className="h-3 w-3" /> Family Album
                         </Badge>
                       )}
                     </div>
                   </div>
                 )}
-                {booking.wedding_photo_sizes &&
-                  String(booking.wedding_photo_sizes).trim() !== "" && (
-                    <div className="space-y-2">
-                      <div className="font-semibold">Wedding Photo Sizes</div>
-                      <div className="flex flex-wrap gap-2">
-                        {String(booking.wedding_photo_sizes)
-                          .split(",")
-                          .map((s: string) => s.trim())
-                          .filter(Boolean)
-                          .map((size: string) => (
-                            <Badge key={size} variant="outline">
-                              {size}
-                            </Badge>
-                          ))}
+
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">
+                    Selected Photo Sizes:
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {booking.group_photo_size && (
+                      <Badge variant="outline">
+                        Group {booking.group_photo_size}
+                      </Badge>
+                    )}
+                    {booking.homecoming_photo_size && (
+                      <Badge variant="outline">
+                        Homecoming {booking.homecoming_photo_size}
+                      </Badge>
+                    )}
+                    {String(booking.wedding_photo_sizes || "")
+                      .split(",")
+                      .map((s: string) => s.trim())
+                      .filter(Boolean)
+                      .map((size: string) => (
+                        <Badge key={size} variant="outline">
+                          Wedding Photo {size}
+                        </Badge>
+                      ))}
+                  </div>
+                </div>
+
+                {booking.extra_thank_you_cards_qty &&
+                  Number(booking.extra_thank_you_cards_qty) > 0 && (
+                    <div className="pt-2 border-t text-sm">
+                      <div className="text-muted-foreground">Extra Items:</div>
+                      <div>
+                        Extra Thank You Cards:{" "}
+                        {booking.extra_thank_you_cards_qty}
                       </div>
                     </div>
                   )}
               </div>
 
-              {booking.extra_thank_you_cards_qty &&
-                Number(booking.extra_thank_you_cards_qty) > 0 && (
-                  <div className="text-sm">
-                    <span className="font-medium">Extra Thank You Cards:</span>{" "}
-                    {booking.extra_thank_you_cards_qty}
-                  </div>
-                )}
-            </div>
-          ) : (
-            <>
-              {/* Date and Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              {/* Description (optional) */}
+              {booking.description && (
+                <div className="rounded-lg border bg-background p-4 space-y-2">
                   <h4 className="font-semibold flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Date
+                    <FileText className="h-4 w-4" /> Description
                   </h4>
-                  <p className="text-sm">
-                    {format(new Date(booking.booking_date), "MMMM dd, yyyy")}
+                  <p className="text-sm whitespace-pre-wrap">
+                    {booking.description}
                   </p>
                 </div>
+              )}
+            </div>
 
-                {(booking.start_time || booking.end_time) && (
-                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Time
-                    </h4>
-                    <p className="text-sm">
-                      {booking.start_time && booking.end_time
-                        ? `${booking.start_time} - ${booking.end_time}`
-                        : booking.start_time || booking.end_time}
-                    </p>
+            {/* Right column (pricing summary) */}
+            <div className="md:col-span-1">
+              <div className="rounded-lg border bg-background p-4 space-y-4 sticky md:top-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" /> Pricing Summary
+                </h4>
+                <div className="space-y-3 text-sm">
+                  {booking.deposit_amount != null &&
+                    booking.deposit_amount !== "" && (
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-muted-foreground">
+                          Deposit Amount
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-muted-foreground">
+                            {currency}
+                          </div>
+                          <div className="font-medium">
+                            {formatCurrency(booking.deposit_amount)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  <div className="border-t pt-3 flex items-start justify-between gap-2">
+                    <div className="font-semibold">Total Amount</div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">
+                        {currency}
+                      </div>
+                      <div className="font-semibold text-lg">
+                        {formatCurrency(booking.total_amount || 0)}
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  All prices are final as of booking date.
+                </div>
               </div>
 
-              {/* Location */}
-              {booking.location && (
-                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Location
-                  </h4>
-                  <p className="text-sm">{booking.location}</p>
+              {/* Timestamps */}
+              <div className="mt-4 text-xs text-muted-foreground">
+                <div>
+                  Created: {format(new Date(booking.created_at), "PPpp")}
                 </div>
-              )}
-            </>
-          )}
-
-          {/* Pricing */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Pricing
-            </h4>
-            <div className="space-y-2 text-sm">
-              {booking.deposit_amount && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Deposit Amount:</span>
-                  <span className="font-medium">
-                    {formatCurrency(booking.deposit_amount)}
-                  </span>
+                <div>
+                  Last Updated: {format(new Date(booking.updated_at), "PPpp")}
                 </div>
-              )}
-              {booking.total_amount && (
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-semibold">Total Amount:</span>
-                  <span className="font-semibold text-lg">
-                    {formatCurrency(booking.total_amount)}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Description */}
-          {booking.description && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Description
-              </h4>
-              <p className="text-sm whitespace-pre-wrap">
-                {booking.description}
-              </p>
-            </div>
-          )}
-
-          {/* Timestamps */}
-          <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
-            <div>Created: {format(new Date(booking.created_at), "PPpp")}</div>
-            <div>
-              Last Updated: {format(new Date(booking.updated_at), "PPpp")}
+              </div>
             </div>
           </div>
         </div>
