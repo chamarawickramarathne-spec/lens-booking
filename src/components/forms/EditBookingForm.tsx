@@ -138,7 +138,9 @@ const EditBookingForm = ({
   useEffect(() => {
     if (watchPackageType === "Wedding" && watchWeddingDate) {
       // Sync booking_date with wedding_date for backend compatibility
-      form.setValue("booking_date", watchWeddingDate as any, { shouldValidate: true });
+      form.setValue("booking_date", watchWeddingDate as any, {
+        shouldValidate: true,
+      });
     }
   }, [watchPackageType, watchWeddingDate]);
 
@@ -154,7 +156,9 @@ const EditBookingForm = ({
         title: booking.title || "",
         description: booking.description || "",
         client_id: booking.client_id ? String(booking.client_id) : "",
-        booking_date: booking.booking_date ? new Date(booking.booking_date) : (undefined as any),
+        booking_date: booking.booking_date
+          ? new Date(booking.booking_date)
+          : (undefined as any),
         start_time: booking.start_time || "",
         end_time: booking.end_time || "",
         location: booking.location || "",
@@ -166,16 +170,27 @@ const EditBookingForm = ({
         deposit_amount: booking.deposit_amount?.toString() || "",
         // wedding fields
         wedding_hotel_name: booking.wedding_hotel_name || "",
-        wedding_date: booking.wedding_date ? new Date(booking.wedding_date) : (undefined as any),
+        wedding_date: booking.wedding_date
+          ? new Date(booking.wedding_date)
+          : (undefined as any),
         homecoming_hotel_name: booking.homecoming_hotel_name || "",
-        homecoming_date: booking.homecoming_date ? new Date(booking.homecoming_date) : (undefined as any),
+        homecoming_date: booking.homecoming_date
+          ? new Date(booking.homecoming_date)
+          : (undefined as any),
         wedding_album: !!booking.wedding_album,
         pre_shoot_album: !!booking.pre_shoot_album,
         family_album: !!booking.family_album,
         group_photo_size: booking.group_photo_size || "",
         homecoming_photo_size: booking.homecoming_photo_size || "",
-        wedding_photo_sizes: booking.wedding_photo_sizes ? String(booking.wedding_photo_sizes).split(",").filter((s: string) => s && s.trim().length > 0) : [],
-        extra_thank_you_cards_qty: booking.extra_thank_you_cards_qty != null ? String(booking.extra_thank_you_cards_qty) : "",
+        wedding_photo_sizes: booking.wedding_photo_sizes
+          ? String(booking.wedding_photo_sizes)
+              .split(",")
+              .filter((s: string) => s && s.trim().length > 0)
+          : [],
+        extra_thank_you_cards_qty:
+          booking.extra_thank_you_cards_qty != null
+            ? String(booking.extra_thank_you_cards_qty)
+            : "",
       });
     }
   }, [booking, isOpen, form]);
@@ -207,7 +222,9 @@ const EditBookingForm = ({
         description: data.description || null,
         client_id: parseInt(data.client_id, 10),
         booking_date: format(
-          (isWedding && data.wedding_date ? (data.wedding_date as Date) : data.booking_date) as Date,
+          (isWedding && data.wedding_date
+            ? (data.wedding_date as Date)
+            : data.booking_date) as Date,
           "yyyy-MM-dd"
         ),
         start_time: data.start_time || null,
@@ -241,7 +258,9 @@ const EditBookingForm = ({
         bookingData.family_album = !!data.family_album;
         bookingData.group_photo_size = data.group_photo_size || null;
         bookingData.homecoming_photo_size = data.homecoming_photo_size || null;
-        bookingData.wedding_photo_sizes = (data.wedding_photo_sizes || []).join(",");
+        bookingData.wedding_photo_sizes = (data.wedding_photo_sizes || []).join(
+          ","
+        );
         bookingData.extra_thank_you_cards_qty = data.extra_thank_you_cards_qty
           ? Number(data.extra_thank_you_cards_qty as any)
           : 0;
@@ -352,13 +371,12 @@ const EditBookingForm = ({
             {/* Wedding-specific section when Wedding selected */}
             {watchPackageType === "Wedding" && (
               <div className="space-y-4 border rounded-md p-3">
-                <h4 className="text-sm font-semibold">Wedding Details</h4>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                   <FormField
                     control={form.control}
                     name="wedding_hotel_name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Wedding Hotel Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Wedding hotel" {...field} />
@@ -373,7 +391,7 @@ const EditBookingForm = ({
                     render={({ field }) => {
                       const [isCal, setIsCal] = useState(false);
                       return (
-                        <FormItem className="flex flex-col">
+                        <FormItem className="flex flex-col min-w-0">
                           <FormLabel>Wedding Date</FormLabel>
                           <Popover open={isCal} onOpenChange={setIsCal}>
                             <PopoverTrigger asChild>
@@ -381,7 +399,7 @@ const EditBookingForm = ({
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
+                                    "w-full h-10 pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
@@ -394,7 +412,10 @@ const EditBookingForm = ({
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
@@ -413,11 +434,14 @@ const EditBookingForm = ({
                       );
                     }}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                   <FormField
                     control={form.control}
                     name="homecoming_hotel_name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Homecoming Hotel Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Homecoming hotel" {...field} />
@@ -432,7 +456,7 @@ const EditBookingForm = ({
                     render={({ field }) => {
                       const [isCal2, setIsCal2] = useState(false);
                       return (
-                        <FormItem className="flex flex-col">
+                        <FormItem className="flex flex-col min-w-0">
                           <FormLabel>Homecoming Date</FormLabel>
                           <Popover open={isCal2} onOpenChange={setIsCal2}>
                             <PopoverTrigger asChild>
@@ -440,7 +464,7 @@ const EditBookingForm = ({
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
+                                    "w-full h-10 pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
@@ -453,7 +477,10 @@ const EditBookingForm = ({
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
@@ -529,7 +556,10 @@ const EditBookingForm = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Group Photo Size</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select size" />
@@ -553,7 +583,10 @@ const EditBookingForm = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Homecoming Photo Size</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select size" />
@@ -577,7 +610,16 @@ const EditBookingForm = ({
                 <div className="space-y-2">
                   <Label>Wedding Photo Sizes (choose one or more)</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    {["4x6","5x7","6x8","8x12","10x15","12x18","16x20","20x30"].map((size) => (
+                    {[
+                      "4x6",
+                      "5x7",
+                      "6x8",
+                      "8x12",
+                      "10x15",
+                      "12x18",
+                      "16x20",
+                      "20x30",
+                    ].map((size) => (
                       <FormField
                         key={size}
                         control={form.control}
@@ -612,7 +654,12 @@ const EditBookingForm = ({
                     <FormItem>
                       <FormLabel>Extra Thank You Cards Qty</FormLabel>
                       <FormControl>
-                        <Input type="number" min={0} placeholder="0" {...field} />
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="0"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -629,7 +676,8 @@ const EditBookingForm = ({
                     control={form.control}
                     name="booking_date"
                     render={({ field }) => {
-                      const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+                      const [isCalendarOpen, setIsCalendarOpen] =
+                        useState(false);
 
                       return (
                         <FormItem className="flex flex-col min-w-0">
@@ -656,7 +704,10 @@ const EditBookingForm = ({
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
                               <Calendar
                                 mode="single"
                                 selected={field.value}
