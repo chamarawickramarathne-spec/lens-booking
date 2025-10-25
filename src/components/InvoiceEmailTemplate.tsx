@@ -20,7 +20,10 @@ const InvoiceEmailTemplate = ({
   const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost${imagePath}`;
+    
+    // Use the image proxy to get images with proper CORS headers
+    const encodedPath = encodeURIComponent(imagePath);
+    return `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
   };
 
   const profileImageUrl = getImageUrl(photographer?.profile_picture);
