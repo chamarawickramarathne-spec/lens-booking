@@ -183,20 +183,36 @@ const InvoiceStatusManager = ({
 
       await apiClient.updateInvoice(invoice.id, updateData);
 
-      let statusMessage = `Invoice status updated to ${
-        allStatusOptions.find((s) => s.value === newStatus)?.label
-      }`;
+      // Send invoice email when status changes to pending
+      if (newStatus === "pending") {
+        try {
+          await apiClient.sendInvoiceEmail(invoice.id);
+          toast({
+            title: "Success",
+            description: "Invoice sent successfully! Email has been sent to the client.",
+          });
+        } catch (emailError: any) {
+          console.error("Failed to send email:", emailError);
+          toast({
+            title: "Warning",
+            description: "Invoice status updated, but failed to send email to client.",
+            variant: "default",
+          });
+        }
+      } else {
+        let statusMessage = `Invoice status updated to ${
+          allStatusOptions.find((s) => s.value === newStatus)?.label
+        }`;
 
-      if (newStatus === "paid") {
-        statusMessage += ". Payment date has been recorded.";
-      } else if (newStatus === "pending") {
-        statusMessage += ". Payment schedules have been created.";
+        if (newStatus === "paid") {
+          statusMessage += ". Payment date has been recorded.";
+        }
+
+        toast({
+          title: "Success",
+          description: statusMessage,
+        });
       }
-
-      toast({
-        title: "Success",
-        description: statusMessage,
-      });
 
       onStatusChange();
     } catch (error: any) {

@@ -17,19 +17,31 @@ const InvoicePDFDownload = ({
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
 
-  const loadImageAsBase64 = async (url: string): Promise<string> => {
+  const loadImageAsBase64 = async (url: string): Promise<{ data: string; format: string }> => {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
+      
+      // Detect image format from blob type
+      let format = 'JPEG';
+      if (blob.type.includes('png')) {
+        format = 'PNG';
+      } else if (blob.type.includes('jpg') || blob.type.includes('jpeg')) {
+        format = 'JPEG';
+      }
+      
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
+        reader.onloadend = () => resolve({ 
+          data: reader.result as string,
+          format: format
+        });
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
     } catch (error) {
       console.error("Failed to load image:", error);
-      return "";
+      return { data: "", format: "JPEG" };
     }
   };
 
@@ -39,45 +51,23 @@ const InvoicePDFDownload = ({
     return `http://localhost${imagePath}`;
   };
 
-  // Load image and detect format for jsPDF (PNG or JPEG)
-  const loadImageWithFormat = async (
-    url: string
-  ): Promise<{ dataUrl: string; format: "PNG" | "JPEG" }> => {
-    try {
-      const response = await fetch(url, { mode: "cors" });
-      const blob = await response.blob();
-      const format: "PNG" | "JPEG" = blob.type.includes("png") ? "PNG" : "JPEG";
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      return { dataUrl, format };
-    } catch (e) {
-      console.error("Failed to load logo:", e);
-      return { dataUrl: "", format: "PNG" };
-    }
-  };
-
   const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let yPosition = 20;
 
-      // Add logo/profile image (same as Email Preview)
-      const logoPath = photographer?.profile_picture;
-      const logoUrl = getImageUrl(logoPath);
-      if (logoUrl) {
+      // Add profile image/logo if available
+      const profileImageUrl = getImageUrl(photographer?.profile_picture);
+      if (profileImageUrl) {
         try {
-          const { dataUrl, format } = await loadImageWithFormat(logoUrl);
-          if (dataUrl) {
-            const imgSize = 40; // larger for visibility, similar to email preview
+          const imageResult = await loadImageAsBase64(profileImageUrl);
+          if (imageResult.data) {
+            const imgSize = 40; // Larger size to match Email Preview (96px -> ~40 in PDF scale)
             const imgX = (pageWidth - imgSize) / 2;
             doc.addImage(
-              dataUrl,
-              format,
+              imageResult.data,
+              imageResult.format,
               imgX,
               yPosition,
               imgSize,
@@ -88,7 +78,7 @@ const InvoicePDFDownload = ({
             yPosition += imgSize + 8;
           }
         } catch (error) {
-          console.error("Failed to add logo to PDF:", error);
+          console.error("Failed to add profile image to PDF:", error);
         }
       }
 

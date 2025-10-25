@@ -299,6 +299,13 @@ class ApiClient {
     });
   }
 
+  async sendInvoiceEmail(invoiceId: number) {
+    return this.request('/send-invoice-email', {
+      method: 'POST',
+      body: JSON.stringify({ invoice_id: invoiceId }),
+    });
+  }
+
   async deleteInvoice(id: number) {
     return this.request(`/invoices/${id}`, {
       method: 'DELETE',
