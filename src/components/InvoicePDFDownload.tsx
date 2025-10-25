@@ -49,8 +49,16 @@ const InvoicePDFDownload = ({
     if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
     
+    // Remove leading slash and /lens-booking prefix if present
+    let cleanPath = imagePath;
+    if (cleanPath.startsWith("/lens-booking/")) {
+      cleanPath = cleanPath.substring("/lens-booking/".length);
+    } else if (cleanPath.startsWith("/")) {
+      cleanPath = cleanPath.substring(1);
+    }
+    
     // Use the image proxy to get images with proper CORS headers
-    const encodedPath = encodeURIComponent(imagePath);
+    const encodedPath = encodeURIComponent(cleanPath);
     return `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
   };
 

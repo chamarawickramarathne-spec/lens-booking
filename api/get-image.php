@@ -24,7 +24,10 @@ if (empty($imagePath)) {
 // Security: Prevent directory traversal attacks
 $imagePath = str_replace(['../', '..\\'], '', $imagePath);
 
-// Build the full path
+// Remove any leading slashes
+$imagePath = ltrim($imagePath, '/\\');
+
+// Build the full path - go up one level from api directory to reach lens-booking root
 $fullPath = __DIR__ . '/../' . $imagePath;
 
 // Check if file exists
