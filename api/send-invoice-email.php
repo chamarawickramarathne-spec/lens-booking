@@ -7,6 +7,10 @@
 // Include CORS configuration first
 require_once 'config/cors.php';
 
+// Set CORS headers and handle preflight
+setCORSHeaders();
+handleCORSPreflight();
+
 require_once 'config/database.php';
 require_once 'middleware/auth.php';
 
