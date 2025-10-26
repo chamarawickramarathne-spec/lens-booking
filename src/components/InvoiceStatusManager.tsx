@@ -189,13 +189,15 @@ const InvoiceStatusManager = ({
           await apiClient.sendInvoiceEmail(invoice.id);
           toast({
             title: "Success",
-            description: "Invoice sent successfully! Email has been sent to the client.",
+            description:
+              "Invoice sent successfully! Email has been sent to the client.",
           });
         } catch (emailError: any) {
           console.error("Failed to send email:", emailError);
           toast({
             title: "Warning",
-            description: "Invoice status updated, but failed to send email to client.",
+            description:
+              "Invoice status updated, but failed to send email to client.",
             variant: "default",
           });
         }

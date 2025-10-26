@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Camera,
+  Mail,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { apiClient } from "@/integrations/api/client";
@@ -35,6 +36,7 @@ const navigationItems = [
   { title: "Payment Schedules", url: "/payment-schedules", icon: CreditCard },
   { title: "Galleries", url: "/galleries", icon: Image },
   { title: "Profile", url: "/profile", icon: Settings },
+  { title: "Test Email", url: "/test-email", icon: Mail },
 ];
 
 export function AppSidebar() {

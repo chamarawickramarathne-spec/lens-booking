@@ -20,7 +20,7 @@ const InvoiceEmailTemplate = ({
   const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
-    
+
     // Remove leading slash and /lens-booking prefix if present
     let cleanPath = imagePath;
     if (cleanPath.startsWith("/lens-booking/")) {
@@ -28,7 +28,7 @@ const InvoiceEmailTemplate = ({
     } else if (cleanPath.startsWith("/")) {
       cleanPath = cleanPath.substring(1);
     }
-    
+
     // Use the image proxy to get images with proper CORS headers
     const encodedPath = encodeURIComponent(cleanPath);
     return `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;

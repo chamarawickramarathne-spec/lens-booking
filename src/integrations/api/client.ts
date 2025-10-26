@@ -306,6 +306,13 @@ class ApiClient {
     });
   }
 
+  async sendTestEmail(data: { to: string; subject: string; body: string }) {
+    return this.request('/send-test-email', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async deleteInvoice(id: number) {
     return this.request(`/invoices/${id}`, {
       method: 'DELETE',

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -319,7 +319,7 @@ const PaymentSchedules = () => {
                     {/* Render grouped invoices */}
                     {Object.entries(grouped).map(
                       ([invoiceNumber, schedules]) => (
-                        <>
+                        <Fragment key={invoiceNumber}>
                           {schedules.map((schedule, idx) => (
                             <TableRow
                               key={schedule.id}
@@ -370,7 +370,7 @@ const PaymentSchedules = () => {
                               </TableCell>
                             </TableRow>
                           ))}
-                        </>
+                        </Fragment>
                       )
                     )}
                     {/* Render schedules without invoice */}

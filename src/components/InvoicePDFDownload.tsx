@@ -17,25 +17,28 @@ const InvoicePDFDownload = ({
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
 
-  const loadImageAsBase64 = async (url: string): Promise<{ data: string; format: string }> => {
+  const loadImageAsBase64 = async (
+    url: string
+  ): Promise<{ data: string; format: string }> => {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
-      
+
       // Detect image format from blob type
-      let format = 'JPEG';
-      if (blob.type.includes('png')) {
-        format = 'PNG';
-      } else if (blob.type.includes('jpg') || blob.type.includes('jpeg')) {
-        format = 'JPEG';
+      let format = "JPEG";
+      if (blob.type.includes("png")) {
+        format = "PNG";
+      } else if (blob.type.includes("jpg") || blob.type.includes("jpeg")) {
+        format = "JPEG";
       }
-      
+
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve({ 
-          data: reader.result as string,
-          format: format
-        });
+        reader.onloadend = () =>
+          resolve({
+            data: reader.result as string,
+            format: format,
+          });
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
@@ -48,7 +51,7 @@ const InvoicePDFDownload = ({
   const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
-    
+
     // Remove leading slash and /lens-booking prefix if present
     let cleanPath = imagePath;
     if (cleanPath.startsWith("/lens-booking/")) {
@@ -56,7 +59,7 @@ const InvoicePDFDownload = ({
     } else if (cleanPath.startsWith("/")) {
       cleanPath = cleanPath.substring(1);
     }
-    
+
     // Use the image proxy to get images with proper CORS headers
     const encodedPath = encodeURIComponent(cleanPath);
     return `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
