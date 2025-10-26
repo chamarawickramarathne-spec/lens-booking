@@ -2,16 +2,27 @@
 require_once __DIR__ . '/config/cors.php';
 require_once __DIR__ . '/middleware/auth.php';
 
-// Set CORS headers
+// Set CORS headers FIRST before any output
 setCORSHeaders();
 
-// Handle preflight
-if (handleCORSPreflight()) {
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-// Require authentication
-requireAuth();
+// Authenticate user
+$auth = new JWTAuth();
+$user_data = $auth->getUserFromHeader();
+
+if (!$user_data) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Unauthorized: Invalid or missing token'
+    ]);
+    exit;
+}
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
