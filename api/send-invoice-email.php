@@ -76,27 +76,13 @@ class InvoiceEmailController {
                 return;
             }
 
-            // Get photographer details (graceful fallback if table missing)
-            $photographer = null;
-            try {
-                $userQuery = "SELECT first_name, last_name, email, phone, business_name, business_email, business_phone
-                              FROM users WHERE id = :user_id";
-                $userStmt = $this->db->prepare($userQuery);
-                $userStmt->bindParam(":user_id", $user_data['user_id']);
-                $userStmt->execute();
-                $photographer = $userStmt->fetch(PDO::FETCH_ASSOC) ?: null;
-            } catch (Exception $e) {
-                // If users table doesn't exist or query fails, fallback to token data
-                $photographer = [
-                    'first_name' => null,
-                    'last_name' => null,
-                    'email' => $user_data['email'] ?? null,
-                    'phone' => null,
-                    'business_name' => null,
-                    'business_email' => $user_data['email'] ?? null,
-                    'business_phone' => null,
-                ];
-            }
+            // Get photographer details
+            $userQuery = "SELECT first_name, last_name, email, phone, business_name, business_email, business_phone
+                          FROM photographers WHERE id = :user_id";
+            $userStmt = $this->db->prepare($userQuery);
+            $userStmt->bindParam(":user_id", $user_data['user_id']);
+            $userStmt->execute();
+            $photographer = $userStmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$invoice['client_email']) {
                 http_response_code(400);
@@ -106,16 +92,11 @@ class InvoiceEmailController {
 
             // Prepare email
             $to = $invoice['client_email'];
-            $subjectFrom = $photographer['business_name']
-                ?: trim(($photographer['first_name'] ?? '') . ' ' . ($photographer['last_name'] ?? ''))
-                ?: 'Your Photography';
-            $subject = "Invoice #{$invoice['invoice_number']} from " . $subjectFrom;
+            $subject = "Invoice #{$invoice['invoice_number']} from " . ($photographer['business_name'] ?: ($photographer['first_name'] . ' ' . $photographer['last_name']));
             
-            $businessName = $photographer['business_name']
-                ?: trim(($photographer['first_name'] ?? '') . ' ' . ($photographer['last_name'] ?? ''))
-                ?: 'Your Photography';
-            $contactEmail = ($photographer['business_email'] ?? null) ?: ($photographer['email'] ?? null) ?: ($user_data['email'] ?? null);
-            $contactPhone = ($photographer['business_phone'] ?? null) ?: ($photographer['phone'] ?? null);
+            $businessName = $photographer['business_name'] ?: ($photographer['first_name'] . ' ' . $photographer['last_name']);
+            $contactEmail = $photographer['business_email'] ?: $photographer['email'];
+            $contactPhone = $photographer['business_phone'] ?: $photographer['phone'];
 
             // Create email message
             $message = "Dear {$invoice['client_name']},\n\n";
@@ -151,7 +132,7 @@ class InvoiceEmailController {
             // For development, we'll just log the email instead of actually sending it
             
             // Check if we're in development mode (no proper mail server)
-            $isDevelopment = true; // Development mode: log email instead of sending
+            $isDevelopment = false; // Set to false in production
             
             if ($isDevelopment) {
                 // In development, just log the email and return success

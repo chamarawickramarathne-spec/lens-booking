@@ -12,7 +12,6 @@ import Invoices from "./pages/Invoices";
 import PaymentSchedules from "./pages/PaymentSchedules";
 import Galleries from "./pages/Galleries";
 import Profile from "./pages/Profile";
-import TestEmail from "./pages/TestEmail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,14 +99,6 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/test-email"
-            element={
-              <ProtectedRoute>
-                <TestEmail />
               </ProtectedRoute>
             }
           />

@@ -3,7 +3,7 @@
  * Replaces Supabase integration with PHP backend API calls
  */
 
-const API_BASE_URL = 'http://localhost/lens-booking/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/lens-booking/api';
 
 class ApiClient {
   private baseURL: string;
@@ -303,13 +303,6 @@ class ApiClient {
     return this.request('/send-invoice-email', {
       method: 'POST',
       body: JSON.stringify({ invoice_id: invoiceId }),
-    });
-  }
-
-  async sendTestEmail(data: { to: string; subject: string; body: string }) {
-    return this.request('/send-test-email', {
-      method: 'POST',
-      body: JSON.stringify(data),
     });
   }
 
