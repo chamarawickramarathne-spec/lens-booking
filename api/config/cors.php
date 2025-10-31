@@ -7,6 +7,8 @@
 function setCORSHeaders() {
     // Allow requests from the React app and common development ports
     $allowed_origins = [
+        'https://lensmanager.hireartist.studio', // Production domain
+        'http://lensmanager.hireartist.studio', // Production domain (http fallback)
         'http://localhost:8080', // Current Vite dev server port
         'http://localhost:8081',
         'http://localhost:8082',
@@ -24,8 +26,11 @@ function setCORSHeaders() {
     if (in_array($origin, $allowed_origins)) {
         header("Access-Control-Allow-Origin: $origin");
     } else {
-        // Default to the current React app origin
-        header("Access-Control-Allow-Origin: http://localhost:8080");
+        // Default to the production domain or localhost
+        $defaultOrigin = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') 
+            ? 'https://lensmanager.hireartist.studio' 
+            : 'http://localhost:8080';
+        header("Access-Control-Allow-Origin: $defaultOrigin");
     }
     
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
