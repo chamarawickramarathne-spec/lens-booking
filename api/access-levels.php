@@ -138,10 +138,13 @@ class AccessLevelsController {
 // Handle request
 $access_levels_controller = new AccessLevelsController();
 $request_method = $_SERVER["REQUEST_METHOD"];
-$request_uri = $_SERVER['REQUEST_URI'];
+$request_uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/access-levels', '', parse_url($request_uri, PHP_URL_PATH));
+// Determine endpoint suffix after "/access-levels"
+// This approach works whether the app is deployed at a subpath (e.g. /lens-booking/api)
+// or at the domain root (/api).
+$parts = explode('/access-levels', $request_uri_path, 2);
+$endpoint = isset($parts[1]) ? $parts[1] : '';
 
 switch ($request_method) {
     case 'GET':
