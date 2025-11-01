@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Eye, EyeOff, Camera } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface SignupFormProps {
   onToggleMode: () => void;
@@ -74,10 +74,12 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
 
   return (
     <form onSubmit={handleSignup} className="space-y-6">
-      <div className="flex items-center justify-center mb-6">
-        <div className="p-3 bg-primary rounded-full">
-          <Camera className="h-8 w-8 text-primary-foreground" />
-        </div>
+      <div className="flex items-center justify-center mb-8">
+        <img 
+          src="/hireartist_logo_dim.png" 
+          alt="HireArtist Logo" 
+          className="h-24 w-auto object-contain"
+        />
       </div>
 
       <div className="space-y-2">
@@ -162,7 +164,7 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
 
       <Button
         type="submit"
-        className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+        className="w-full bg-gradient-to-r from-[#e94560] to-[#533483] hover:opacity-90 transition-opacity text-white font-semibold shadow-lg hover:shadow-xl"
         disabled={isLoading}
       >
         {isLoading ? "Creating account..." : "Create Account"}
@@ -173,7 +175,7 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
           type="button"
           variant="link"
           onClick={onToggleMode}
-          className="text-muted-foreground hover:text-primary"
+          className="text-gray-600 hover:text-[#e94560] transition-colors"
         >
           Already have an account? Sign in
         </Button>
