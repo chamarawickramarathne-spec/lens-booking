@@ -49,8 +49,8 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "bg-primary text-primary-foreground font-medium"
-      : "hover:bg-secondary";
+      ? "bg-gradient-primary text-primary-foreground font-medium shadow-elegant"
+      : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground";
 
   const handleLogout = async () => {
     try {
@@ -78,7 +78,7 @@ export function AppSidebar() {
     >
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-primary font-semibold px-4 py-3">
+          <SidebarGroupLabel className="font-semibold px-4 py-3 bg-gradient-primary bg-clip-text text-transparent">
             {!collapsed && "PhotoStudio Manager"}
           </SidebarGroupLabel>
 
@@ -92,8 +92,8 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                           isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                            ? "bg-gradient-primary text-primary-foreground font-medium shadow-elegant"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
                         }`
                       }
                     >
