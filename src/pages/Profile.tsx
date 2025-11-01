@@ -127,7 +127,7 @@ const Profile = () => {
         setAccessLevel(response.access_level.name);
       }
     } catch (error) {
-      console.error("Failed to fetch access level:", error);
+      // Silently handle access level fetch error
     }
   };
 
@@ -260,11 +260,7 @@ const Profile = () => {
                       src={imagePreview}
                       alt="Profile"
                       onError={(e) => {
-                        console.error("Failed to load image:", imagePreview);
                         e.currentTarget.style.display = "none";
-                      }}
-                      onLoad={() => {
-                        console.log("Image loaded successfully:", imagePreview);
                       }}
                     />
                     <AvatarFallback className="text-4xl">

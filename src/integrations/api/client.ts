@@ -40,15 +40,11 @@ class ApiClient {
     };
 
     try {
-      console.log('Making API request to:', url, 'with config:', config);
       const response = await fetch(url, config);
-
-      console.log('Response status:', response.status, 'headers:', Object.fromEntries(response.headers.entries()));
 
       const rawText = await response.text();
 
       if (!response.ok) {
-        console.error('API Error Response:', rawText);
         // Attempt to parse JSON error if possible
         try {
           const errJson = JSON.parse(rawText);
@@ -81,14 +77,11 @@ class ApiClient {
           candidate = cleaned.slice(idx);
         }
         const data = JSON.parse(candidate);
-        console.log('API Response data:', data);
         return data;
       } catch (e) {
-        console.error('Failed to parse JSON. Raw response:', rawText);
         throw new Error('Invalid JSON response from server');
       }
     } catch (error) {
-      console.error('API request error:', error);
       throw error;
     }
   }
