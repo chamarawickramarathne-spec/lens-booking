@@ -8,13 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Brand tokens aligned to logo (warm red → orange gradient) */
-    --brand-primary: 16 85% 42%;    /* deep warm red/orange */
-    --brand-primary-glow: 28 95% 56%; /* vibrant orange for glow */
-    --brand-accent: 35 95% 58%;     /* golden accent */
-
     /* Photography-inspired color palette */
-  --background: 0 0% 98%;
+    --background: 250 250% 98%;
     --foreground: 240 20% 15%;
 
     --card: 0 0% 100%;
@@ -23,10 +18,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 20% 15%;
 
-  /* Primary derived from brand */
-  --primary: var(--brand-primary);
+  /* Brand primary aligned to logo (warm orange-red) */
+  --primary: 18 85% 46%;
   --primary-foreground: 0 0% 98%;
-  --primary-glow: var(--brand-primary-glow);
+  --primary-glow: 28 95% 58%;
 
     /* Warm grey secondary */
     --secondary: 240 10% 96%;
@@ -35,8 +30,8 @@ All colors MUST be HSL.
     --muted: 240 5% 96%;
     --muted-foreground: 240 6% 45%;
 
-  /* Accent derived from brand */
-  --accent: var(--brand-accent);
+  /* Golden accent to complement primary */
+  --accent: 35 90% 58%;
     --accent-foreground: 240 20% 15%;
 
     --destructive: 0 75% 60%;
@@ -44,7 +39,7 @@ All colors MUST be HSL.
 
     --border: 240 15% 92%;
     --input: 240 15% 97%;
-    --ring: 240 60% 25%;
+  --ring: 18 85% 46%;
 
     /* Success color for completed items */
     --success: 140 60% 45%;
@@ -55,8 +50,8 @@ All colors MUST be HSL.
     --warning-foreground: 240 20% 15%;
 
     /* Gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-glow)) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-glow)) 70%);
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(240 10% 98%));
 
     /* Shadows */
@@ -65,23 +60,24 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Sidebar palette tuned to brand */
-    --sidebar-background: 24 30% 98%;
-    --sidebar-foreground: 24 25% 18%;
-    --sidebar-primary: var(--brand-primary);
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 45% 96%;
-    --sidebar-accent-foreground: 24 25% 18%;
-    --sidebar-border: 24 20% 92%;
-    --sidebar-ring: var(--brand-primary-glow);
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    /* Dark mode brand tokens (warm orange/red, elevated lightness) */
-    --brand-primary: 18 70% 68%;
-    --brand-primary-glow: 28 85% 62%;
-    --brand-accent: 35 85% 62%;
-
     --background: 240 25% 8%;
     --foreground: 240 10% 95%;
 
@@ -91,9 +87,9 @@ All colors MUST be HSL.
     --popover: 240 20% 10%;
     --popover-foreground: 240 10% 95%;
 
-  --primary: var(--brand-primary);
-    --primary-foreground: 240 25% 8%;
-  --primary-glow: var(--brand-primary-glow);
+  --primary: 18 65% 68%;
+  --primary-foreground: 240 25% 8%;
+  --primary-glow: 28 85% 62%;
 
     --secondary: 240 15% 15%;
     --secondary-foreground: 240 10% 90%;
@@ -101,7 +97,7 @@ All colors MUST be HSL.
     --muted: 240 15% 12%;
     --muted-foreground: 240 8% 65%;
 
-  --accent: var(--brand-accent);
+  --accent: 35 85% 62%;
     --accent-foreground: 240 25% 8%;
 
     --destructive: 0 65% 55%;
@@ -115,22 +111,22 @@ All colors MUST be HSL.
 
     --border: 240 15% 18%;
     --input: 240 15% 15%;
-    --ring: 240 50% 70%;
+  --ring: 18 65% 68%;
 
-  --gradient-primary: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-glow)) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-glow)) 70%);
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(240 20% 12%));
 
     --shadow-elegant: 0 8px 32px hsl(0 0% 0% / 0.3);
     --shadow-glow: 0 0 40px hsl(var(--accent) / 0.15);
-    --sidebar-background: 24 20% 12%;
-    --sidebar-foreground: 20 8% 92%;
-    --sidebar-primary: var(--brand-primary);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 24 15% 16%;
-    --sidebar-accent-foreground: 20 8% 92%;
-    --sidebar-border: 24 15% 16%;
-    --sidebar-ring: var(--brand-primary-glow);
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
