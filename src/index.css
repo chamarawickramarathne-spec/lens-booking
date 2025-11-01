@@ -8,6 +8,11 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Brand tokens (update these three to match your logo) */
+    --brand-primary: 240 60% 25%;
+    --brand-primary-glow: 240 40% 45%;
+    --brand-accent: 45 95% 65%;
+
     /* Photography-inspired color palette */
     --background: 250 250% 98%;
     --foreground: 240 20% 15%;
@@ -18,10 +23,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 20% 15%;
 
-    /* Elegant navy blue primary */
-    --primary: 240 60% 25%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 240 40% 45%;
+  /* Primary derived from brand */
+  --primary: var(--brand-primary);
+  --primary-foreground: 0 0% 98%;
+  --primary-glow: var(--brand-primary-glow);
 
     /* Warm grey secondary */
     --secondary: 240 10% 96%;
@@ -30,8 +35,8 @@ All colors MUST be HSL.
     --muted: 240 5% 96%;
     --muted-foreground: 240 6% 45%;
 
-    /* Golden accent for highlights */
-    --accent: 45 95% 65%;
+  /* Accent derived from brand */
+  --accent: var(--brand-accent);
     --accent-foreground: 240 20% 15%;
 
     --destructive: 0 75% 60%;
@@ -50,7 +55,7 @@ All colors MUST be HSL.
     --warning-foreground: 240 20% 15%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(240 40% 35%));
     --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(240 10% 98%));
 
@@ -78,6 +83,11 @@ All colors MUST be HSL.
   }
 
   .dark {
+    /* Dark mode brand tokens (update to match dark variant of logo if needed) */
+    --brand-primary: 240 50% 70%;
+    --brand-primary-glow: 240 40% 55%;
+    --brand-accent: 45 85% 60%;
+
     --background: 240 25% 8%;
     --foreground: 240 10% 95%;
 
@@ -87,9 +97,9 @@ All colors MUST be HSL.
     --popover: 240 20% 10%;
     --popover-foreground: 240 10% 95%;
 
-    --primary: 240 50% 70%;
+  --primary: var(--brand-primary);
     --primary-foreground: 240 25% 8%;
-    --primary-glow: 240 40% 55%;
+  --primary-glow: var(--brand-primary-glow);
 
     --secondary: 240 15% 15%;
     --secondary-foreground: 240 10% 90%;
@@ -97,7 +107,7 @@ All colors MUST be HSL.
     --muted: 240 15% 12%;
     --muted-foreground: 240 8% 65%;
 
-    --accent: 45 85% 60%;
+  --accent: var(--brand-accent);
     --accent-foreground: 240 25% 8%;
 
     --destructive: 0 65% 55%;
