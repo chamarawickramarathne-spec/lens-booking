@@ -8,9 +8,9 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Photography-inspired color palette (warm brand background) */
-    --background: 24 40% 98%; /* warm off-white inspired by logo */
-    --foreground: 24 25% 18%; /* warm charcoal for contrast */
+  /* Page background tuned to logo (warm off-white) */
+  --background: 24 60% 98%;
+    --foreground: 240 20% 15%;
 
     --card: 0 0% 100%;
     --card-foreground: 240 20% 15%;
@@ -23,12 +23,12 @@ All colors MUST be HSL.
   --primary-foreground: 0 0% 98%;
   --primary-glow: 28 95% 58%;
 
-  /* Warm neutrals derived from brand */
-  --secondary: 24 30% 96%;
-  --secondary-foreground: 24 25% 18%;
+  /* Warm secondary surfaces */
+  --secondary: 24 25% 97%;
+    --secondary-foreground: 240 20% 15%;
 
-  --muted: 24 20% 96%;
-  --muted-foreground: 24 15% 40%;
+  --muted: 24 30% 96%;
+    --muted-foreground: 240 6% 45%;
 
   /* Golden accent to complement primary */
   --accent: 35 90% 58%;
@@ -37,8 +37,8 @@ All colors MUST be HSL.
     --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 98%;
 
-  --border: 24 15% 90%;
-  --input: 24 20% 97%;
+  --border: 24 20% 92%;
+  --input: 24 30% 97%;
   --ring: 18 85% 46%;
 
     /* Success color for completed items */
@@ -52,7 +52,7 @@ All colors MUST be HSL.
     /* Gradients */
   --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
   --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-  --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(24 20% 98%));
+  --gradient-card: linear-gradient(180deg, hsl(var(--background)), hsl(24 30% 96%));
 
     /* Shadows */
     --shadow-elegant: 0 8px 32px hsl(var(--primary) / 0.1);
