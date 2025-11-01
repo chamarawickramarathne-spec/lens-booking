@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Photography-inspired color palette */
-    --background: 250 250% 98%;
+  /* App background tuned to logo (warm near-white) */
+  --background: 24 40% 98%;
     --foreground: 240 20% 15%;
 
     --card: 0 0% 100%;
@@ -60,7 +60,7 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+  --sidebar-background: 24 30% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
 
