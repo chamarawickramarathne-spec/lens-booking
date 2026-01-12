@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Lens Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .success { color: #48BB78; }
+        .error { color: #F56565; }
+        .warning { color: #ED8936; }
+        .loading { color: #4299E1; }
+
+        h1 {
+            color: #2D3748;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #4A5568;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message-box {
+            display: none;
+        }
+
+        .message-box.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loading" class="message-box active">
+            <div class="spinner"></div>
+            <h1>Verifying Your Email</h1>
+            <p>Please wait while we verify your email address...</p>
+        </div>
+
+        <!-- Success State -->
+        <div id="success" class="message-box">
+            <div class="icon success">✓</div>
+            <h1>Email Verified Successfully!</h1>
+            <p>Your account has been activated. You can now login and start using Lens Manager.</p>
+            <a href="/lens-booking/login" class="button">Go to Login</a>
+        </div>
+
+        <!-- Already Verified State -->
+        <div id="already-verified" class="message-box">
+            <div class="icon warning">⚠</div>
+            <h1>Already Verified</h1>
+            <p>Your email has already been verified. You can login to your account.</p>
+            <a href="/lens-booking/login" class="button">Go to Login</a>
+        </div>
+
+        <!-- Expired State -->
+        <div id="expired" class="message-box">
+            <div class="icon error">✕</div>
+            <h1>Verification Link Expired</h1>
+            <p>This verification link has expired. Please request a new verification email from the login page.</p>
+            <a href="/lens-booking/login" class="button">Go to Login</a>
+        </div>
+
+        <!-- Invalid State -->
+        <div id="invalid" class="message-box">
+            <div class="icon error">✕</div>
+            <h1>Invalid Verification Link</h1>
+            <p>This verification link is invalid. Please check your email for the correct link or request a new one.</p>
+            <a href="/lens-booking/login" class="button">Go to Login</a>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="message-box">
+            <div class="icon error">✕</div>
+            <h1>Verification Failed</h1>
+            <p id="error-message">An error occurred during verification. Please try again later.</p>
+            <a href="/lens-booking/login" class="button">Go to Login</a>
+        </div>
+    </div>
+
+    <script>
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Function to show specific message
+        function showMessage(messageId) {
+            document.querySelectorAll('.message-box').forEach(box => {
+                box.classList.remove('active');
+            });
+            document.getElementById(messageId).classList.add('active');
+        }
+
+        // Verify email
+        async function verifyEmail() {
+            if (!token) {
+                showMessage('invalid');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/lens-booking/api/auth/verify-email?token=${token}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showMessage('success');
+                } else if (result.status === 'already_verified') {
+                    showMessage('already-verified');
+                } else if (result.status === 'expired') {
+                    showMessage('expired');
+                } else if (result.status === 'invalid') {
+                    showMessage('invalid');
+                } else {
+                    document.getElementById('error-message').textContent = result.message || 'Verification failed';
+                    showMessage('error');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                document.getElementById('error-message').textContent = 'Network error. Please check your connection and try again.';
+                showMessage('error');
+            }
+        }
+
+        // Start verification on page load
+        verifyEmail();
+    </script>
+</body>
+</html>

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { apiClient, User } from "@/integrations/api/client";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Check for existing authentication
@@ -18,13 +21,17 @@ export const useAuth = () => {
         } catch (error) {
           console.error("Auth check failed:", error);
           apiClient.logout();
+          // Redirect to login if not already on login page
+          if (location.pathname !== '/login') {
+            navigate('/login', { replace: true });
+          }
         }
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [navigate, location.pathname]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -55,6 +62,7 @@ export const useAuth = () => {
   const logout = () => {
     apiClient.logout();
     setUser(null);
+    navigate('/login', { replace: true });
   };
 
   const updateProfile = async (profileData: any) => {

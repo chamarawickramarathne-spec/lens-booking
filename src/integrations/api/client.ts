@@ -3,7 +3,8 @@
  * Replaces Supabase integration with PHP backend API calls
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost/lens-booking/api';
+// For root deployment, default to relative '/api'. Use VITE_API_URL to override in dev.
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiClient {
   private baseURL: string;
@@ -45,6 +46,16 @@ class ApiClient {
       const rawText = await response.text();
 
       if (!response.ok) {
+        // Check for 401 Unauthorized (session expired or invalid token)
+        if (response.status === 401) {
+          this.logout();
+          // Redirect to login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+          throw new Error('Session expired. Please login again.');
+        }
+
         // Attempt to parse JSON error if possible
         try {
           const errJson = JSON.parse(rawText);

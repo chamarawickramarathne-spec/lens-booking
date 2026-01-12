@@ -1,0 +1,25 @@
+# Apache configuration for Vite-built SPA served from /dist at domain root
+# - Serve existing files directly
+# - Allow /api and /uploads paths to pass through
+# - Rewrite all other requests to dist/index.html for client-side routing
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Base for root deployment
+  RewriteBase /
+
+  # Bypass existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Allow API routes to be handled by PHP
+  RewriteRule ^api/ - [L]
+
+  # Allow uploads/static (adjust if your uploads path differs)
+  RewriteRule ^uploads/ - [L]
+
+  # Fall back all other routes to the SPA entry
+  RewriteRule ^ dist/index.html [L]
+</IfModule>

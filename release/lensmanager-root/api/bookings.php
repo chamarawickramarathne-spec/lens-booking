@@ -154,9 +154,6 @@ class BookingsController {
             ? intval($data['extra_thank_you_cards_qty']) : 0;
 
         if ($this->booking->create()) {
-            // Send confirmation email to client
-            $this->sendConfirmationEmail($this->booking->id, $user_data['user_id'], $data['client_id']);
-            
             http_response_code(201);
             echo json_encode([
                 "message" => "Booking created successfully",
@@ -352,97 +349,6 @@ class BookingsController {
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Unable to update booking"]);
-        }
-    }
-
-    /**
-     * Send booking confirmation email to client
-     */
-    private function sendConfirmationEmail($booking_id, $photographer_id, $client_id) {
-        try {
-            // Generate secure token
-            $token = bin2hex(random_bytes(32));
-            $expires = date('Y-m-d H:i:s', strtotime('+7 days'));
-            
-            // Store token in booking
-            $tokenQuery = "UPDATE bookings 
-                          SET confirmation_token = :token, 
-                              confirmation_token_expires = :expires 
-                          WHERE id = :id";
-            $tokenStmt = $this->db->prepare($tokenQuery);
-            $tokenStmt->bindParam(':token', $token);
-            $tokenStmt->bindParam(':expires', $expires);
-            $tokenStmt->bindParam(':id', $booking_id);
-            $tokenStmt->execute();
-            
-            // Get client and photographer details
-            $query = "SELECT c.name as client_name, c.email as client_email,
-                             p.first_name, p.last_name, p.business_name, p.business_email, p.email as photographer_email,
-                             b.booking_date, b.title, b.location
-                      FROM bookings b
-                      LEFT JOIN clients c ON b.client_id = c.id
-                      LEFT JOIN photographers p ON b.photographer_id = p.id
-                      WHERE b.id = :booking_id";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':booking_id', $booking_id);
-            $stmt->execute();
-            $data = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$data || !$data['client_email']) {
-                error_log('[bookings] Cannot send confirmation: missing client email for booking ' . $booking_id);
-                return;
-            }
-            
-            // Build confirmation link
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $confirmLink = $protocol . '://' . $host . '/api/confirm-booking?token=' . urlencode($token);
-            
-            // Prepare email
-            $businessName = $data['business_name'] ?: trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
-            $fromEmail = $data['business_email'] ?: ($data['photographer_email'] ?: 'noreply@lensmanager.hireartist.studio');
-            
-            $to = $data['client_email'];
-            $subject = 'Booking Confirmation Required - ' . ($businessName ?: 'Lens Manager');
-            
-            $message = "Dear {$data['client_name']},\n\n";
-            $message .= "Thank you for booking with us!\n\n";
-            $message .= "Booking Details:\n";
-            if ($data['title']) $message .= "- Service: {$data['title']}\n";
-            if ($data['booking_date']) $message .= "- Date: " . date('M d, Y', strtotime($data['booking_date'])) . "\n";
-            if ($data['location']) $message .= "- Location: {$data['location']}\n";
-            $message .= "\n";
-            $message .= "Please confirm your booking by clicking the link below:\n";
-            $message .= $confirmLink . "\n\n";
-            $message .= "This confirmation link will expire in 7 days.\n\n";
-            $message .= "If you did not make this booking, please ignore this email.\n\n";
-            $message .= "Best regards,\n";
-            $message .= $businessName ?: 'Lens Manager';
-            
-            // Build headers
-            $headers = [];
-            $headers[] = 'From: ' . ($businessName ?: 'Lens Manager') . ' <' . $fromEmail . '>';
-            $headers[] = 'Reply-To: ' . $fromEmail;
-            $headers[] = 'MIME-Version: 1.0';
-            $headers[] = 'Content-Type: text/plain; charset=UTF-8';
-            $headersStr = implode("\r\n", $headers);
-            
-            // Send email with envelope sender
-            $envelope = '-f ' . escapeshellarg('noreply@lensmanager.hireartist.studio');
-            $sent = @mail($to, $subject, $message, $headersStr, $envelope);
-            
-            if (!$sent) {
-                @ini_set('sendmail_from', 'noreply@lensmanager.hireartist.studio');
-                $sent = @mail($to, $subject, $message, $headersStr);
-            }
-            
-            if (!$sent) {
-                error_log('[bookings] Failed to send confirmation email to ' . $to . ' for booking ' . $booking_id);
-            }
-            
-        } catch (Exception $e) {
-            error_log('[bookings] Exception sending confirmation email: ' . $e->getMessage());
         }
     }
 
