@@ -36,13 +36,13 @@ const PaymentManager = ({
 }: PaymentManagerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number>(
-    Number(paymentSchedule.paid_amount) || 0
+    Number(paymentSchedule.paid_amount) || 0,
   );
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(
     paymentSchedule.payment_date &&
       paymentSchedule.payment_date !== "0000-00-00"
       ? new Date(paymentSchedule.payment_date)
-      : undefined
+      : undefined,
   );
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -55,7 +55,7 @@ const PaymentManager = ({
   const alreadyPaid = Number(paymentSchedule.paid_amount) || 0;
   const clampedPaidAmount = Math.min(
     Math.max(paidAmount, alreadyPaid),
-    totalAmount
+    totalAmount,
   );
   const remainingAmount = Math.max(totalAmount - clampedPaidAmount, 0);
   const isFullyPaid = clampedPaidAmount >= totalAmount;
@@ -67,7 +67,7 @@ const PaymentManager = ({
       return "New total paid amount cannot be less than already paid amount.";
     if (paidAmount > totalAmount)
       return `New total paid amount cannot exceed total amount (${formatCurrency(
-        totalAmount
+        totalAmount,
       )}). You can add up to ${formatCurrency(totalAmount - alreadyPaid)}.`;
     return null;
   })();
@@ -115,7 +115,7 @@ const PaymentManager = ({
         paymentSchedule.schedule_type === "final"
       ) {
         const invoiceResponse = await apiClient.getInvoice(
-          paymentSchedule.invoice_id
+          paymentSchedule.invoice_id,
         );
         if (invoiceResponse.data) {
           await apiClient.updateInvoice(paymentSchedule.invoice_id, {
@@ -134,8 +134,8 @@ const PaymentManager = ({
           paidAmount >= totalAmount && paymentSchedule.schedule_type === "final"
             ? "Payment completed and invoice marked as paid!"
             : paidAmount >= totalAmount
-            ? "Payment completed successfully!"
-            : "Payment updated successfully!",
+              ? "Payment completed successfully!"
+              : "Payment updated successfully!",
       });
 
       setIsOpen(false);
@@ -174,7 +174,6 @@ const PaymentManager = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <DollarSign className="h-3 w-3 mr-1" />
           {isCompleted ? "View Payment" : "Manage Payment"}
         </Button>
       </DialogTrigger>
@@ -233,7 +232,7 @@ const PaymentManager = ({
                 value={paidAmount}
                 onChange={handlePaidAmountChange}
                 placeholder={`Enter total paid amount (Max: ${formatCurrency(
-                  totalAmount
+                  totalAmount,
                 )})`}
                 className={validationError ? "border-red-500" : ""}
                 disabled={isCompleted}
@@ -245,7 +244,7 @@ const PaymentManager = ({
                 Amount to be recorded:{" "}
                 <strong>
                   {formatCurrency(
-                    Math.min(Math.max(paidAmount, alreadyPaid), totalAmount)
+                    Math.min(Math.max(paidAmount, alreadyPaid), totalAmount),
                   )}
                 </strong>
               </p>
@@ -255,8 +254,8 @@ const PaymentManager = ({
                   Math.max(
                     totalAmount -
                       Math.min(Math.max(paidAmount, alreadyPaid), totalAmount),
-                    0
-                  )
+                    0,
+                  ),
                 )}
               </p>
             </div>
@@ -269,7 +268,7 @@ const PaymentManager = ({
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !paymentDate && "text-gray-500"
+                      !paymentDate && "text-gray-500",
                     )}
                     disabled={isCompleted}
                   >

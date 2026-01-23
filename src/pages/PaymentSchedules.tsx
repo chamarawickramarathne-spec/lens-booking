@@ -56,7 +56,7 @@ interface PaymentSchedule {
 const PaymentSchedules = () => {
   // Use the defined type
   const [paymentSchedules, setPaymentSchedules] = useState<PaymentSchedule[]>(
-    []
+    [],
   );
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -165,15 +165,15 @@ const PaymentSchedules = () => {
   // Calculate totals - using nullish coalescing (?? 0) for safety
   const totalAmount = paymentSchedules.reduce(
     (sum, schedule) => sum + (schedule.amount ?? 0),
-    0
+    0,
   );
   const paidAmount = paymentSchedules.reduce(
     (sum, schedule) => sum + (schedule.paid_amount ?? 0),
-    0
+    0,
   );
   const pendingAmount = totalAmount - paidAmount;
   const completedSchedules = paymentSchedules.filter(
-    (s) => s.status === "completed"
+    (s) => s.status === "completed",
   ).length;
 
   // Sort by ID descending and group by invoice number
@@ -234,7 +234,6 @@ const PaymentSchedules = () => {
               <CardTitle className="text-sm font-medium">
                 Total Amount
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -246,7 +245,6 @@ const PaymentSchedules = () => {
           <Card className="shadow-elegant">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Paid Amount</CardTitle>
-              <DollarSign className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-success">
@@ -348,7 +346,7 @@ const PaymentSchedules = () => {
                                 schedule.due_date !== "0000-00-00"
                                   ? format(
                                       new Date(schedule.due_date),
-                                      "MMM dd, yyyy"
+                                      "MMM dd, yyyy",
                                     )
                                   : "Not set"}
                               </TableCell>
@@ -371,7 +369,7 @@ const PaymentSchedules = () => {
                             </TableRow>
                           ))}
                         </Fragment>
-                      )
+                      ),
                     )}
                     {/* Render schedules without invoice */}
                     {noInvoiceGroup.map((schedule, idx) => (
@@ -404,7 +402,7 @@ const PaymentSchedules = () => {
                           schedule.due_date !== "0000-00-00"
                             ? format(
                                 new Date(schedule.due_date),
-                                "MMM dd, yyyy"
+                                "MMM dd, yyyy",
                               )
                             : "Not set"}
                         </TableCell>

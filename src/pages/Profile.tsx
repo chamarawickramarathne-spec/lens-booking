@@ -416,7 +416,6 @@ const Profile = () => {
                           <FormLabel>Currency Type *</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input
                                 placeholder="e.g., USD, EUR, INR"
                                 className="pl-10"

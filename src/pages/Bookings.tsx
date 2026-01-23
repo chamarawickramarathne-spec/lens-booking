@@ -115,7 +115,7 @@ const Bookings = () => {
   // Active bookings: anything not completed/cancelled/cancel_by_client
   const isActive = (b: any) =>
     !["completed", "cancelled", "cancel_by_client"].includes(
-      String(b.status).toLowerCase()
+      String(b.status).toLowerCase(),
     );
 
   // Sort: active first, then by booking ID descending
@@ -200,7 +200,7 @@ const Bookings = () => {
                               <Calendar className="h-3 w-3" />
                               {format(
                                 new Date(booking.booking_date),
-                                "MMM dd, yyyy"
+                                "MMM dd, yyyy",
                               )}
                             </div>
                             {(booking.start_time || booking.end_time) && (
@@ -217,7 +217,6 @@ const Bookings = () => {
                         <TableCell>
                           {booking.total_amount ? (
                             <div className="flex items-center gap-2">
-                              <DollarSign className="h-3 w-3" />
                               {formatCurrency(booking.total_amount)}
                             </div>
                           ) : (

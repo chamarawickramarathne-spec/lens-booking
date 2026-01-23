@@ -27,6 +27,17 @@ class Booking {
     public $deposit_paid;
     public $special_requirements;
     public $notes;
+    public $wedding_hotel_name;
+    public $wedding_date;
+    public $homecoming_hotel_name;
+    public $homecoming_date;
+    public $wedding_album;
+    public $pre_shoot_album;
+    public $family_album;
+    public $group_photo_size;
+    public $homecoming_photo_size;
+    public $wedding_photo_sizes;
+    public $extra_thank_you_cards_qty;
     public $created_at;
     public $updated_at;
 
@@ -53,7 +64,12 @@ class Booking {
                      package_type=:package_type, package_name=:package_name, status=:status,
                      total_amount=:total_amount, paid_amount=:paid_amount,
                      deposit_amount=:deposit_amount, deposit_paid=:deposit_paid,
-                     special_requirements=:special_requirements, notes=:notes";
+                     special_requirements=:special_requirements, notes=:notes,
+                     wedding_hotel_name=:wedding_hotel_name, wedding_date=:wedding_date,
+                     homecoming_hotel_name=:homecoming_hotel_name, homecoming_date=:homecoming_date,
+                     wedding_album=:wedding_album, pre_shoot_album=:pre_shoot_album, family_album=:family_album,
+                     group_photo_size=:group_photo_size, homecoming_photo_size=:homecoming_photo_size,
+                     wedding_photo_sizes=:wedding_photo_sizes, extra_thank_you_cards_qty=:extra_thank_you_cards_qty";
 
         $stmt = $this->conn->prepare($query);
 
@@ -66,6 +82,11 @@ class Booking {
         $this->status = htmlspecialchars(strip_tags($this->status ?? 'pending'));
         $this->special_requirements = htmlspecialchars(strip_tags($this->special_requirements ?? ''));
         $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
+        $this->wedding_hotel_name = htmlspecialchars(strip_tags($this->wedding_hotel_name ?? ''));
+        $this->homecoming_hotel_name = htmlspecialchars(strip_tags($this->homecoming_hotel_name ?? ''));
+        $this->group_photo_size = htmlspecialchars(strip_tags($this->group_photo_size ?? ''));
+        $this->homecoming_photo_size = htmlspecialchars(strip_tags($this->homecoming_photo_size ?? ''));
+        $this->wedding_photo_sizes = htmlspecialchars(strip_tags($this->wedding_photo_sizes ?? ''));
 
         // Bind values
         $stmt->bindParam(":user_id", $this->user_id);
@@ -86,6 +107,17 @@ class Booking {
         $stmt->bindParam(":deposit_paid", $this->deposit_paid);
         $stmt->bindParam(":special_requirements", $this->special_requirements);
         $stmt->bindParam(":notes", $this->notes);
+        $stmt->bindParam(":wedding_hotel_name", $this->wedding_hotel_name);
+        $stmt->bindParam(":wedding_date", $this->wedding_date);
+        $stmt->bindParam(":homecoming_hotel_name", $this->homecoming_hotel_name);
+        $stmt->bindParam(":homecoming_date", $this->homecoming_date);
+        $stmt->bindParam(":wedding_album", $this->wedding_album);
+        $stmt->bindParam(":pre_shoot_album", $this->pre_shoot_album);
+        $stmt->bindParam(":family_album", $this->family_album);
+        $stmt->bindParam(":group_photo_size", $this->group_photo_size);
+        $stmt->bindParam(":homecoming_photo_size", $this->homecoming_photo_size);
+        $stmt->bindParam(":wedding_photo_sizes", $this->wedding_photo_sizes);
+        $stmt->bindParam(":extra_thank_you_cards_qty", $this->extra_thank_you_cards_qty);
 
         if ($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
@@ -142,6 +174,11 @@ class Booking {
                      total_amount=:total_amount, paid_amount=:paid_amount,
                      deposit_amount=:deposit_amount, deposit_paid=:deposit_paid,
                      status=:status, special_requirements=:special_requirements, notes=:notes,
+                     wedding_hotel_name=:wedding_hotel_name, wedding_date=:wedding_date,
+                     homecoming_hotel_name=:homecoming_hotel_name, homecoming_date=:homecoming_date,
+                     wedding_album=:wedding_album, pre_shoot_album=:pre_shoot_album, family_album=:family_album,
+                     group_photo_size=:group_photo_size, homecoming_photo_size=:homecoming_photo_size,
+                     wedding_photo_sizes=:wedding_photo_sizes, extra_thank_you_cards_qty=:extra_thank_you_cards_qty,
                      updated_at=CURRENT_TIMESTAMP
                  WHERE id=:id AND user_id=:user_id";
 
@@ -156,6 +193,11 @@ class Booking {
         $this->status = htmlspecialchars(strip_tags($this->status ?? 'pending'));
         $this->special_requirements = htmlspecialchars(strip_tags($this->special_requirements ?? ''));
         $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
+        $this->wedding_hotel_name = htmlspecialchars(strip_tags($this->wedding_hotel_name ?? ''));
+        $this->homecoming_hotel_name = htmlspecialchars(strip_tags($this->homecoming_hotel_name ?? ''));
+        $this->group_photo_size = htmlspecialchars(strip_tags($this->group_photo_size ?? ''));
+        $this->homecoming_photo_size = htmlspecialchars(strip_tags($this->homecoming_photo_size ?? ''));
+        $this->wedding_photo_sizes = htmlspecialchars(strip_tags($this->wedding_photo_sizes ?? ''));
 
         // Bind values
         $stmt->bindParam(":client_id", $this->client_id);
@@ -166,6 +208,28 @@ class Booking {
         $stmt->bindParam(":location", $this->location);
         $stmt->bindParam(":title", $this->title);
         $stmt->bindParam(":description", $this->description);
+        $stmt->bindParam(":package_type", $this->package_type);
+        $stmt->bindParam(":package_name", $this->package_name);
+        $stmt->bindParam(":total_amount", $this->total_amount);
+        $stmt->bindParam(":paid_amount", $this->paid_amount);
+        $stmt->bindParam(":deposit_amount", $this->deposit_amount);
+        $stmt->bindParam(":deposit_paid", $this->deposit_paid);
+        $stmt->bindParam(":status", $this->status);
+        $stmt->bindParam(":special_requirements", $this->special_requirements);
+        $stmt->bindParam(":notes", $this->notes);
+        $stmt->bindParam(":wedding_hotel_name", $this->wedding_hotel_name);
+        $stmt->bindParam(":wedding_date", $this->wedding_date);
+        $stmt->bindParam(":homecoming_hotel_name", $this->homecoming_hotel_name);
+        $stmt->bindParam(":homecoming_date", $this->homecoming_date);
+        $stmt->bindParam(":wedding_album", $this->wedding_album);
+        $stmt->bindParam(":pre_shoot_album", $this->pre_shoot_album);
+        $stmt->bindParam(":family_album", $this->family_album);
+        $stmt->bindParam(":group_photo_size", $this->group_photo_size);
+        $stmt->bindParam(":homecoming_photo_size", $this->homecoming_photo_size);
+        $stmt->bindParam(":wedding_photo_sizes", $this->wedding_photo_sizes);
+        $stmt->bindParam(":extra_thank_you_cards_qty", $this->extra_thank_you_cards_qty);
+        $stmt->bindParam(":id", $this->id);
+        $stmt->bindParam(":user_id", $this->user_id);
         $stmt->bindParam(":package_type", $this->package_type);
         $stmt->bindParam(":package_name", $this->package_name);
         $stmt->bindParam(":total_amount", $this->total_amount);

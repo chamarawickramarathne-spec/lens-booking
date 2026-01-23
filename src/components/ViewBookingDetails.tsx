@@ -208,7 +208,7 @@ const ViewBookingDetails = ({
                         {booking.wedding_date
                           ? format(
                               new Date(booking.wedding_date),
-                              "MMMM dd, yyyy"
+                              "MMMM dd, yyyy",
                             )
                           : "-"}
                       </div>
@@ -232,7 +232,7 @@ const ViewBookingDetails = ({
                         {booking.homecoming_date
                           ? format(
                               new Date(booking.homecoming_date),
-                              "MMMM dd, yyyy"
+                              "MMMM dd, yyyy",
                             )
                           : "-"}
                       </div>
@@ -261,7 +261,7 @@ const ViewBookingDetails = ({
                         {booking.booking_date
                           ? format(
                               new Date(booking.booking_date),
-                              "MMMM dd, yyyy"
+                              "MMMM dd, yyyy",
                             )
                           : "-"}
                       </div>
@@ -382,7 +382,7 @@ const ViewBookingDetails = ({
             <div className="md:col-span-1">
               <div className="rounded-lg border bg-background p-4 space-y-4 sticky md:top-4">
                 <h4 className="font-semibold flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" /> Pricing Summary
+                  Pricing Summary
                 </h4>
                 <div className="space-y-3 text-sm">
                   {booking.deposit_amount != null &&

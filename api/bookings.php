@@ -142,6 +142,14 @@ class BookingsController {
         $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
         $this->booking->special_requirements = $data['special_requirements'] ?? '';
         $this->booking->notes = $data['notes'] ?? '';
+        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
+        $this->booking->wedding_date = $data['wedding_date'] ?? null;
+        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
+        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
+        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
+        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
+        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
+        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
         $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
         $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null; // expect comma-separated string
         $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
@@ -326,6 +334,18 @@ class BookingsController {
         $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
         $this->booking->special_requirements = $data['special_requirements'] ?? '';
         $this->booking->notes = $data['notes'] ?? '';
+        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
+        $this->booking->wedding_date = $data['wedding_date'] ?? null;
+        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
+        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
+        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
+        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
+        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
+        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
+        $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
+        $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null;
+        $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
+            ? intval($data['extra_thank_you_cards_qty']) : 0;
 
         if ($this->booking->update()) {
             http_response_code(200);

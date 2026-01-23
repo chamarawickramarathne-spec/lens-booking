@@ -129,24 +129,24 @@ const Invoices = () => {
 
   // Calculate totals excluding cancelled invoices
   const activeInvoices = invoices.filter(
-    (invoice) => !["cancelled", "cancel_by_client"].includes(invoice.status)
+    (invoice) => !["cancelled", "cancel_by_client"].includes(invoice.status),
   );
   const totalRevenue = activeInvoices
     .filter((invoice) => invoice.status === "paid")
     .reduce(
       (sum, invoice) =>
         sum + Number(invoice.total_amount || invoice.amount || 0),
-      0
+      0,
     );
   const pendingAmount = activeInvoices
     .filter(
       (invoice) =>
-        !["paid", "cancelled", "cancel_by_client"].includes(invoice.status)
+        !["paid", "cancelled", "cancel_by_client"].includes(invoice.status),
     )
     .reduce(
       (sum, invoice) =>
         sum + Number(invoice.total_amount || invoice.amount || 0),
-      0
+      0,
     );
 
   return (
@@ -168,7 +168,6 @@ const Invoices = () => {
               <CardTitle className="text-sm font-medium">
                 Total Revenue
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -269,7 +268,7 @@ const Invoices = () => {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {!["cancelled", "cancel_by_client"].includes(
-                              invoice.status
+                              invoice.status,
                             ) && (
                               <InvoicePDFDownload
                                 invoice={invoice}

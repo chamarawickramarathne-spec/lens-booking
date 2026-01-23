@@ -449,12 +449,22 @@ export interface Booking {
   deposit_paid?: boolean;
   special_requirements?: string;
   notes?: string;
+  wedding_hotel_name?: string;
+  wedding_date?: string;
+  homecoming_hotel_name?: string;
+  homecoming_date?: string;
+  wedding_album?: boolean;
+  pre_shoot_album?: boolean;
+  family_album?: boolean;
+  group_photo_size?: string;
+  homecoming_photo_size?: string;
+  wedding_photo_sizes?: string;
+  extra_thank_you_cards_qty?: number;
   created_at: string;
   updated_at: string;
   client_name?: string;
   client_email?: string;
   client_phone?: string;
-  package_name?: string;
 }
 
 // Re-export the client as default for easier imports
