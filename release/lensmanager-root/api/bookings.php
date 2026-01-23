@@ -346,9 +346,79 @@ class BookingsController {
         $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
             ? intval($data['extra_thank_you_cards_qty']) : 0;
 
+        // Check if status is being changed to confirmed for invoice creation
+        $old_status = null;
+        $new_status = $data['status'] ?? null;
+        if ($new_status) {
+            // Get current booking status
+            $current_booking = $this->booking->getById($id, $user_data['user_id']);
+            $old_status = $current_booking['status'] ?? null;
+        }
+
         if ($this->booking->update()) {
+            $response_data = ["message" => "Booking updated successfully"];
+            
+            // If status changed to "confirmed", automatically create an invoice
+            if ($new_status === 'confirmed' && $old_status !== 'confirmed') {
+                try {
+                    // Get the updated booking details
+                    $booking = $this->booking->getById($id, $user_data['user_id']);
+                    
+                    if ($booking && $booking['client_id']) {
+                        // Check if an invoice already exists for this booking
+                        $check_query = "SELECT id FROM invoices WHERE booking_id = :booking_id LIMIT 1";
+                        $check_stmt = $this->db->prepare($check_query);
+                        $check_stmt->bindParam(":booking_id", $id);
+                        $check_stmt->execute();
+                        
+                        // Only create invoice if one doesn't exist
+                        if ($check_stmt->rowCount() == 0) {
+                            // Generate invoice number
+                            $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+                            
+                            // Create invoice
+                            $invoice_query = "INSERT INTO invoices 
+                                            SET user_id=:photographer_id, 
+                                                client_id=:client_id, 
+                                                booking_id=:booking_id,
+                                                invoice_number=:invoice_number, 
+                                                issue_date=:issue_date, 
+                                                subtotal=:subtotal,
+                                                total_amount=:total_amount,
+                                                status='draft'";
+                            
+                            $invoice_stmt = $this->db->prepare($invoice_query);
+                            
+                            $issue_date = date('Y-m-d');
+                            $total_amount = $booking['total_amount'] ?? 0;
+                            $subtotal = $total_amount;
+                            
+                            $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
+                            $invoice_stmt->bindParam(":client_id", $booking['client_id']);
+                            $invoice_stmt->bindParam(":booking_id", $id);
+                            $invoice_stmt->bindParam(":invoice_number", $invoice_number);
+                            $invoice_stmt->bindParam(":issue_date", $issue_date);
+                            $invoice_stmt->bindParam(":subtotal", $subtotal);
+                            $invoice_stmt->bindParam(":total_amount", $total_amount);
+                            
+                            if (!$invoice_stmt->execute()) {
+                                throw new Exception("Failed to execute invoice insert: " . implode(", ", $invoice_stmt->errorInfo()));
+                            }
+                            
+                            $response_data["invoice_id"] = $this->db->lastInsertId();
+                            $response_data["invoice_number"] = $invoice_number;
+                            $response_data["invoice_message"] = "Invoice created automatically";
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Log error but don't fail the update
+                    error_log("Failed to create invoice for booking $id: " . $e->getMessage());
+                    $response_data["invoice_warning"] = "Booking updated but invoice creation failed";
+                }
+            }
+            
             http_response_code(200);
-            echo json_encode(["message" => "Booking updated successfully"]);
+            echo json_encode($response_data);
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Unable to update booking"]);
