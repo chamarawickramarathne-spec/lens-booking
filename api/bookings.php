@@ -210,24 +210,19 @@ class BookingsController {
                             
                             // Create invoice
                             $invoice_query = "INSERT INTO invoices 
-                                            SET photographer_id=:photographer_id, 
+                                            SET user_id=:photographer_id, 
                                                 client_id=:client_id, 
                                                 booking_id=:booking_id,
                                                 invoice_number=:invoice_number, 
                                                 issue_date=:issue_date, 
-                                                due_date=:due_date,
                                                 subtotal=:subtotal, 
-                                                tax_amount=:tax_amount, 
                                                 total_amount=:total_amount,
-                                                deposit_amount=:deposit_amount, 
                                                 status='draft'";
                             
                             $invoice_stmt = $this->db->prepare($invoice_query);
                             
                             $issue_date = date('Y-m-d');
-                            $due_date = date('Y-m-d', strtotime('+30 days'));
                             $total_amount = $booking['total_amount'] ?? 0;
-                            $deposit_amount = $booking['deposit_amount'] ?? 0;
                             $tax_amount = 0;
                             
                             $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
@@ -235,11 +230,9 @@ class BookingsController {
                             $invoice_stmt->bindParam(":booking_id", $id);
                             $invoice_stmt->bindParam(":invoice_number", $invoice_number);
                             $invoice_stmt->bindParam(":issue_date", $issue_date);
-                            $invoice_stmt->bindParam(":due_date", $due_date);
                             $invoice_stmt->bindParam(":subtotal", $total_amount);
                             $invoice_stmt->bindParam(":tax_amount", $tax_amount);
                             $invoice_stmt->bindParam(":total_amount", $total_amount);
-                            $invoice_stmt->bindParam(":deposit_amount", $deposit_amount);
                             
                             $invoice_stmt->execute();
                         }
