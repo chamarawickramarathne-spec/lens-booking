@@ -32,14 +32,16 @@ import {
 } from "@/components/ui/select";
 
 const clientSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  full_name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip_code: z.string().optional(),
+  country: z.string().optional(),
+  status: z.enum(["active", "inactive", "blacklisted"]).default("active"),
   notes: z.string().optional(),
-  second_contact: z.string().optional(),
-  second_phone: z.string().optional(),
-  status: z.enum(["active", "blacklisted"]),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -63,14 +65,16 @@ const EditClientForm = ({
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      name: client.name || "",
+      full_name: client.full_name || "",
       email: client.email || "",
       phone: client.phone || "",
       address: client.address || "",
-      notes: client.notes || "",
-      second_contact: client.second_contact || "",
-      second_phone: client.second_phone || "",
+      city: client.city || "",
+      state: client.state || "",
+      zip_code: client.zip_code || "",
+      country: client.country || "Sri Lanka",
       status: client.status || "active",
+      notes: client.notes || "",
     },
   });
 
@@ -79,18 +83,17 @@ const EditClientForm = ({
 
     setIsLoading(true);
     try {
-      // Send both 'name' and 'full_name' for compatibility with PHP backend
       const clientData = {
-        name: data.name,
-        full_name: data.name, // for PHP controller compatibility
+        full_name: data.full_name,
         email: data.email,
         phone: data.phone || null,
         address: data.address || null,
+        city: data.city || null,
+        state: data.state || null,
+        zip_code: data.zip_code || null,
+        country: data.country || "Sri Lanka",
+        status: data.status || "active",
         notes: data.notes || null,
-        second_contact: data.second_contact || null,
-        second_phone: data.second_phone || null,
-        status: data.status,
-        photographer_id: client.photographer_id || user.id,
       };
 
       await apiClient.updateClient(client.id, clientData);
@@ -127,7 +130,7 @@ const EditClientForm = ({
               <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="full_name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name</FormLabel>
@@ -197,13 +200,14 @@ const EditClientForm = ({
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select client status" />
+                            <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="active">Active Client</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
                           <SelectItem value="blacklisted">
-                            Blacklisted Client
+                            Blacklisted
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -216,15 +220,12 @@ const EditClientForm = ({
               <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="second_contact"
+                  name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Second Contact (Optional)</FormLabel>
+                      <FormLabel>City (Optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Secondary contact person"
-                          {...field}
-                        />
+                        <Input placeholder="City" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -232,15 +233,12 @@ const EditClientForm = ({
                 />
                 <FormField
                   control={form.control}
-                  name="second_phone"
+                  name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Second Phone (Optional)</FormLabel>
+                      <FormLabel>State (Optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Secondary phone number"
-                          {...field}
-                        />
+                        <Input placeholder="State/Province" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -248,21 +246,49 @@ const EditClientForm = ({
                 />
                 <FormField
                   control={form.control}
-                  name="notes"
+                  name="zip_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
+                      <FormLabel>Zip Code (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Additional notes about the client"
-                          {...field}
-                        />
+                        <Input placeholder="Zip/Postal code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Country" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+            </div>
+            <div className="mt-4">
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Additional notes about the client"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className="flex justify-end space-x-2 mt-6">
               <Button

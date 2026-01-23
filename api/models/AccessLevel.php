@@ -49,11 +49,11 @@ class AccessLevel {
      */
     public function getUserAccessInfo($user_id) {
         // Get user's access level
-        $query = "SELECT u.id as user_id, u.first_name, u.email, u.user_access_level, 
+        $query = "SELECT u.id as user_id, u.full_name, u.email, u.access_level_id, 
                         al.id as access_level_id, al.level_name, 
                         al.max_clients, al.max_bookings
-                 FROM photographers u
-                 LEFT JOIN access_levels al ON u.user_access_level = al.id
+                 FROM users u
+                 LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.id = :user_id";
         
         $stmt = $this->conn->prepare($query);
@@ -67,14 +67,14 @@ class AccessLevel {
         $user_access = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Count current clients
-        $client_query = "SELECT COUNT(*) as count FROM clients WHERE photographer_id = :user_id";
+        $client_query = "SELECT COUNT(*) as count FROM clients WHERE user_id = :user_id";
         $client_stmt = $this->conn->prepare($client_query);
         $client_stmt->bindParam(":user_id", $user_id);
         $client_stmt->execute();
         $client_count = $client_stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Count current bookings
-        $booking_query = "SELECT COUNT(*) as count FROM bookings WHERE photographer_id = :user_id";
+        $booking_query = "SELECT COUNT(*) as count FROM bookings WHERE user_id = :user_id";
         $booking_stmt = $this->conn->prepare($booking_query);
         $booking_stmt->bindParam(":user_id", $user_id);
         $booking_stmt->execute();
@@ -82,11 +82,10 @@ class AccessLevel {
         
         return [
             'user_id' => $user_access['user_id'],
-            'name' => $user_access['first_name'],
+            'name' => $user_access['full_name'],
             'email' => $user_access['email'],
-            'role' => $user_access['user_access_level'],
             'access_level' => [
-                'id' => $user_access['user_access_level'],
+                'id' => $user_access['access_level_id'],
                 'name' => $user_access['level_name'],
                 'max_clients' => $user_access['max_clients'],
                 'max_bookings' => $user_access['max_bookings']

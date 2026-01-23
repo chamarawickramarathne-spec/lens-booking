@@ -102,7 +102,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
 
   const fetchClients = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from("clients")
@@ -123,7 +123,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
 
   const fetchBookings = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from("bookings")
@@ -155,7 +155,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
 
   const onSubmit = async (data: InvoiceFormData) => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       // Check if an invoice already exists for this booking
@@ -169,7 +169,8 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
       if (existingInvoices && existingInvoices.length > 0) {
         toast({
           title: "Error",
-          description: "An invoice already exists for this booking. Only one invoice per booking is allowed.",
+          description:
+            "An invoice already exists for this booking. Only one invoice per booking is allowed.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -191,9 +192,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
         status: "draft",
       };
 
-      const { error } = await supabase
-        .from("invoices")
-        .insert(invoiceData);
+      const { error } = await supabase.from("invoices").insert(invoiceData);
 
       if (error) throw error;
 
@@ -201,7 +200,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
         title: "Success",
         description: "Invoice created successfully!",
       });
-      
+
       form.reset();
       setOpen(false);
       onSuccess();
@@ -218,9 +217,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Invoice</DialogTitle>
@@ -240,14 +237,17 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="client_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Client</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a client" />
@@ -256,7 +256,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                     <SelectContent>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
-                          {client.name} ({client.email})
+                          {client.full_name} ({client.email})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -265,14 +265,17 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="booking_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Related Booking *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a booking" />
@@ -281,7 +284,11 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                     <SelectContent>
                       {bookings.map((booking) => (
                         <SelectItem key={booking.id} value={booking.id}>
-                          {booking.title} - {format(new Date(booking.booking_date), "MMM dd, yyyy")}
+                          {booking.title} -{" "}
+                          {format(
+                            new Date(booking.booking_date),
+                            "MMM dd, yyyy",
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -290,7 +297,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -305,7 +312,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (
@@ -331,7 +338,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="due_date"
@@ -345,7 +352,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (
@@ -373,7 +380,7 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -382,13 +389,18 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                   <FormItem>
                     <FormLabel>Subtotal</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="tax_amount"
@@ -396,13 +408,18 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                   <FormItem>
                     <FormLabel>Tax Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="deposit_amount"
@@ -410,13 +427,18 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                   <FormItem>
                     <FormLabel>Deposit Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="total_amount"
@@ -424,14 +446,20 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                   <FormItem>
                     <FormLabel>Total Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} readOnly />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        readOnly
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="notes"
@@ -439,13 +467,16 @@ const InvoiceForm = ({ onSuccess, trigger }: InvoiceFormProps) => {
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional notes for the invoice" {...field} />
+                    <Textarea
+                      placeholder="Additional notes for the invoice"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"

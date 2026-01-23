@@ -74,7 +74,7 @@ const Clients = () => {
   const handleDeleteClick = async (client: any) => {
     try {
       const response = await apiClient.getClientDeletionInfo(
-        parseInt(client.id)
+        parseInt(client.id),
       );
       setDeletionInfo(response);
       setClientToDelete(client);
@@ -188,7 +188,7 @@ const Clients = () => {
                     {clients.map((client) => (
                       <TableRow key={client.id}>
                         <TableCell className="font-medium">
-                          {client.name}
+                          {client.full_name}
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
@@ -271,8 +271,8 @@ const Clients = () => {
                                     <div>
                                       <p>
                                         This will permanently delete the client{" "}
-                                        <strong>{client.name}</strong> and all
-                                        related data:
+                                        <strong>{client.full_name}</strong> and
+                                        all related data:
                                       </p>
                                       {deletionInfo && (
                                         <ul className="list-disc list-inside mt-3 space-y-1 bg-destructive/10 p-3 rounded-md">

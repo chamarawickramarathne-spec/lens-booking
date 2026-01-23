@@ -121,42 +121,28 @@ class BookingsController {
         }
 
         // Set booking properties
-        $this->booking->photographer_id = $user_data['user_id'];
+        $this->booking->user_id = $user_data['user_id'];
         $this->booking->client_id = $data['client_id'];
         $this->booking->booking_date = $data['booking_date'];
-        $this->booking->start_time = $data['start_time'] ?? ($data['booking_time'] ?? null);
+        $this->booking->booking_time = $data['booking_time'] ?? null;
         $this->booking->end_time = $data['end_time'] ?? null;
         $this->booking->location = $data['location'] ?? '';
-        $this->booking->title = $data['title'] ?? '';
-        $this->booking->description = $data['description'] ?? ($data['notes'] ?? '');
-        $this->booking->package_type = $data['package_type'] ?? '';
-        $this->booking->package_name = $data['package_name'] ?? '';
-        $this->booking->pre_shoot = isset($data['pre_shoot']) ? (int)!!$data['pre_shoot'] : 0;
-        $this->booking->album = isset($data['album']) ? (int)!!$data['album'] : 0;
+        $this->booking->status = $data['status'] ?? 'pending';
         $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
             ? floatval($data['total_amount']) : 0;
+        $this->booking->paid_amount = isset($data['paid_amount']) && $data['paid_amount'] !== ''
+            ? floatval($data['paid_amount']) : 0;
         $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
             ? floatval($data['deposit_amount']) : 0;
-        $this->booking->status = $data['status'] ?? 'pending';
-
-        // Wedding-specific fields
-        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
-        $this->booking->wedding_date = $data['wedding_date'] ?? null;
-        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
-        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
-        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
-        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
-        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
-        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
+        $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
+        $this->booking->special_requirements = $data['special_requirements'] ?? '';
+        $this->booking->notes = $data['notes'] ?? '';
         $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
         $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null; // expect comma-separated string
         $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
             ? intval($data['extra_thank_you_cards_qty']) : 0;
 
         if ($this->booking->create()) {
-            // Send confirmation email to client
-            $this->sendConfirmationEmail($this->booking->id, $user_data['user_id'], $data['client_id']);
-            
             http_response_code(201);
             echo json_encode([
                 "message" => "Booking created successfully",
@@ -314,37 +300,22 @@ class BookingsController {
 
         // Set booking properties
         $this->booking->id = $id;
-        $this->booking->photographer_id = $user_data['user_id'];
+        $this->booking->user_id = $user_data['user_id'];
         $this->booking->client_id = $data['client_id'] ?? null;
         $this->booking->booking_date = $data['booking_date'] ?? null;
-        $this->booking->start_time = $data['start_time'] ?? ($data['booking_time'] ?? null);
+        $this->booking->booking_time = $data['booking_time'] ?? null;
         $this->booking->end_time = $data['end_time'] ?? null;
         $this->booking->location = $data['location'] ?? '';
-        $this->booking->title = $data['title'] ?? '';
-        $this->booking->description = $data['description'] ?? ($data['notes'] ?? '');
-        $this->booking->package_type = $data['package_type'] ?? '';
-        $this->booking->package_name = $data['package_name'] ?? '';
-        $this->booking->pre_shoot = isset($data['pre_shoot']) ? (int)!!$data['pre_shoot'] : 0;
-        $this->booking->album = isset($data['album']) ? (int)!!$data['album'] : 0;
+        $this->booking->status = $data['status'] ?? 'pending';
         $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
             ? floatval($data['total_amount']) : 0;
+        $this->booking->paid_amount = isset($data['paid_amount']) && $data['paid_amount'] !== ''
+            ? floatval($data['paid_amount']) : 0;
         $this->booking->deposit_amount = isset($data['deposit_amount']) && $data['deposit_amount'] !== ''
             ? floatval($data['deposit_amount']) : 0;
-        $this->booking->status = $data['status'] ?? 'pending';
-
-        // Wedding-specific fields
-        $this->booking->wedding_hotel_name = $data['wedding_hotel_name'] ?? null;
-        $this->booking->wedding_date = $data['wedding_date'] ?? null;
-        $this->booking->homecoming_hotel_name = $data['homecoming_hotel_name'] ?? null;
-        $this->booking->homecoming_date = $data['homecoming_date'] ?? null;
-        $this->booking->wedding_album = isset($data['wedding_album']) ? (int)!!$data['wedding_album'] : 0;
-        $this->booking->pre_shoot_album = isset($data['pre_shoot_album']) ? (int)!!$data['pre_shoot_album'] : 0;
-        $this->booking->family_album = isset($data['family_album']) ? (int)!!$data['family_album'] : 0;
-        $this->booking->group_photo_size = $data['group_photo_size'] ?? null;
-        $this->booking->homecoming_photo_size = $data['homecoming_photo_size'] ?? null;
-        $this->booking->wedding_photo_sizes = $data['wedding_photo_sizes'] ?? null;
-        $this->booking->extra_thank_you_cards_qty = isset($data['extra_thank_you_cards_qty']) && $data['extra_thank_you_cards_qty'] !== ''
-            ? intval($data['extra_thank_you_cards_qty']) : 0;
+        $this->booking->deposit_paid = isset($data['deposit_paid']) ? (int)!!$data['deposit_paid'] : 0;
+        $this->booking->special_requirements = $data['special_requirements'] ?? '';
+        $this->booking->notes = $data['notes'] ?? '';
 
         if ($this->booking->update()) {
             http_response_code(200);
@@ -474,7 +445,7 @@ $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/bookings', '', parse_url($request_uri, PHP_URL_PATH));
+$endpoint = str_replace('/lens-booking/lens-booking/api/bookings', '', parse_url($request_uri, PHP_URL_PATH));
 
 // Get ID from URL if present
 $id = null;

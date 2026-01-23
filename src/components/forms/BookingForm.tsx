@@ -190,7 +190,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
           (isWedding && data.wedding_date
             ? (data.wedding_date as Date)
             : data.booking_date) as Date,
-          "yyyy-MM-dd"
+          "yyyy-MM-dd",
         ),
         booking_time: data.start_time || null,
         end_time: data.end_time || null,
@@ -225,7 +225,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
         bookingData.group_photo_size = data.group_photo_size || null;
         bookingData.homecoming_photo_size = data.homecoming_photo_size || null;
         bookingData.wedding_photo_sizes = (data.wedding_photo_sizes || []).join(
-          ","
+          ",",
         );
         bookingData.extra_thank_you_cards_qty = data.extra_thank_you_cards_qty
           ? Number(data.extra_thank_you_cards_qty as any)
@@ -317,7 +317,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                               key={client.id}
                               value={String(client.id)}
                             >
-                              {client.name} ({client.email})
+                              {client.full_name} ({client.email})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -393,7 +393,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                     variant="outline"
                                     className={cn(
                                       "w-full h-10 pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
                                     )}
                                   >
                                     {field.value ? (
@@ -458,7 +458,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                     variant="outline"
                                     className={cn(
                                       "w-full h-10 pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
                                     )}
                                   >
                                     {field.value ? (
@@ -685,7 +685,7 @@ const BookingForm = ({ onSuccess, trigger }: BookingFormProps) => {
                                     variant="outline"
                                     className={cn(
                                       "w-full h-10 pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
                                     )}
                                   >
                                     {field.value ? (

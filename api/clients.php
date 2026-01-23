@@ -112,21 +112,29 @@ class ClientsController {
         }
 
         // Set client properties for correct DB columns
-        $this->client->photographer_id = $data['photographer_id'] ?? $user_data['user_id'];
-        $this->client->name = $client_name;
+        $this->client->user_id = $user_data['user_id'];
+        $this->client->full_name = $client_name;
         $this->client->email = $data['email'] ?? '';
         $this->client->phone = $data['phone'] ?? '';
         $this->client->address = $data['address'] ?? '';
-        $this->client->notes = $data['notes'] ?? '';
+        $this->client->city = $data['city'] ?? '';
+        $this->client->state = $data['state'] ?? '';
+        $this->client->zip_code = $data['zip_code'] ?? '';
+        $this->client->country = $data['country'] ?? 'Sri Lanka';
         $this->client->status = $data['status'] ?? 'active';
-        $this->client->second_contact = $data['second_contact'] ?? '';
-        $this->client->second_phone = $data['second_phone'] ?? '';
+        $this->client->notes = $data['notes'] ?? '';
 
-        if ($this->client->create()) {
+        $result = $this->client->create();
+        if ($result === true) {
             http_response_code(201);
             echo json_encode([
                 "message" => "Client created successfully",
                 "client_id" => $this->client->id
+            ]);
+        } elseif (is_array($result) && isset($result['error']) && $result['error'] === 'limit_reached') {
+            http_response_code(403);
+            echo json_encode([
+                "message" => $result['message']
             ]);
         } else {
             http_response_code(500);
@@ -158,15 +166,17 @@ class ClientsController {
 
         // Set client properties for correct DB columns
         $this->client->id = $id;
-        $this->client->photographer_id = $data['photographer_id'] ?? $user_data['user_id'];
-        $this->client->name = $client_name;
+        $this->client->user_id = $user_data['user_id'];
+        $this->client->full_name = $client_name;
         $this->client->email = $data['email'] ?? '';
         $this->client->phone = $data['phone'] ?? '';
         $this->client->address = $data['address'] ?? '';
-        $this->client->notes = $data['notes'] ?? '';
+        $this->client->city = $data['city'] ?? '';
+        $this->client->state = $data['state'] ?? '';
+        $this->client->zip_code = $data['zip_code'] ?? '';
+        $this->client->country = $data['country'] ?? 'Sri Lanka';
         $this->client->status = $data['status'] ?? 'active';
-        $this->client->second_contact = $data['second_contact'] ?? '';
-        $this->client->second_phone = $data['second_phone'] ?? '';
+        $this->client->notes = $data['notes'] ?? '';
 
         if ($this->client->update()) {
             http_response_code(200);
@@ -345,7 +355,7 @@ $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/clients', '', parse_url($request_uri, PHP_URL_PATH));
+$endpoint = str_replace('/lens-booking/lens-booking/api/clients', '', parse_url($request_uri, PHP_URL_PATH));
 
 // Get ID from URL if present
 $id = null;

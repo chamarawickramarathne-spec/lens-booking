@@ -64,7 +64,12 @@ interface EditInvoiceFormProps {
   onSuccess: () => void;
 }
 
-const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFormProps) => {
+const EditInvoiceForm = ({
+  invoice,
+  isOpen,
+  onClose,
+  onSuccess,
+}: EditInvoiceFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
@@ -109,7 +114,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
 
   const fetchClients = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from("clients")
@@ -130,7 +135,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
 
   const fetchBookings = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from("bookings")
@@ -162,7 +167,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
 
   const onSubmit = async (data: EditInvoiceFormData) => {
     if (!user || !invoice) return;
-    
+
     setIsLoading(true);
     try {
       const invoiceData = {
@@ -189,7 +194,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
         title: "Success",
         description: "Invoice updated successfully!",
       });
-      
+
       onClose();
       onSuccess();
     } catch (error: any) {
@@ -224,7 +229,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="client_id"
@@ -240,7 +245,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                     <SelectContent>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
-                          {client.name} ({client.email})
+                          {client.full_name} ({client.email})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -249,7 +254,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="booking_id"
@@ -265,7 +270,11 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                     <SelectContent>
                       {bookings.map((booking) => (
                         <SelectItem key={booking.id} value={booking.id}>
-                          {booking.title} - {format(new Date(booking.booking_date), "MMM dd, yyyy")}
+                          {booking.title} -{" "}
+                          {format(
+                            new Date(booking.booking_date),
+                            "MMM dd, yyyy",
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -274,7 +283,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -289,7 +298,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (
@@ -315,7 +324,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="due_date"
@@ -329,7 +338,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (
@@ -357,7 +366,7 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -366,13 +375,18 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                   <FormItem>
                     <FormLabel>Subtotal</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="tax_amount"
@@ -380,13 +394,18 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                   <FormItem>
                     <FormLabel>Tax Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="total_amount"
@@ -394,14 +413,20 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                   <FormItem>
                     <FormLabel>Total Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} readOnly />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        readOnly
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="notes"
@@ -409,19 +434,18 @@ const EditInvoiceForm = ({ invoice, isOpen, onClose, onSuccess }: EditInvoiceFor
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Additional notes for the invoice" {...field} />
+                    <Textarea
+                      placeholder="Additional notes for the invoice"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

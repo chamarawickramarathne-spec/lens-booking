@@ -177,10 +177,7 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Client (Optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select client" />
@@ -190,7 +187,7 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
                         <SelectItem value="none">No client</SelectItem>
                         {clients?.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
-                            {client.name}
+                            {client.full_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -206,10 +203,7 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Booking (Optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select booking" />

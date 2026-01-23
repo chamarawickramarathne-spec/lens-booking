@@ -37,26 +37,11 @@ CREATE TABLE clients (
 );
 
 -- Booking types/packages
-CREATE TABLE booking_packages (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    package_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    duration_hours INT,
-    base_price DECIMAL(10,2),
-    currency VARCHAR(3) DEFAULT 'LKR',
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 -- Bookings table
 CREATE TABLE bookings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     client_id INT,
-    package_id INT,
     booking_date DATE NOT NULL,
     booking_time TIME,
     end_time TIME,
@@ -64,7 +49,6 @@ CREATE TABLE bookings (
     status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     total_amount DECIMAL(10,2),
     paid_amount DECIMAL(10,2) DEFAULT 0,
-    currency VARCHAR(3) DEFAULT 'LKR',
     deposit_amount DECIMAL(10,2),
     deposit_paid BOOLEAN DEFAULT false,
     special_requirements TEXT,
@@ -72,8 +56,7 @@ CREATE TABLE bookings (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
-    FOREIGN KEY (package_id) REFERENCES booking_packages(id) ON DELETE SET NULL
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
 );
 
 -- Galleries table

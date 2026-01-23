@@ -61,7 +61,8 @@ class AuthController {
                     "email" => $user_data['email'],
                     "full_name" => $user_data['full_name'],
                     "role" => $user_data['role'],
-                    "currency_type" => $user_data['currency_type'] ?? 'USD'
+                    "currency_type" => $user_data['currency_type'] ?? 'USD',
+                    "access_level" => $user_data['access_level'] ?? null
                 ]
             ]);
         } else {
@@ -391,7 +392,7 @@ $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
+$endpoint = str_replace('/lens-booking/lens-booking/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
 
 // Debug logging
 error_log("Auth API - Method: $request_method, URI: $request_uri, Endpoint: $endpoint");

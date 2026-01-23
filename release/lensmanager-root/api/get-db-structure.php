@@ -9,7 +9,7 @@ require_once 'config/database.php';
 $database = new Database();
 $conn = $database->getConnection();
 
-$tables = ['users', 'clients', 'bookings', 'booking_packages', 'galleries', 'gallery_images', 'invoices', 'payments'];
+$tables = ['users', 'clients', 'bookings', 'galleries', 'gallery_images', 'invoices', 'payments'];
 
 foreach ($tables as $table) {
     echo "\n=== TABLE: $table ===\n";

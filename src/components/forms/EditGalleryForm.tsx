@@ -50,7 +50,11 @@ interface EditGalleryFormProps {
   trigger: React.ReactNode;
 }
 
-const EditGalleryForm = ({ gallery, onSuccess, trigger }: EditGalleryFormProps) => {
+const EditGalleryForm = ({
+  gallery,
+  onSuccess,
+  trigger,
+}: EditGalleryFormProps) => {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -139,9 +143,7 @@ const EditGalleryForm = ({ gallery, onSuccess, trigger }: EditGalleryFormProps) 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Gallery</DialogTitle>
-          <DialogDescription>
-            Update gallery information
-          </DialogDescription>
+          <DialogDescription>Update gallery information</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -183,10 +185,7 @@ const EditGalleryForm = ({ gallery, onSuccess, trigger }: EditGalleryFormProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Client (Optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select client" />
@@ -196,7 +195,7 @@ const EditGalleryForm = ({ gallery, onSuccess, trigger }: EditGalleryFormProps) 
                         <SelectItem value="">No client</SelectItem>
                         {clients?.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
-                            {client.name}
+                            {client.full_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -212,10 +211,7 @@ const EditGalleryForm = ({ gallery, onSuccess, trigger }: EditGalleryFormProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Booking (Optional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select booking" />

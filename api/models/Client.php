@@ -9,15 +9,17 @@ class Client {
     private $table_name = "clients";
 
     public $id;
-    public $photographer_id;
-    public $name;
+    public $user_id;
+    public $full_name;
     public $email;
     public $phone;
     public $address;
-    public $notes;
+    public $city;
+    public $state;
+    public $zip_code;
+    public $country;
     public $status;
-    public $second_contact;
-    public $second_phone;
+    public $notes;
     public $created_at;
     public $updated_at;
 
@@ -29,33 +31,45 @@ class Client {
      * Create new client
      */
     public function create() {
+        // Check access level permissions
+        require_once 'AccessLevel.php';
+        $accessLevel = new AccessLevel($this->conn);
+        
+        if (!$accessLevel->canCreateClient($this->user_id)) {
+            return ['error' => 'limit_reached', 'message' => 'You have reached your client limit for your current plan.'];
+        }
+
         $query = "INSERT INTO " . $this->table_name . " 
-                 SET photographer_id=:photographer_id, name=:name, email=:email, phone=:phone,
-                     address=:address, notes=:notes, status=:status, 
-                     second_contact=:second_contact, second_phone=:second_phone";
+                 SET user_id=:user_id, full_name=:full_name, email=:email, phone=:phone,
+                     address=:address, city=:city, state=:state, zip_code=:zip_code,
+                     country=:country, status=:status, notes=:notes";
 
         $stmt = $this->conn->prepare($query);
 
         // Sanitize inputs
-        $this->name = htmlspecialchars(strip_tags($this->name));
-        $this->email = htmlspecialchars(strip_tags($this->email));
-        $this->phone = htmlspecialchars(strip_tags($this->phone));
-        $this->address = htmlspecialchars(strip_tags($this->address));
-        $this->notes = htmlspecialchars(strip_tags($this->notes));
-        $this->status = htmlspecialchars(strip_tags($this->status));
-        $this->second_contact = htmlspecialchars(strip_tags($this->second_contact));
-        $this->second_phone = htmlspecialchars(strip_tags($this->second_phone));
+        $this->full_name = htmlspecialchars(strip_tags($this->full_name));
+        $this->email = htmlspecialchars(strip_tags($this->email ?? ''));
+        $this->phone = htmlspecialchars(strip_tags($this->phone ?? ''));
+        $this->address = htmlspecialchars(strip_tags($this->address ?? ''));
+        $this->city = htmlspecialchars(strip_tags($this->city ?? ''));
+        $this->state = htmlspecialchars(strip_tags($this->state ?? ''));
+        $this->zip_code = htmlspecialchars(strip_tags($this->zip_code ?? ''));
+        $this->country = htmlspecialchars(strip_tags($this->country ?? 'Sri Lanka'));
+        $this->status = htmlspecialchars(strip_tags($this->status ?? 'active'));
+        $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
 
         // Bind values
-        $stmt->bindParam(":photographer_id", $this->photographer_id);
-        $stmt->bindParam(":name", $this->name);
+        $stmt->bindParam(":user_id", $this->user_id);
+        $stmt->bindParam(":full_name", $this->full_name);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":phone", $this->phone);
         $stmt->bindParam(":address", $this->address);
-        $stmt->bindParam(":notes", $this->notes);
+        $stmt->bindParam(":city", $this->city);
+        $stmt->bindParam(":state", $this->state);
+        $stmt->bindParam(":zip_code", $this->zip_code);
+        $stmt->bindParam(":country", $this->country);
         $stmt->bindParam(":status", $this->status);
-        $stmt->bindParam(":second_contact", $this->second_contact);
-        $stmt->bindParam(":second_phone", $this->second_phone);
+        $stmt->bindParam(":notes", $this->notes);
 
         if ($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
@@ -65,15 +79,15 @@ class Client {
     }
 
     /**
-     * Get all clients for a photographer
+     * Get all clients for a user
      */
-    public function getByUserId($photographer_id) {
+    public function getByUserId($user_id) {
         $query = "SELECT * FROM " . $this->table_name . " 
-                 WHERE photographer_id = :photographer_id 
+                 WHERE user_id = :user_id 
                  ORDER BY created_at DESC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":photographer_id", $photographer_id);
+        $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -82,13 +96,13 @@ class Client {
     /**
      * Get client by ID
      */
-    public function getById($id, $photographer_id) {
+    public function getById($id, $user_id) {
         $query = "SELECT * FROM " . $this->table_name . " 
-                 WHERE id = :id AND photographer_id = :photographer_id";
+                 WHERE id = :id AND user_id = :user_id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $id);
-        $stmt->bindParam(":photographer_id", $photographer_id);
+        $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
@@ -102,34 +116,38 @@ class Client {
      */
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
-                 SET name=:name, email=:email, phone=:phone, address=:address,
-                     notes=:notes, status=:status, second_contact=:second_contact,
-                     second_phone=:second_phone, updated_at=CURRENT_TIMESTAMP
-                 WHERE id=:id AND photographer_id=:photographer_id";
+                 SET full_name=:full_name, email=:email, phone=:phone, address=:address,
+                     city=:city, state=:state, zip_code=:zip_code, country=:country,
+                     status=:status, notes=:notes, updated_at=CURRENT_TIMESTAMP
+                 WHERE id=:id AND user_id=:user_id";
 
         $stmt = $this->conn->prepare($query);
 
         // Sanitize inputs
-        $this->name = htmlspecialchars(strip_tags($this->name));
-        $this->email = htmlspecialchars(strip_tags($this->email));
-        $this->phone = htmlspecialchars(strip_tags($this->phone));
-        $this->address = htmlspecialchars(strip_tags($this->address));
-        $this->notes = htmlspecialchars(strip_tags($this->notes));
-        $this->status = htmlspecialchars(strip_tags($this->status));
-        $this->second_contact = htmlspecialchars(strip_tags($this->second_contact));
-        $this->second_phone = htmlspecialchars(strip_tags($this->second_phone));
+        $this->full_name = htmlspecialchars(strip_tags($this->full_name));
+        $this->email = htmlspecialchars(strip_tags($this->email ?? ''));
+        $this->phone = htmlspecialchars(strip_tags($this->phone ?? ''));
+        $this->address = htmlspecialchars(strip_tags($this->address ?? ''));
+        $this->city = htmlspecialchars(strip_tags($this->city ?? ''));
+        $this->state = htmlspecialchars(strip_tags($this->state ?? ''));
+        $this->zip_code = htmlspecialchars(strip_tags($this->zip_code ?? ''));
+        $this->country = htmlspecialchars(strip_tags($this->country ?? 'Sri Lanka'));
+        $this->status = htmlspecialchars(strip_tags($this->status ?? 'active'));
+        $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
 
         // Bind values
-        $stmt->bindParam(":name", $this->name);
+        $stmt->bindParam(":full_name", $this->full_name);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":phone", $this->phone);
         $stmt->bindParam(":address", $this->address);
-        $stmt->bindParam(":notes", $this->notes);
+        $stmt->bindParam(":city", $this->city);
+        $stmt->bindParam(":state", $this->state);
+        $stmt->bindParam(":zip_code", $this->zip_code);
+        $stmt->bindParam(":country", $this->country);
         $stmt->bindParam(":status", $this->status);
-        $stmt->bindParam(":second_contact", $this->second_contact);
-        $stmt->bindParam(":second_phone", $this->second_phone);
+        $stmt->bindParam(":notes", $this->notes);
         $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam(":photographer_id", $this->photographer_id);
+        $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();
     }

@@ -401,30 +401,38 @@ export interface User {
   bio?: string;
   website?: string;
   portfolio_url?: string;
+  access_level?: {
+    id: number;
+    name: string;
+    role: 'admin' | 'photographer' | 'client';
+    max_clients: number | null;
+    max_bookings: number | null;
+  };
   created_at: string;
   updated_at: string;
 }
 
 export interface Client {
   id: number;
-  photographer_id: number;
-  name: string;
+  user_id: number;
+  full_name: string;
   email?: string;
   phone?: string;
   address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  status?: 'active' | 'inactive' | 'blacklisted';
   notes?: string;
-  status: string;
   created_at: string;
   updated_at: string;
-  second_contact?: string;
-  second_phone?: string;
 }
 
 export interface Booking {
   id: number;
   user_id: number;
   client_id: number;
-  package_id?: number;
   booking_date: string;
   booking_time?: string;
   end_time?: string;
@@ -432,7 +440,6 @@ export interface Booking {
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
   total_amount?: number;
   paid_amount?: number;
-  currency?: string;
   deposit_amount?: number;
   deposit_paid?: boolean;
   special_requirements?: string;
