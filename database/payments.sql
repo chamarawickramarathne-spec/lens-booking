@@ -28,22 +28,17 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `payments` (
-  `id` int(11) NOT NULL,
-  `invoice_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `payment_date` date DEFAULT NULL,
-  `payment_method` varchar(50) DEFAULT NULL,
-  `transaction_id` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `photographer_id` int(11) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` int(11) NOT NULL,
+  `invoice_id` int(11) DEFAULT NULL,
   `booking_id` int(11) DEFAULT NULL,
-  `schedule_type` varchar(50) DEFAULT NULL,
-  `payment_name` varchar(100) DEFAULT NULL,
-  `due_date` date DEFAULT NULL,
-  `status` enum('pending','completed','cancelled') DEFAULT 'pending',
+  `schedule_id` int(11) DEFAULT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `payment_date` date NOT NULL,
+  `payment_method` enum('cash', 'bank_transfer', 'card', 'online', 'cheque') DEFAULT 'cash',
+  `transaction_reference` varchar(255) DEFAULT NULL,
   `notes` text DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `paid_amount` decimal(10,2) DEFAULT 0.00
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -54,10 +49,10 @@ CREATE TABLE `payments` (
 -- Indexes for table `payments`
 --
 ALTER TABLE `payments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `photographer_id` (`photographer_id`),
+  ADD KEY `user_id` (`user_id`),
   ADD KEY `booking_id` (`booking_id`),
-  ADD KEY `invoice_id` (`invoice_id`);
+  ADD KEY `invoice_id` (`invoice_id`),
+  ADD KEY `schedule_id` (`schedule_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -77,10 +72,10 @@ ALTER TABLE `payments`
 -- Constraints for table `payments`
 --
 ALTER TABLE `payments`
-  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`),
-  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`photographer_id`) REFERENCES `photographers` (`id`),
-  ADD CONSTRAINT `payments_ibfk_3` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`),
-  ADD CONSTRAINT `payments_ibfk_4` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`);
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payments_ibfk_3` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payments_ibfk_4` FOREIGN KEY (`schedule_id`) REFERENCES `payment_schedules` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
