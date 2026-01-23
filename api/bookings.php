@@ -190,6 +190,9 @@ class BookingsController {
         $new_status = $data['status'];
 
         if ($this->booking->updateStatus($id, $user_data['user_id'], $new_status)) {
+            $response_data = ["message" => "Booking status updated successfully"];
+            $invoice_created = false;
+            
             // If status is being changed to "confirmed", automatically create an invoice
             if ($new_status === 'confirmed') {
                 try {
@@ -215,7 +218,7 @@ class BookingsController {
                                                 booking_id=:booking_id,
                                                 invoice_number=:invoice_number, 
                                                 issue_date=:issue_date, 
-                                                subtotal=:subtotal, 
+                                                subtotal=:subtotal,
                                                 total_amount=:total_amount,
                                                 status='draft'";
                             
@@ -223,23 +226,30 @@ class BookingsController {
                             
                             $issue_date = date('Y-m-d');
                             $total_amount = $booking['total_amount'] ?? 0;
-                            $tax_amount = 0;
+                            $subtotal = $total_amount;
                             
                             $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
                             $invoice_stmt->bindParam(":client_id", $booking['client_id']);
                             $invoice_stmt->bindParam(":booking_id", $id);
                             $invoice_stmt->bindParam(":invoice_number", $invoice_number);
                             $invoice_stmt->bindParam(":issue_date", $issue_date);
-                            $invoice_stmt->bindParam(":subtotal", $total_amount);
-                            $invoice_stmt->bindParam(":tax_amount", $tax_amount);
+                            $invoice_stmt->bindParam(":subtotal", $subtotal);
                             $invoice_stmt->bindParam(":total_amount", $total_amount);
                             
-                            $invoice_stmt->execute();
+                            if (!$invoice_stmt->execute()) {
+                                throw new Exception("Failed to execute invoice insert: " . implode(", ", $invoice_stmt->errorInfo()));
+                            }
+                            
+                            $invoice_created = true;
+                            $response_data["invoice_id"] = $this->db->lastInsertId();
+                            $response_data["invoice_number"] = $invoice_number;
+                            $response_data["invoice_message"] = "Invoice created automatically";
                         }
                     }
                 } catch (Exception $e) {
                     // Log error but don't fail the status update
                     error_log("Failed to create invoice for booking $id: " . $e->getMessage());
+                    $response_data["invoice_warning"] = "Status updated but invoice creation failed";
                 }
             }
             
@@ -283,7 +293,7 @@ class BookingsController {
             }
             
             http_response_code(200);
-            echo json_encode(["message" => "Booking status updated successfully"]);
+            echo json_encode($response_data);
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Unable to update booking status"]);
