@@ -46,7 +46,7 @@ class InvoicesController {
                       FROM " . $this->table_name . " i
                       LEFT JOIN clients c ON i.client_id = c.id
                       LEFT JOIN bookings b ON i.booking_id = b.id
-                      WHERE i.photographer_id = :photographer_id
+                      WHERE i.user_id = :photographer_id
                       ORDER BY i.created_at DESC";
 
             $stmt = $this->db->prepare($query);
@@ -65,7 +65,7 @@ class InvoicesController {
                     'status' => $invoice['status'],
                     'created_at' => $invoice['created_at'],
                     'updated_at' => $invoice['updated_at'],
-                    'photographer_id' => $invoice['photographer_id'],
+                    'user_id' => $invoice['user_id'],
                     'client_id' => $invoice['client_id'],
                     'invoice_number' => $invoice['invoice_number'],
                     'issue_date' => $invoice['issue_date'],
@@ -122,7 +122,7 @@ class InvoicesController {
                       FROM " . $this->table_name . " i
                       LEFT JOIN clients c ON i.client_id = c.id
                       LEFT JOIN bookings b ON i.booking_id = b.id
-                      WHERE i.id = :id AND i.photographer_id = :photographer_id";
+                      WHERE i.id = :id AND i.user_id = :photographer_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
@@ -140,7 +140,7 @@ class InvoicesController {
                     'status' => $invoice['status'],
                     'created_at' => $invoice['created_at'],
                     'updated_at' => $invoice['updated_at'],
-                    'photographer_id' => $invoice['photographer_id'],
+                    'user_id' => $invoice['user_id'],
                     'client_id' => $invoice['client_id'],
                     'invoice_number' => $invoice['invoice_number'],
                     'issue_date' => $invoice['issue_date'],
@@ -262,7 +262,7 @@ class InvoicesController {
         try {
             // Check if status is changing to pending
             $check_query = "SELECT status, total_amount, deposit_amount, booking_id FROM " . $this->table_name . " 
-                           WHERE id = :id AND photographer_id = :photographer_id";
+                           WHERE id = :id AND user_id = :photographer_id";
             $check_stmt = $this->db->prepare($check_query);
             $check_stmt->bindParam(":id", $id);
             $check_stmt->bindParam(":photographer_id", $user_data['user_id']);
@@ -278,7 +278,7 @@ class InvoicesController {
                          subtotal=:subtotal, tax_amount=:tax_amount, total_amount=:total_amount,
                          deposit_amount=:deposit_amount, status=:status, notes=:notes,
                          payment_date=:payment_date, updated_at=CURRENT_TIMESTAMP
-                     WHERE id=:id AND photographer_id=:photographer_id";
+                     WHERE id=:id AND user_id=:photographer_id";
 
             $stmt = $this->db->prepare($query);
 
@@ -329,7 +329,7 @@ class InvoicesController {
     private function getInvoiceData($id, $photographer_id) {
         try {
             $query = "SELECT * FROM " . $this->table_name . " 
-                     WHERE id = :id AND photographer_id = :photographer_id";
+                     WHERE id = :id AND user_id = :photographer_id";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
