@@ -38,15 +38,15 @@ class PaymentsController {
             $query = "SELECT p.*, 
                              i.invoice_number, i.client_id as invoice_client_id,
                              b.title as booking_title, b.client_id as booking_client_id,
-                             c1.name as booking_client_name,
-                             c2.name as invoice_client_name
+                             c1.full_name as booking_client_name,
+                             c2.full_name as invoice_client_name
                       FROM " . $this->table_name . " p
                       LEFT JOIN invoices i ON p.invoice_id = i.id
                       LEFT JOIN bookings b ON p.booking_id = b.id
                       LEFT JOIN clients c1 ON b.client_id = c1.id
                       LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.photographer_id = :photographer_id
-                      ORDER BY p.due_date ASC, p.created_at DESC";
+                      WHERE p.user_id = :photographer_id
+                      ORDER BY p.payment_date ASC, p.created_at DESC";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
@@ -120,14 +120,14 @@ class PaymentsController {
             $query = "SELECT p.*, 
                              i.invoice_number, i.client_id as invoice_client_id,
                              b.title as booking_title, b.client_id as booking_client_id,
-                             c1.name as booking_client_name,
-                             c2.name as invoice_client_name
+                             c1.full_name as booking_client_name,
+                             c2.full_name as invoice_client_name
                       FROM " . $this->table_name . " p
                       LEFT JOIN invoices i ON p.invoice_id = i.id
                       LEFT JOIN bookings b ON p.booking_id = b.id
                       LEFT JOIN clients c1 ON b.client_id = c1.id
                       LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.id = :id AND p.photographer_id = :photographer_id";
+                      WHERE p.id = :id AND p.user_id = :photographer_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
@@ -325,11 +325,11 @@ class PaymentsController {
 
         try {
             $query = "DELETE FROM " . $this->table_name . " 
-                     WHERE id = :id AND photographer_id = :photographer_id";
+                     WHERE id = :id AND user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 http_response_code(200);
