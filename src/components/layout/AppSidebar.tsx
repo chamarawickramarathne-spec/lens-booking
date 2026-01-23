@@ -29,8 +29,8 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: Camera },
-  { title: "Bookings", url: "/bookings", icon: Calendar },
   { title: "Clients", url: "/clients", icon: Users },
+  { title: "Bookings", url: "/bookings", icon: Calendar },
   { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Payment Schedules", url: "/payment-schedules", icon: CreditCard },
   { title: "Galleries", url: "/galleries", icon: Image },
@@ -78,7 +78,7 @@ export function AppSidebar() {
     >
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-primary font-semibold px-4 py-3">
+          <SidebarGroupLabel className="text-sidebar-primary font-semibold px-4 py-3 mb-4">
             {!collapsed && "PhotoStudio Manager"}
           </SidebarGroupLabel>
 
