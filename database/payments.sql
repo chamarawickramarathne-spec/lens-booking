@@ -50,8 +50,8 @@ CREATE TABLE `payments` (
 --
 ALTER TABLE `payments`
   ADD KEY `user_id` (`user_id`),
-  ADD KEY `booking_id` (`booking_id`),
   ADD KEY `invoice_id` (`invoice_id`),
+  ADD KEY `booking_id` (`booking_id`),
   ADD KEY `schedule_id` (`schedule_id`);
 
 --
