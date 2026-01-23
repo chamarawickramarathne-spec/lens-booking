@@ -45,7 +45,7 @@ class DashboardController {
         $recent_bookings = array_slice($recent_bookings, 0, 5); // Get only 5 recent bookings
 
         // Get client count
-        $client_query = "SELECT COUNT(*) as total_clients FROM clients WHERE photographer_id = :photographer_id";
+        $client_query = "SELECT COUNT(*) as total_clients FROM clients WHERE user_id = :photographer_id";
         $client_stmt = $this->db->prepare($client_query);
         $client_stmt->bindParam(":photographer_id", $user_data['user_id']);
         $client_stmt->execute();
@@ -57,7 +57,7 @@ class DashboardController {
                                     YEAR(booking_date) as year,
                                     SUM(total_amount) as revenue
                                   FROM bookings 
-                                  WHERE photographer_id = :photographer_id 
+                                  WHERE user_id = :photographer_id 
                                     AND booking_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                                   GROUP BY YEAR(booking_date), MONTH(booking_date)
                                   ORDER BY year DESC, month DESC";
