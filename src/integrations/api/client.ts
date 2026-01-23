@@ -435,8 +435,13 @@ export interface Booking {
   client_id: number;
   booking_date: string;
   booking_time?: string;
+  start_time?: string;
   end_time?: string;
   location?: string;
+  title?: string;
+  description?: string;
+  package_type?: string;
+  package_name?: string;
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
   total_amount?: number;
   paid_amount?: number;

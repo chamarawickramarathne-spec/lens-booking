@@ -13,8 +13,13 @@ class Booking {
     public $client_id;
     public $booking_date;
     public $booking_time;
+    public $start_time;
     public $end_time;
     public $location;
+    public $title;
+    public $description;
+    public $package_type;
+    public $package_name;
     public $status;
     public $total_amount;
     public $paid_amount;
@@ -43,8 +48,9 @@ class Booking {
 
         $query = "INSERT INTO " . $this->table_name . " 
                  SET user_id=:user_id, client_id=:client_id,
-                     booking_date=:booking_date, booking_time=:booking_time, end_time=:end_time,
-                     location=:location, status=:status,
+                     booking_date=:booking_date, booking_time=:booking_time, start_time=:start_time, end_time=:end_time,
+                     location=:location, title=:title, description=:description,
+                     package_type=:package_type, package_name=:package_name, status=:status,
                      total_amount=:total_amount, paid_amount=:paid_amount,
                      deposit_amount=:deposit_amount, deposit_paid=:deposit_paid,
                      special_requirements=:special_requirements, notes=:notes";
@@ -53,6 +59,10 @@ class Booking {
 
         // Sanitize inputs
         $this->location = htmlspecialchars(strip_tags($this->location ?? ''));
+        $this->title = htmlspecialchars(strip_tags($this->title ?? ''));
+        $this->description = htmlspecialchars(strip_tags($this->description ?? ''));
+        $this->package_type = htmlspecialchars(strip_tags($this->package_type ?? ''));
+        $this->package_name = htmlspecialchars(strip_tags($this->package_name ?? ''));
         $this->status = htmlspecialchars(strip_tags($this->status ?? 'pending'));
         $this->special_requirements = htmlspecialchars(strip_tags($this->special_requirements ?? ''));
         $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
@@ -62,8 +72,13 @@ class Booking {
         $stmt->bindParam(":client_id", $this->client_id);
         $stmt->bindParam(":booking_date", $this->booking_date);
         $stmt->bindParam(":booking_time", $this->booking_time);
+        $stmt->bindParam(":start_time", $this->start_time);
         $stmt->bindParam(":end_time", $this->end_time);
         $stmt->bindParam(":location", $this->location);
+        $stmt->bindParam(":title", $this->title);
+        $stmt->bindParam(":description", $this->description);
+        $stmt->bindParam(":package_type", $this->package_type);
+        $stmt->bindParam(":package_name", $this->package_name);
         $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":total_amount", $this->total_amount);
         $stmt->bindParam(":paid_amount", $this->paid_amount);
@@ -122,7 +137,8 @@ class Booking {
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
                  SET client_id=:client_id, booking_date=:booking_date,
-                     booking_time=:booking_time, end_time=:end_time, location=:location,
+                     booking_time=:booking_time, start_time=:start_time, end_time=:end_time, location=:location,
+                     title=:title, description=:description, package_type=:package_type, package_name=:package_name,
                      total_amount=:total_amount, paid_amount=:paid_amount,
                      deposit_amount=:deposit_amount, deposit_paid=:deposit_paid,
                      status=:status, special_requirements=:special_requirements, notes=:notes,
@@ -133,6 +149,10 @@ class Booking {
 
         // Sanitize inputs
         $this->location = htmlspecialchars(strip_tags($this->location ?? ''));
+        $this->title = htmlspecialchars(strip_tags($this->title ?? ''));
+        $this->description = htmlspecialchars(strip_tags($this->description ?? ''));
+        $this->package_type = htmlspecialchars(strip_tags($this->package_type ?? ''));
+        $this->package_name = htmlspecialchars(strip_tags($this->package_name ?? ''));
         $this->status = htmlspecialchars(strip_tags($this->status ?? 'pending'));
         $this->special_requirements = htmlspecialchars(strip_tags($this->special_requirements ?? ''));
         $this->notes = htmlspecialchars(strip_tags($this->notes ?? ''));
@@ -141,8 +161,16 @@ class Booking {
         $stmt->bindParam(":client_id", $this->client_id);
         $stmt->bindParam(":booking_date", $this->booking_date);
         $stmt->bindParam(":booking_time", $this->booking_time);
+        $stmt->bindParam(":start_time", $this->start_time);
         $stmt->bindParam(":end_time", $this->end_time);
         $stmt->bindParam(":location", $this->location);
+        $stmt->bindParam(":title", $this->title);
+        $stmt->bindParam(":description", $this->description);
+        $stmt->bindParam(":package_type", $this->package_type);
+        $stmt->bindParam(":package_name", $this->package_name);
+        $stmt->bindParam(":total_amount", $this->total_amount);
+        $stmt->bindParam(":paid_amount", $this->paid_amount);
+        $stmt->bindParam(":deposit_amount", $this->deposit_amount);
         $stmt->bindParam(":total_amount", $this->total_amount);
         $stmt->bindParam(":paid_amount", $this->paid_amount);
         $stmt->bindParam(":deposit_amount", $this->deposit_amount);

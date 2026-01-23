@@ -125,8 +125,13 @@ class BookingsController {
         $this->booking->client_id = $data['client_id'];
         $this->booking->booking_date = $data['booking_date'];
         $this->booking->booking_time = $data['booking_time'] ?? null;
+        $this->booking->start_time = $data['start_time'] ?? null;
         $this->booking->end_time = $data['end_time'] ?? null;
         $this->booking->location = $data['location'] ?? '';
+        $this->booking->title = $data['title'] ?? '';
+        $this->booking->description = $data['description'] ?? '';
+        $this->booking->package_type = $data['package_type'] ?? '';
+        $this->booking->package_name = $data['package_name'] ?? '';
         $this->booking->status = $data['status'] ?? 'pending';
         $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
             ? floatval($data['total_amount']) : 0;
@@ -304,8 +309,13 @@ class BookingsController {
         $this->booking->client_id = $data['client_id'] ?? null;
         $this->booking->booking_date = $data['booking_date'] ?? null;
         $this->booking->booking_time = $data['booking_time'] ?? null;
+        $this->booking->start_time = $data['start_time'] ?? null;
         $this->booking->end_time = $data['end_time'] ?? null;
         $this->booking->location = $data['location'] ?? '';
+        $this->booking->title = $data['title'] ?? '';
+        $this->booking->description = $data['description'] ?? '';
+        $this->booking->package_type = $data['package_type'] ?? '';
+        $this->booking->package_name = $data['package_name'] ?? '';
         $this->booking->status = $data['status'] ?? 'pending';
         $this->booking->total_amount = isset($data['total_amount']) && $data['total_amount'] !== ''
             ? floatval($data['total_amount']) : 0;
