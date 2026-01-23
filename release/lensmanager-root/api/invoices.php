@@ -36,7 +36,7 @@ class InvoicesController {
 
         try {
             $query = "SELECT i.*, 
-                             c.name as client_name, c.email as client_email, 
+                             c.full_name as client_name, c.email as client_email, 
                              c.phone as client_phone, c.address as client_address,
                              b.title as booking_title, b.booking_date
                       FROM " . $this->table_name . " i
@@ -112,7 +112,7 @@ class InvoicesController {
 
         try {
             $query = "SELECT i.*, 
-                             c.name as client_name, c.email as client_email, 
+                             c.full_name as client_name, c.email as client_email, 
                              c.phone as client_phone, c.address as client_address,
                              b.title as booking_title, b.booking_date
                       FROM " . $this->table_name . " i
