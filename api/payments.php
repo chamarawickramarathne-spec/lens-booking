@@ -38,15 +38,15 @@ class PaymentsController {
             $query = "SELECT p.*, 
                              i.invoice_number, i.client_id as invoice_client_id,
                              b.title as booking_title, b.client_id as booking_client_id,
-                             c1.full_name as booking_client_name,
-                             c2.full_name as invoice_client_name
+                             c1.name as booking_client_name,
+                             c2.name as invoice_client_name
                       FROM " . $this->table_name . " p
                       LEFT JOIN invoices i ON p.invoice_id = i.id
                       LEFT JOIN bookings b ON p.booking_id = b.id
                       LEFT JOIN clients c1 ON b.client_id = c1.id
                       LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.user_id = :photographer_id
-                      ORDER BY p.payment_date ASC, p.created_at DESC";
+                      WHERE p.photographer_id = :photographer_id
+                      ORDER BY p.due_date ASC, p.created_at DESC";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
@@ -120,14 +120,14 @@ class PaymentsController {
             $query = "SELECT p.*, 
                              i.invoice_number, i.client_id as invoice_client_id,
                              b.title as booking_title, b.client_id as booking_client_id,
-                             c1.full_name as booking_client_name,
-                             c2.full_name as invoice_client_name
+                             c1.name as booking_client_name,
+                             c2.name as invoice_client_name
                       FROM " . $this->table_name . " p
                       LEFT JOIN invoices i ON p.invoice_id = i.id
                       LEFT JOIN bookings b ON p.booking_id = b.id
                       LEFT JOIN clients c1 ON b.client_id = c1.id
                       LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.id = :id AND p.user_id = :photographer_id";
+                      WHERE p.id = :id AND p.photographer_id = :photographer_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
@@ -210,22 +210,30 @@ class PaymentsController {
 
         try {
             $query = "INSERT INTO " . $this->table_name . " 
-                     SET user_id=:photographer_id, invoice_id=:invoice_id, booking_id=:booking_id,
-                         schedule_id=:schedule_id, amount=:amount, payment_date=:payment_date,
-                         payment_method=:payment_method, transaction_reference=:transaction_reference,
-                         notes=:notes";
+                     SET photographer_id=:photographer_id, invoice_id=:invoice_id, booking_id=:booking_id,
+                         payment_name=:payment_name, schedule_type=:schedule_type, due_date=:due_date,
+                         amount=:amount, paid_amount=:paid_amount, status=:status,
+                         payment_date=:payment_date, payment_method=:payment_method,
+                         transaction_id=:transaction_id, notes=:notes";
 
             $stmt = $this->db->prepare($query);
 
+            $status = $data['status'] ?? 'pending';
+            $schedule_type = $data['schedule_type'] ?? 'invoice';
+
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
-            $stmt->bindParam(":invoice_id", $data['invoice_id'] ?? null);
-            $stmt->bindParam(":booking_id", $data['booking_id'] ?? null);
-            $stmt->bindParam(":schedule_id", $data['schedule_id'] ?? null);
+            $stmt->bindParam(":invoice_id", $data['invoice_id']);
+            $stmt->bindParam(":booking_id", $data['booking_id']);
+            $stmt->bindParam(":payment_name", $data['payment_name']);
+            $stmt->bindParam(":schedule_type", $schedule_type);
+            $stmt->bindParam(":due_date", $data['due_date']);
             $stmt->bindParam(":amount", $data['amount']);
+            $stmt->bindParam(":paid_amount", $data['paid_amount']);
+            $stmt->bindParam(":status", $status);
             $stmt->bindParam(":payment_date", $data['payment_date']);
-            $stmt->bindParam(":payment_method", $data['payment_method'] ?? 'cash');
-            $stmt->bindParam(":transaction_reference", $data['transaction_reference'] ?? null);
-            $stmt->bindParam(":notes", $data['notes'] ?? null);
+            $stmt->bindParam(":payment_method", $data['payment_method']);
+            $stmt->bindParam(":transaction_id", $data['transaction_id']);
+            $stmt->bindParam(":notes", $data['notes']);
 
             if ($stmt->execute()) {
                 http_response_code(201);
@@ -263,21 +271,27 @@ class PaymentsController {
         try {
             $query = "UPDATE " . $this->table_name . " 
                      SET invoice_id=:invoice_id, booking_id=:booking_id,
-                         schedule_id=:schedule_id, amount=:amount, payment_date=:payment_date,
-                         payment_method=:payment_method, transaction_reference=:transaction_reference,
-                         notes=:notes
-                     WHERE id=:id AND user_id=:photographer_id";
+                         payment_name=:payment_name, schedule_type=:schedule_type, due_date=:due_date,
+                         amount=:amount, paid_amount=:paid_amount, status=:status,
+                         payment_date=:payment_date, payment_method=:payment_method,
+                         transaction_id=:transaction_id, notes=:notes,
+                         updated_at=CURRENT_TIMESTAMP
+                     WHERE id=:id AND photographer_id=:photographer_id";
 
             $stmt = $this->db->prepare($query);
 
-            $stmt->bindParam(":invoice_id", $data['invoice_id'] ?? null);
-            $stmt->bindParam(":booking_id", $data['booking_id'] ?? null);
-            $stmt->bindParam(":schedule_id", $data['schedule_id'] ?? null);
+            $stmt->bindParam(":invoice_id", $data['invoice_id']);
+            $stmt->bindParam(":booking_id", $data['booking_id']);
+            $stmt->bindParam(":payment_name", $data['payment_name']);
+            $stmt->bindParam(":schedule_type", $data['schedule_type']);
+            $stmt->bindParam(":due_date", $data['due_date']);
             $stmt->bindParam(":amount", $data['amount']);
+            $stmt->bindParam(":paid_amount", $data['paid_amount']);
+            $stmt->bindParam(":status", $data['status']);
             $stmt->bindParam(":payment_date", $data['payment_date']);
-            $stmt->bindParam(":payment_method", $data['payment_method'] ?? 'cash');
-            $stmt->bindParam(":transaction_reference", $data['transaction_reference'] ?? null);
-            $stmt->bindParam(":notes", $data['notes'] ?? null);
+            $stmt->bindParam(":payment_method", $data['payment_method']);
+            $stmt->bindParam(":transaction_id", $data['transaction_id']);
+            $stmt->bindParam(":notes", $data['notes']);
             $stmt->bindParam(":id", $id);
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
 
@@ -311,11 +325,11 @@ class PaymentsController {
 
         try {
             $query = "DELETE FROM " . $this->table_name . " 
-                     WHERE id = :id AND user_id = :user_id";
+                     WHERE id = :id AND photographer_id = :photographer_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":user_id", $user_data['user_id']);
+            $stmt->bindParam(":photographer_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 http_response_code(200);
