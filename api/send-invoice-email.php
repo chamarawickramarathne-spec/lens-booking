@@ -80,17 +80,17 @@ class InvoiceEmailController {
                 'invoice_id' => $data->invoice_id,
             ]);
             // Get invoice details
-            $query = "SELECT i.*, 
-                             c.name as client_name, c.email as client_email,
-                             b.title as booking_title
-                      FROM invoices i
-                      LEFT JOIN clients c ON i.client_id = c.id
-                      LEFT JOIN bookings b ON i.booking_id = b.id
-                      WHERE i.id = :invoice_id AND i.photographer_id = :photographer_id";
+                 $query = "SELECT i.*, 
+                         c.full_name as client_name, c.email as client_email,
+                         b.title as booking_title
+                     FROM invoices i
+                     LEFT JOIN clients c ON i.client_id = c.id
+                     LEFT JOIN bookings b ON i.booking_id = b.id
+                     WHERE i.id = :invoice_id AND i.user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":invoice_id", $data->invoice_id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -106,8 +106,8 @@ class InvoiceEmailController {
             }
 
             // Get photographer details
-            $userQuery = "SELECT first_name, last_name, email, phone, business_name, business_email, business_phone
-                          FROM photographers WHERE id = :user_id";
+            $userQuery = "SELECT full_name, email, phone, business_name, business_email, business_phone, business_address
+                          FROM users WHERE id = :user_id";
             $userStmt = $this->db->prepare($userQuery);
             $userStmt->bindParam(":user_id", $user_data['user_id']);
             $userStmt->execute();
@@ -125,9 +125,9 @@ class InvoiceEmailController {
 
             // Prepare email basics
             $to = $invoice['client_email'];
-            $subject = "Invoice #{$invoice['invoice_number']} from " . ($photographer['business_name'] ?: ($photographer['first_name'] . ' ' . $photographer['last_name']));
+            $subject = "Invoice #{$invoice['invoice_number']} from " . ($photographer['business_name'] ?: ($photographer['full_name'] ?? 'Lens Manager'));
             
-            $businessName = $photographer['business_name'] ?: ($photographer['first_name'] . ' ' . $photographer['last_name']);
+            $businessName = $photographer['business_name'] ?: ($photographer['full_name'] ?? 'Lens Manager');
             $contactEmail = $photographer['business_email'] ?: $photographer['email'];
             $contactPhone = $photographer['business_phone'] ?: $photographer['phone'];
 
@@ -136,7 +136,7 @@ class InvoiceEmailController {
             $message .= "Please find attached your invoice #{$invoice['invoice_number']}.\n\n";
             $message .= "Invoice Details:\n";
             $message .= "- Invoice Number: {$invoice['invoice_number']}\n";
-            $message .= "- Issue Date: " . date('M d, Y', strtotime($invoice['issue_date'])) . "\n";
+            $message .= "- Issue Date: " . date('M d, Y', strtotime($invoice['invoice_date'])) . "\n";
             $message .= "- Due Date: " . date('M d, Y', strtotime($invoice['due_date'])) . "\n";
             $message .= "- Total Amount: " . number_format($invoice['total_amount'], 2) . "\n\n";
             
@@ -196,23 +196,28 @@ class InvoiceEmailController {
             // For development, we'll just log the email instead of actually sending it
             
             // Check if we're in development mode (no proper mail server)
-            $isDevelopment = false; // Set to false in production
+            $isDevelopment = true; // Set to false in production
             
             if ($isDevelopment) {
-                // In development, just log the email and return success
+                // In development, just log the email and mark invoice as sent
+                $this->logEmailToFile($to, $subject, $email['body'], $email['headers'], $attachmentBytes, $attachmentName);
                 $this->log('info', 'Development mode: email logged instead of sent', [
                     'to' => $to,
                     'subject' => $subject,
                     'attachment' => (bool)$attachmentBytes,
                     'invoice_number' => $invoice['invoice_number'] ?? null,
                 ]);
-                
+
+                // Update invoice status to sent after successful logging
+                $this->markInvoiceAsSent($data->invoice_id, $user_data['user_id']);
+
                 http_response_code(200);
                 echo json_encode([
-                    "message" => "Invoice email logged successfully (Development Mode)",
+                    "message" => "Invoice emailed (logged) and status set to sent",
                     "data" => [
                         "sent_to" => $to,
                         "invoice_number" => $invoice['invoice_number'],
+                        "status" => 'sent',
                         "dev_mode" => true
                     ]
                 ]);
@@ -233,12 +238,16 @@ class InvoiceEmailController {
                         'to' => $to,
                         'attachment' => (bool)$attachmentBytes,
                     ]);
+
+                    // Update invoice status to sent after successful email delivery
+                    $this->markInvoiceAsSent($data->invoice_id, $user_data['user_id']);
                     http_response_code(200);
                     echo json_encode([
-                        "message" => "Invoice email sent successfully",
+                        "message" => "Invoice email sent successfully and status set to sent",
                         "data" => [
                             "sent_to" => $to,
                             "invoice_number" => $invoice['invoice_number'],
+                            "status" => 'sent',
                             "attachment" => $attachmentBytes ? ($attachmentName ?: true) : false
                         ]
                     ]);
@@ -272,6 +281,28 @@ class InvoiceEmailController {
             echo json_encode([
                 "message" => "Failed to send invoice email",
                 "error" => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Mark invoice status as sent (skip if already paid/cancelled)
+     */
+    private function markInvoiceAsSent($invoice_id, $user_id) {
+        try {
+            $update = "UPDATE invoices 
+                       SET status = 'sent', updated_at = CURRENT_TIMESTAMP
+                       WHERE id = :invoice_id AND user_id = :user_id
+                         AND status NOT IN ('paid', 'cancelled')";
+            $stmt = $this->db->prepare($update);
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->bindParam(":user_id", $user_id);
+            $stmt->execute();
+        } catch (Exception $e) {
+            $this->log('error', 'Failed to update invoice status to sent', [
+                'invoice_id' => $invoice_id,
+                'user_id' => $user_id,
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -346,6 +377,32 @@ class InvoiceEmailController {
 
         // Fallback to PHP error_log
         error_log('[send-invoice-email] ' . $line);
+    }
+
+    /**
+     * Log email to dedicated file in development mode
+     */
+    private function logEmailToFile($to, $subject, $body, $headers, $attachmentBytes = null, $attachmentName = null) {
+        $logFile = __DIR__ . '/../logs/email.log';
+        $logDir = dirname($logFile);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+
+        $logEntry = "\n" . str_repeat('=', 80) . "\n";
+        $logEntry .= "[" . date('Y-m-d H:i:s') . "] INVOICE EMAIL LOGGED (DEV MODE)\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "To: " . $to . "\n";
+        $logEntry .= "Subject: " . $subject . "\n";
+        if ($attachmentBytes) {
+            $logEntry .= "Attachment: " . $attachmentName . " (" . strlen($attachmentBytes) . " bytes)\n";
+        }
+        $logEntry .= "Headers:\n" . $headers . "\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "Body:\n" . substr($body, 0, 2000) . (strlen($body) > 2000 ? "\n... (truncated)" : "") . "\n";
+        $logEntry .= str_repeat('=', 80) . "\n";
+
+        @file_put_contents($logFile, $logEntry, FILE_APPEND);
     }
 }
 

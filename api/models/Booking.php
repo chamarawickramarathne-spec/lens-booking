@@ -230,20 +230,6 @@ class Booking {
         $stmt->bindParam(":extra_thank_you_cards_qty", $this->extra_thank_you_cards_qty);
         $stmt->bindParam(":id", $this->id);
         $stmt->bindParam(":user_id", $this->user_id);
-        $stmt->bindParam(":package_type", $this->package_type);
-        $stmt->bindParam(":package_name", $this->package_name);
-        $stmt->bindParam(":total_amount", $this->total_amount);
-        $stmt->bindParam(":paid_amount", $this->paid_amount);
-        $stmt->bindParam(":deposit_amount", $this->deposit_amount);
-        $stmt->bindParam(":total_amount", $this->total_amount);
-        $stmt->bindParam(":paid_amount", $this->paid_amount);
-        $stmt->bindParam(":deposit_amount", $this->deposit_amount);
-        $stmt->bindParam(":deposit_paid", $this->deposit_paid);
-        $stmt->bindParam(":status", $this->status);
-        $stmt->bindParam(":special_requirements", $this->special_requirements);
-        $stmt->bindParam(":notes", $this->notes);
-        $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam(":user_id", $this->user_id);
 
         return $stmt->execute();
     }

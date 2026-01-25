@@ -9,6 +9,8 @@ class EmailUtility {
     private $from_name;
     private $base_url;
     private $envelope_from;
+    private $dev_mode;
+    private $email_log_file;
 
     public function __construct() {
         // Set default values - these can be overridden
@@ -16,6 +18,10 @@ class EmailUtility {
         $this->from_name = 'Lens Manager';
         $this->base_url = $this->getBaseUrl();
         $this->envelope_from = $this->from_email; // used with -f to improve deliverability
+        
+        // Development mode: set to true to skip email sending and log only
+        $this->dev_mode = true;
+        $this->email_log_file = __DIR__ . '/../../logs/email.log';
     }
 
     /**
@@ -81,6 +87,13 @@ class EmailUtility {
     private function sendMail($to, $subject, $message, array $headersArray) {
         $headers = implode("\r\n", $headersArray);
 
+        // Development mode: log email instead of sending
+        if ($this->dev_mode) {
+            $this->logEmail($to, $subject, $message, $headers);
+            error_log('[EmailUtility] DEV MODE: Email logged instead of sent. To=' . $to . ', Subject=' . $subject);
+            return true;
+        }
+
         // Use envelope sender if possible (many hosts require this)
         $additionalParams = '-f ' . escapeshellarg($this->envelope_from);
 
@@ -100,6 +113,28 @@ class EmailUtility {
         // Log detailed failure context without leaking message content
         error_log('[EmailUtility] mail() failed. To=' . $to . ', Subject=' . $subject . ', From=' . $this->from_email);
         return false;
+    }
+
+    /**
+     * Log email to file in development mode
+     */
+    private function logEmail($to, $subject, $message, $headers) {
+        $logDir = dirname($this->email_log_file);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+
+        $logEntry = "\n" . str_repeat('=', 80) . "\n";
+        $logEntry .= "[" . date('Y-m-d H:i:s') . "] EMAIL LOGGED (DEV MODE)\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "To: " . $to . "\n";
+        $logEntry .= "Subject: " . $subject . "\n";
+        $logEntry .= "Headers:\n" . $headers . "\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "Message:\n" . $message . "\n";
+        $logEntry .= str_repeat('=', 80) . "\n";
+
+        @file_put_contents($this->email_log_file, $logEntry, FILE_APPEND);
     }
 
     /**

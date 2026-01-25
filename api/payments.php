@@ -14,7 +14,7 @@ class PaymentsController {
     private $database;
     private $db;
     private $auth;
-    private $table_name = "payments";
+    private $table_name = "payment_schedules";
 
     public function __construct() {
         $this->database = new Database();
@@ -35,21 +35,21 @@ class PaymentsController {
         }
 
         try {
-            $query = "SELECT p.*, 
-                             i.invoice_number, i.client_id as invoice_client_id,
-                             b.title as booking_title, b.client_id as booking_client_id,
-                             c1.name as booking_client_name,
-                             c2.name as invoice_client_name
-                      FROM " . $this->table_name . " p
-                      LEFT JOIN invoices i ON p.invoice_id = i.id
-                      LEFT JOIN bookings b ON p.booking_id = b.id
-                      LEFT JOIN clients c1 ON b.client_id = c1.id
-                      LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.photographer_id = :photographer_id
-                      ORDER BY p.due_date ASC, p.created_at DESC";
+                 $query = "SELECT p.*, 
+                         i.invoice_number, i.client_id AS invoice_client_id,
+                         b.title AS booking_title, b.client_id AS booking_client_id,
+                         c1.full_name AS booking_client_name,
+                         c2.full_name AS invoice_client_name
+                     FROM " . $this->table_name . " p
+                     LEFT JOIN invoices i ON p.invoice_id = i.id
+                     LEFT JOIN bookings b ON p.booking_id = b.id
+                     LEFT JOIN clients c1 ON b.client_id = c1.id
+                     LEFT JOIN clients c2 ON i.client_id = c2.id
+                     WHERE p.user_id = :user_id
+                     ORDER BY p.due_date ASC, p.created_at DESC";
 
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+                 $stmt = $this->db->prepare($query);
+                 $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -58,18 +58,17 @@ class PaymentsController {
             $formatted_payments = array_map(function($payment) {
                 return [
                     'id' => $payment['id'],
-                    'photographer_id' => $payment['photographer_id'],
+                    'user_id' => $payment['user_id'],
                     'invoice_id' => $payment['invoice_id'],
                     'booking_id' => $payment['booking_id'],
-                    'payment_name' => $payment['payment_name'],
-                    'schedule_type' => $payment['schedule_type'],
+                    'schedule_name' => $payment['schedule_name'],
+                    'schedule_type' => $payment['schedule_type'] ?? null,
                     'due_date' => $payment['due_date'],
                     'amount' => (float)$payment['amount'],
-                    'paid_amount' => $payment['paid_amount'] ? (float)$payment['paid_amount'] : null,
+                    'paid_amount' => (float)($payment['paid_amount'] ?? 0),
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
-                    'transaction_id' => $payment['transaction_id'],
                     'notes' => $payment['notes'],
                     'created_at' => $payment['created_at'],
                     'updated_at' => $payment['updated_at'],
@@ -117,21 +116,21 @@ class PaymentsController {
         }
 
         try {
-            $query = "SELECT p.*, 
-                             i.invoice_number, i.client_id as invoice_client_id,
-                             b.title as booking_title, b.client_id as booking_client_id,
-                             c1.name as booking_client_name,
-                             c2.name as invoice_client_name
-                      FROM " . $this->table_name . " p
-                      LEFT JOIN invoices i ON p.invoice_id = i.id
-                      LEFT JOIN bookings b ON p.booking_id = b.id
-                      LEFT JOIN clients c1 ON b.client_id = c1.id
-                      LEFT JOIN clients c2 ON i.client_id = c2.id
-                      WHERE p.id = :id AND p.photographer_id = :photographer_id";
+                 $query = "SELECT p.*, 
+                         i.invoice_number, i.client_id AS invoice_client_id,
+                         b.title AS booking_title, b.client_id AS booking_client_id,
+                         c1.full_name AS booking_client_name,
+                         c2.full_name AS invoice_client_name
+                     FROM " . $this->table_name . " p
+                     LEFT JOIN invoices i ON p.invoice_id = i.id
+                     LEFT JOIN bookings b ON p.booking_id = b.id
+                     LEFT JOIN clients c1 ON b.client_id = c1.id
+                     LEFT JOIN clients c2 ON i.client_id = c2.id
+                     WHERE p.id = :id AND p.user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
@@ -139,18 +138,17 @@ class PaymentsController {
 
                 $formatted_payment = [
                     'id' => $payment['id'],
-                    'photographer_id' => $payment['photographer_id'],
+                    'user_id' => $payment['user_id'],
                     'invoice_id' => $payment['invoice_id'],
                     'booking_id' => $payment['booking_id'],
-                    'payment_name' => $payment['payment_name'],
-                    'schedule_type' => $payment['schedule_type'],
+                    'schedule_name' => $payment['schedule_name'],
+                    'schedule_type' => $payment['schedule_type'] ?? null,
                     'due_date' => $payment['due_date'],
                     'amount' => (float)$payment['amount'],
-                    'paid_amount' => $payment['paid_amount'] ? (float)$payment['paid_amount'] : null,
+                    'paid_amount' => (float)($payment['paid_amount'] ?? 0),
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
-                    'transaction_id' => $payment['transaction_id'],
                     'notes' => $payment['notes'],
                     'created_at' => $payment['created_at'],
                     'updated_at' => $payment['updated_at'],
@@ -202,38 +200,48 @@ class PaymentsController {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['payment_name']) || !isset($data['amount'])) {
+        if (!isset($data['schedule_name']) || !isset($data['amount'])) {
             http_response_code(400);
-            echo json_encode(["message" => "Payment name and amount are required"]);
+            echo json_encode(["message" => "Schedule name and amount are required"]);
             return;
         }
 
         try {
             $query = "INSERT INTO " . $this->table_name . " 
-                     SET photographer_id=:photographer_id, invoice_id=:invoice_id, booking_id=:booking_id,
-                         payment_name=:payment_name, schedule_type=:schedule_type, due_date=:due_date,
+                     SET user_id=:user_id, invoice_id=:invoice_id, booking_id=:booking_id,
+                         schedule_name=:schedule_name, schedule_type=:schedule_type, due_date=:due_date,
                          amount=:amount, paid_amount=:paid_amount, status=:status,
                          payment_date=:payment_date, payment_method=:payment_method,
-                         transaction_id=:transaction_id, notes=:notes";
+                         notes=:notes";
 
             $stmt = $this->db->prepare($query);
 
+            // Handle optional fields with null coalescing - MUST assign to variables first
+            // because bindParam() requires references, not expressions
             $status = $data['status'] ?? 'pending';
-            $schedule_type = $data['schedule_type'] ?? 'invoice';
+            $invoice_id = $data['invoice_id'] ?? null;
+            $booking_id = $data['booking_id'] ?? null;
+            $schedule_name = $data['schedule_name'] ?? null;
+            $schedule_type = $data['schedule_type'] ?? null;
+            $due_date = $data['due_date'] ?? null;
+            $amount = $data['amount'] ?? null;
+            $payment_date = $data['payment_date'] ?? null;
+            $payment_method = $data['payment_method'] ?? null;
+            $notes = $data['notes'] ?? null;
+            $paid_amount = $data['paid_amount'] ?? 0;
 
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
-            $stmt->bindParam(":invoice_id", $data['invoice_id']);
-            $stmt->bindParam(":booking_id", $data['booking_id']);
-            $stmt->bindParam(":payment_name", $data['payment_name']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->bindParam(":booking_id", $booking_id);
+            $stmt->bindParam(":schedule_name", $schedule_name);
             $stmt->bindParam(":schedule_type", $schedule_type);
-            $stmt->bindParam(":due_date", $data['due_date']);
-            $stmt->bindParam(":amount", $data['amount']);
-            $stmt->bindParam(":paid_amount", $data['paid_amount']);
+            $stmt->bindParam(":due_date", $due_date);
+            $stmt->bindParam(":amount", $amount);
+            $stmt->bindParam(":paid_amount", $paid_amount);
             $stmt->bindParam(":status", $status);
-            $stmt->bindParam(":payment_date", $data['payment_date']);
-            $stmt->bindParam(":payment_method", $data['payment_method']);
-            $stmt->bindParam(":transaction_id", $data['transaction_id']);
-            $stmt->bindParam(":notes", $data['notes']);
+            $stmt->bindParam(":payment_date", $payment_date);
+            $stmt->bindParam(":payment_method", $payment_method);
+            $stmt->bindParam(":notes", $notes);
 
             if ($stmt->execute()) {
                 http_response_code(201);
@@ -243,7 +251,7 @@ class PaymentsController {
                 ]);
             } else {
                 http_response_code(500);
-                echo json_encode(["message" => "Unable to create payment"]);
+                echo json_encode(["message" => "Unable to create payment", "error" => $stmt->errorInfo()[2]]);
             }
         } catch (Exception $e) {
             http_response_code(500);
@@ -271,36 +279,49 @@ class PaymentsController {
         try {
             $query = "UPDATE " . $this->table_name . " 
                      SET invoice_id=:invoice_id, booking_id=:booking_id,
-                         payment_name=:payment_name, schedule_type=:schedule_type, due_date=:due_date,
+                         schedule_name=:schedule_name, schedule_type=:schedule_type, due_date=:due_date,
                          amount=:amount, paid_amount=:paid_amount, status=:status,
                          payment_date=:payment_date, payment_method=:payment_method,
-                         transaction_id=:transaction_id, notes=:notes,
+                         notes=:notes,
                          updated_at=CURRENT_TIMESTAMP
-                     WHERE id=:id AND photographer_id=:photographer_id";
+                     WHERE id=:id AND user_id=:user_id";
 
             $stmt = $this->db->prepare($query);
 
-            $stmt->bindParam(":invoice_id", $data['invoice_id']);
-            $stmt->bindParam(":booking_id", $data['booking_id']);
-            $stmt->bindParam(":payment_name", $data['payment_name']);
-            $stmt->bindParam(":schedule_type", $data['schedule_type']);
-            $stmt->bindParam(":due_date", $data['due_date']);
-            $stmt->bindParam(":amount", $data['amount']);
-            $stmt->bindParam(":paid_amount", $data['paid_amount']);
-            $stmt->bindParam(":status", $data['status']);
-            $stmt->bindParam(":payment_date", $data['payment_date']);
-            $stmt->bindParam(":payment_method", $data['payment_method']);
-            $stmt->bindParam(":transaction_id", $data['transaction_id']);
-            $stmt->bindParam(":notes", $data['notes']);
+            // Handle optional fields with null coalescing - MUST assign to variables first
+            // because bindParam() requires references, not expressions
+            $invoice_id = $data['invoice_id'] ?? null;
+            $booking_id = $data['booking_id'] ?? null;
+            $schedule_name = $data['schedule_name'] ?? null;
+            $payment_date = $data['payment_date'] ?? null;
+            $payment_method = $data['payment_method'] ?? null;
+            $notes = $data['notes'] ?? null;
+            $paid_amount = $data['paid_amount'] ?? 0;
+            $schedule_type = $data['schedule_type'] ?? null;
+            $due_date = $data['due_date'] ?? null;
+            $amount = $data['amount'] ?? null;
+            $status = $data['status'] ?? null;
+
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->bindParam(":booking_id", $booking_id);
+            $stmt->bindParam(":schedule_name", $schedule_name);
+            $stmt->bindParam(":schedule_type", $schedule_type);
+            $stmt->bindParam(":due_date", $due_date);
+            $stmt->bindParam(":amount", $amount);
+            $stmt->bindParam(":paid_amount", $paid_amount);
+            $stmt->bindParam(":status", $status);
+            $stmt->bindParam(":payment_date", $payment_date);
+            $stmt->bindParam(":payment_method", $payment_method);
+            $stmt->bindParam(":notes", $notes);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 http_response_code(200);
                 echo json_encode(["message" => "Payment updated successfully"]);
             } else {
                 http_response_code(500);
-                echo json_encode(["message" => "Unable to update payment"]);
+                echo json_encode(["message" => "Unable to update payment", "error" => $stmt->errorInfo()[2]]);
             }
         } catch (Exception $e) {
             http_response_code(500);
@@ -325,11 +346,11 @@ class PaymentsController {
 
         try {
             $query = "DELETE FROM " . $this->table_name . " 
-                     WHERE id = :id AND photographer_id = :photographer_id";
+                     WHERE id = :id AND user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 http_response_code(200);

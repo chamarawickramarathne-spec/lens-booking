@@ -39,18 +39,18 @@ class InvoicesController {
         }
 
         try {
-            $query = "SELECT i.*, 
-                             c.full_name as client_name, c.email as client_email, 
-                             c.phone as client_phone, c.address as client_address,
-                             b.title as booking_title, b.booking_date
-                      FROM " . $this->table_name . " i
-                      LEFT JOIN clients c ON i.client_id = c.id
-                      LEFT JOIN bookings b ON i.booking_id = b.id
-                      WHERE i.user_id = :photographer_id
-                      ORDER BY i.created_at DESC";
+                 $query = "SELECT i.*, 
+                         c.full_name as client_name, c.email as client_email, 
+                         c.phone as client_phone, c.address as client_address,
+                         b.title as booking_title, b.booking_date
+                     FROM " . $this->table_name . " i
+                     LEFT JOIN clients c ON i.client_id = c.id
+                     LEFT JOIN bookings b ON i.booking_id = b.id
+                     WHERE i.user_id = :user_id
+                     ORDER BY i.created_at DESC";
 
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+                 $stmt = $this->db->prepare($query);
+                 $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -60,7 +60,7 @@ class InvoicesController {
                 return [
                     'id' => $invoice['id'],
                     'booking_id' => $invoice['booking_id'],
-                    'amount' => $invoice['amount'],
+                    'amount' => $invoice['total_amount'] ?? 0, // Frontend expects 'amount' field
                     'due_date' => $invoice['due_date'],
                     'status' => $invoice['status'],
                     'created_at' => $invoice['created_at'],
@@ -68,13 +68,13 @@ class InvoicesController {
                     'user_id' => $invoice['user_id'],
                     'client_id' => $invoice['client_id'],
                     'invoice_number' => $invoice['invoice_number'],
-                    'issue_date' => $invoice['issue_date'],
-                    'subtotal' => $invoice['subtotal'],
-                    'tax_amount' => $invoice['tax_amount'],
-                    'total_amount' => $invoice['total_amount'],
-                    'notes' => $invoice['notes'],
-                    'payment_date' => $invoice['payment_date'],
-                    'deposit_amount' => $invoice['deposit_amount'],
+                    'issue_date' => $invoice['invoice_date'],
+                    'subtotal' => $invoice['subtotal'] ?? 0,
+                    'tax_amount' => $invoice['tax_amount'] ?? 0,
+                    'total_amount' => $invoice['total_amount'] ?? 0,
+                    'notes' => $invoice['notes'] ?? '',
+                    'payment_date' => $invoice['payment_date'] ?? null,
+                    'deposit_amount' => $invoice['deposit_amount'] ?? 0,
                     'clients' => [
                         'name' => $invoice['client_name'],
                         'email' => $invoice['client_email'],
@@ -115,18 +115,18 @@ class InvoicesController {
         }
 
         try {
-            $query = "SELECT i.*, 
-                             c.full_name as client_name, c.email as client_email, 
-                             c.phone as client_phone, c.address as client_address,
-                             b.title as booking_title, b.booking_date
-                      FROM " . $this->table_name . " i
-                      LEFT JOIN clients c ON i.client_id = c.id
-                      LEFT JOIN bookings b ON i.booking_id = b.id
-                      WHERE i.id = :id AND i.user_id = :photographer_id";
+                 $query = "SELECT i.*, 
+                         c.full_name as client_name, c.email as client_email, 
+                         c.phone as client_phone, c.address as client_address,
+                         b.title as booking_title, b.booking_date
+                     FROM " . $this->table_name . " i
+                     LEFT JOIN clients c ON i.client_id = c.id
+                     LEFT JOIN bookings b ON i.booking_id = b.id
+                     WHERE i.id = :id AND i.user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
@@ -135,7 +135,7 @@ class InvoicesController {
                 $formatted_invoice = [
                     'id' => $invoice['id'],
                     'booking_id' => $invoice['booking_id'],
-                    'amount' => $invoice['amount'],
+                    'amount' => $invoice['total_amount'] ?? 0, // Frontend expects 'amount' field
                     'due_date' => $invoice['due_date'],
                     'status' => $invoice['status'],
                     'created_at' => $invoice['created_at'],
@@ -143,13 +143,13 @@ class InvoicesController {
                     'user_id' => $invoice['user_id'],
                     'client_id' => $invoice['client_id'],
                     'invoice_number' => $invoice['invoice_number'],
-                    'issue_date' => $invoice['issue_date'],
-                    'subtotal' => $invoice['subtotal'],
-                    'tax_amount' => $invoice['tax_amount'],
-                    'total_amount' => $invoice['total_amount'],
-                    'notes' => $invoice['notes'],
-                    'payment_date' => $invoice['payment_date'],
-                    'deposit_amount' => $invoice['deposit_amount'],
+                    'issue_date' => $invoice['invoice_date'],
+                    'subtotal' => $invoice['subtotal'] ?? 0,
+                    'tax_amount' => $invoice['tax_amount'] ?? 0,
+                    'total_amount' => $invoice['total_amount'] ?? 0,
+                    'notes' => $invoice['notes'] ?? '',
+                    'payment_date' => $invoice['payment_date'] ?? null,
+                    'deposit_amount' => $invoice['deposit_amount'] ?? 0,
                     'clients' => [
                         'name' => $invoice['client_name'],
                         'email' => $invoice['client_email'],
@@ -202,22 +202,22 @@ class InvoicesController {
 
         try {
             $query = "INSERT INTO " . $this->table_name . " 
-                     SET photographer_id=:photographer_id, client_id=:client_id, booking_id=:booking_id,
-                         invoice_number=:invoice_number, issue_date=:issue_date, due_date=:due_date,
+                     SET user_id=:user_id, client_id=:client_id, booking_id=:booking_id,
+                         invoice_number=:invoice_number, invoice_date=:invoice_date, due_date=:due_date,
                          subtotal=:subtotal, tax_amount=:tax_amount, total_amount=:total_amount,
                          deposit_amount=:deposit_amount, status=:status, notes=:notes";
 
             $stmt = $this->db->prepare($query);
 
             $invoice_number = $data['invoice_number'] ?? 'INV-' . date('Ymd') . '-' . rand(1000, 9999);
-            $issue_date = $data['issue_date'] ?? date('Y-m-d');
+            $invoice_date = $data['invoice_date'] ?? date('Y-m-d');
             $status = $data['status'] ?? 'draft';
 
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->bindParam(":client_id", $data['client_id']);
             $stmt->bindParam(":booking_id", $data['booking_id']);
             $stmt->bindParam(":invoice_number", $invoice_number);
-            $stmt->bindParam(":issue_date", $issue_date);
+            $stmt->bindParam(":invoice_date", $invoice_date);
             $stmt->bindParam(":due_date", $data['due_date']);
             $stmt->bindParam(":subtotal", $data['subtotal']);
             $stmt->bindParam(":tax_amount", $data['tax_amount']);
@@ -262,10 +262,10 @@ class InvoicesController {
         try {
             // Check if status is changing to pending
             $check_query = "SELECT status, total_amount, deposit_amount, booking_id FROM " . $this->table_name . " 
-                           WHERE id = :id AND user_id = :photographer_id";
+                           WHERE id = :id AND user_id = :user_id";
             $check_stmt = $this->db->prepare($check_query);
             $check_stmt->bindParam(":id", $id);
-            $check_stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $check_stmt->bindParam(":user_id", $user_data['user_id']);
             $check_stmt->execute();
             $old_invoice = $check_stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -274,26 +274,35 @@ class InvoicesController {
                 ($data['status'] === 'cancelled' || $data['status'] === 'cancel_by_client'));
 
             $query = "UPDATE " . $this->table_name . " 
-                     SET client_id=:client_id, booking_id=:booking_id, due_date=:due_date,
-                         subtotal=:subtotal, tax_amount=:tax_amount, total_amount=:total_amount,
-                         deposit_amount=:deposit_amount, status=:status, notes=:notes,
-                         payment_date=:payment_date, updated_at=CURRENT_TIMESTAMP
-                     WHERE id=:id AND user_id=:photographer_id";
+                     SET client_id=:client_id, booking_id=:booking_id, invoice_date=:invoice_date,
+                         due_date=:due_date, subtotal=:subtotal, tax_amount=:tax_amount, 
+                         total_amount=:total_amount, deposit_amount=:deposit_amount, 
+                         status=:status, notes=:notes, payment_date=:payment_date, 
+                         updated_at=CURRENT_TIMESTAMP
+                     WHERE id=:id AND user_id=:user_id";
 
             $stmt = $this->db->prepare($query);
 
+            // Handle optional fields with null coalescing
+            $deposit_amount = $data['deposit_amount'] ?? null;
+            $payment_date = $data['payment_date'] ?? null;
+            $notes = $data['notes'] ?? null;
+            // Map 'issue_date' from frontend to 'invoice_date' in database
+            $invoice_date = $data['issue_date'] ?? $data['invoice_date'] ?? date('Y-m-d');
+
             $stmt->bindParam(":client_id", $data['client_id']);
             $stmt->bindParam(":booking_id", $data['booking_id']);
+            $stmt->bindParam(":invoice_date", $invoice_date);
             $stmt->bindParam(":due_date", $data['due_date']);
             $stmt->bindParam(":subtotal", $data['subtotal']);
             $stmt->bindParam(":tax_amount", $data['tax_amount']);
             $stmt->bindParam(":total_amount", $data['total_amount']);
-            $stmt->bindParam(":deposit_amount", $data['deposit_amount']);
+            $stmt->bindParam(":deposit_amount", $deposit_amount);
             $stmt->bindParam(":status", $data['status']);
-            $stmt->bindParam(":notes", $data['notes']);
-            $stmt->bindParam(":payment_date", $data['payment_date']);
+            $stmt->bindParam(":notes", $notes);
+            $stmt->bindParam(":payment_date", $payment_date);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 // Create payment schedules if status changed to pending
@@ -329,11 +338,11 @@ class InvoicesController {
     private function getInvoiceData($id, $photographer_id) {
         try {
             $query = "SELECT * FROM " . $this->table_name . " 
-                     WHERE id = :id AND user_id = :photographer_id";
+                     WHERE id = :id AND user_id = :user_id";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $photographer_id);
+            $stmt->bindParam(":user_id", $photographer_id);
             $stmt->execute();
             
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -354,53 +363,74 @@ class InvoicesController {
             $remaining_amount = $total_amount - $deposit_amount;
             
             // Delete existing payment schedules for this invoice if any
-            $delete_query = "DELETE FROM payments WHERE invoice_id = :invoice_id";
+            $delete_query = "DELETE FROM payment_schedules WHERE invoice_id = :invoice_id";
             $delete_stmt = $this->db->prepare($delete_query);
             $delete_stmt->bindParam(":invoice_id", $invoice_id);
-            $delete_stmt->execute();
+            if (!$delete_stmt->execute()) {
+                throw new Exception("Failed to delete existing payment schedules");
+            }
             
             // Create deposit payment if there's a deposit amount
             if ($deposit_amount > 0) {
                 // Use today's date or a custom date for deposit
                 $deposit_due_date = date('Y-m-d');
+                $status = 'pending';
                 
-                $deposit_query = "INSERT INTO payments 
-                                (invoice_id, booking_id, photographer_id, payment_name, schedule_type, 
-                                 due_date, amount, paid_amount, status, created_at, updated_at)
+                $deposit_query = "INSERT INTO payment_schedules 
+                                (invoice_id, booking_id, user_id, schedule_name, schedule_type,
+                                 due_date, amount, paid_amount, status, payment_date, payment_method, notes)
                                 VALUES 
-                                (:invoice_id, :booking_id, :photographer_id, 'Deposit Payment', 'deposit',
-                                 :due_date, :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                                (:invoice_id, :booking_id, :user_id, :schedule_name, :schedule_type,
+                                 :due_date, :amount, 0, :status, NULL, NULL, NULL)";
                 
                 $deposit_stmt = $this->db->prepare($deposit_query);
                 $deposit_stmt->bindParam(":invoice_id", $invoice_id);
                 $deposit_stmt->bindParam(":booking_id", $invoice_data['booking_id']);
-                $deposit_stmt->bindParam(":photographer_id", $photographer_id);
+                $deposit_stmt->bindParam(":user_id", $photographer_id);
+                $schedule_name = 'Deposit Payment';
+                $deposit_stmt->bindParam(":schedule_name", $schedule_name);
+                $schedule_type = 'deposit';
+                $deposit_stmt->bindParam(":schedule_type", $schedule_type);
                 $deposit_stmt->bindParam(":due_date", $deposit_due_date);
                 $deposit_stmt->bindParam(":amount", $deposit_amount);
-                $deposit_stmt->execute();
+                $deposit_stmt->bindParam(":status", $status);
+                
+                if (!$deposit_stmt->execute()) {
+                    throw new Exception("Failed to create deposit payment schedule: " . $deposit_stmt->errorInfo()[2]);
+                }
             }
             
             // Create final payment schedule for remaining amount
             if ($remaining_amount > 0) {
                 // Use invoice due_date for final payment, or default to +30 days
                 $final_due_date = $invoice_data['due_date'] ?? date('Y-m-d', strtotime('+30 days'));
+                $status = 'pending';
                 
-                $final_query = "INSERT INTO payments 
-                               (invoice_id, booking_id, photographer_id, payment_name, schedule_type,
-                                due_date, amount, paid_amount, status, created_at, updated_at)
+                $final_query = "INSERT INTO payment_schedules 
+                               (invoice_id, booking_id, user_id, schedule_name, schedule_type,
+                                due_date, amount, paid_amount, status, payment_date, payment_method, notes)
                                VALUES 
-                               (:invoice_id, :booking_id, :photographer_id, 'Final Payment', 'final',
-                                :due_date, :amount, 0, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                               (:invoice_id, :booking_id, :user_id, :schedule_name, :schedule_type,
+                                :due_date, :amount, 0, :status, NULL, NULL, NULL)";
                 
                 $final_stmt = $this->db->prepare($final_query);
                 $final_stmt->bindParam(":invoice_id", $invoice_id);
                 $final_stmt->bindParam(":booking_id", $invoice_data['booking_id']);
-                $final_stmt->bindParam(":photographer_id", $photographer_id);
+                $final_stmt->bindParam(":user_id", $photographer_id);
+                $schedule_name = 'Final Payment';
+                $final_stmt->bindParam(":schedule_name", $schedule_name);
+                $schedule_type = 'final';
+                $final_stmt->bindParam(":schedule_type", $schedule_type);
                 $final_stmt->bindParam(":due_date", $final_due_date);
                 $final_stmt->bindParam(":amount", $remaining_amount);
-                $final_stmt->execute();
+                $final_stmt->bindParam(":status", $status);
+                
+                if (!$final_stmt->execute()) {
+                    throw new Exception("Failed to create final payment schedule: " . $final_stmt->errorInfo()[2]);
+                }
             }
             
+            error_log("Payment schedules created successfully for invoice {$invoice_id}");
             return true;
         } catch (Exception $e) {
             error_log("Failed to create payment schedules: " . $e->getMessage());
@@ -413,15 +443,12 @@ class InvoicesController {
      */
     private function cancelPaymentSchedules($invoice_id) {
         try {
-            // Update all payment schedules for this invoice to cancelled (except completed ones)
-            $update_query = "UPDATE payments 
-                           SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP 
-                           WHERE invoice_id = :invoice_id AND status != 'completed'";
-            
-            $update_stmt = $this->db->prepare($update_query);
-            $update_stmt->bindParam(":invoice_id", $invoice_id);
-            $update_stmt->execute();
-            
+            // Delete all payment schedules for this invoice (schema status enum lacks cancelled)
+            $delete_query = "DELETE FROM payment_schedules WHERE invoice_id = :invoice_id";
+            $delete_stmt = $this->db->prepare($delete_query);
+            $delete_stmt->bindParam(":invoice_id", $invoice_id);
+            $delete_stmt->execute();
+
             return true;
         } catch (Exception $e) {
             error_log("Failed to cancel payment schedules: " . $e->getMessage());
@@ -443,11 +470,11 @@ class InvoicesController {
 
         try {
             $query = "DELETE FROM " . $this->table_name . " 
-                     WHERE id = :id AND photographer_id = :photographer_id";
+                     WHERE id = :id AND user_id = :user_id";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":id", $id);
-            $stmt->bindParam(":photographer_id", $user_data['user_id']);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
                 http_response_code(200);

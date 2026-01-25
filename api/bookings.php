@@ -213,26 +213,26 @@ class BookingsController {
                             
                             // Create invoice
                             $invoice_query = "INSERT INTO invoices 
-                                            SET user_id=:photographer_id, 
+                                            SET user_id=:user_id, 
                                                 client_id=:client_id, 
                                                 booking_id=:booking_id,
                                                 invoice_number=:invoice_number, 
-                                                issue_date=:issue_date, 
+                                                invoice_date=:invoice_date, 
                                                 subtotal=:subtotal,
                                                 total_amount=:total_amount,
                                                 status='draft'";
                             
                             $invoice_stmt = $this->db->prepare($invoice_query);
                             
-                            $issue_date = date('Y-m-d');
+                            $invoice_date = date('Y-m-d');
                             $total_amount = $booking['total_amount'] ?? 0;
                             $subtotal = $total_amount;
                             
-                            $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
+                            $invoice_stmt->bindParam(":user_id", $user_data['user_id']);
                             $invoice_stmt->bindParam(":client_id", $booking['client_id']);
                             $invoice_stmt->bindParam(":booking_id", $id);
                             $invoice_stmt->bindParam(":invoice_number", $invoice_number);
-                            $invoice_stmt->bindParam(":issue_date", $issue_date);
+                            $invoice_stmt->bindParam(":invoice_date", $invoice_date);
                             $invoice_stmt->bindParam(":subtotal", $subtotal);
                             $invoice_stmt->bindParam(":total_amount", $total_amount);
                             
@@ -353,55 +353,70 @@ class BookingsController {
         // Check if status is being changed to confirmed for invoice creation
         $old_status = null;
         $new_status = $data['status'] ?? null;
-        if ($new_status) {
-            // Get current booking status
-            $current_booking = $this->booking->getById($id, $user_data['user_id']);
-            $old_status = $current_booking['status'] ?? null;
-        }
+        
+        // Get current booking status BEFORE update
+        $current_booking = $this->booking->getById($id, $user_data['user_id']);
+        $old_status = $current_booking['status'] ?? null;
+        
+        // Debug log
+        error_log("Invoice Debug - Booking ID: $id, Old Status: " . ($old_status ?? 'null') . ", New Status: " . ($new_status ?? 'null'));
 
         if ($this->booking->update()) {
-            $response_data = ["message" => "Booking updated successfully"];
+            $response_data = [
+                "message" => "Booking updated successfully",
+                "debug" => [
+                    "old_status" => $old_status,
+                    "new_status" => $new_status,
+                    "status_changed_to_confirmed" => ($new_status === 'confirmed' && $old_status !== 'confirmed')
+                ]
+            ];
             
             // If status changed to "confirmed", automatically create an invoice
             if ($new_status === 'confirmed' && $old_status !== 'confirmed') {
+                error_log("Invoice Debug - Condition met! Creating invoice for booking $id");
                 try {
                     // Get the updated booking details
                     $booking = $this->booking->getById($id, $user_data['user_id']);
+                    error_log("Invoice Debug - Booking retrieved: " . json_encode($booking));
                     
                     if ($booking && $booking['client_id']) {
+                        error_log("Invoice Debug - Client ID found: " . $booking['client_id']);
                         // Check if an invoice already exists for this booking
                         $check_query = "SELECT id FROM invoices WHERE booking_id = :booking_id LIMIT 1";
                         $check_stmt = $this->db->prepare($check_query);
                         $check_stmt->bindParam(":booking_id", $id);
                         $check_stmt->execute();
                         
+                        error_log("Invoice Debug - Existing invoices found: " . $check_stmt->rowCount());
+                        
                         // Only create invoice if one doesn't exist
                         if ($check_stmt->rowCount() == 0) {
+                            error_log("Invoice Debug - No existing invoice, creating new one...");
                             // Generate invoice number
                             $invoice_number = 'INV-' . date('Ymd') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
                             
                             // Create invoice
                             $invoice_query = "INSERT INTO invoices 
-                                            SET user_id=:photographer_id, 
+                                            SET user_id=:user_id, 
                                                 client_id=:client_id, 
                                                 booking_id=:booking_id,
                                                 invoice_number=:invoice_number, 
-                                                issue_date=:issue_date, 
+                                                invoice_date=:invoice_date, 
                                                 subtotal=:subtotal,
                                                 total_amount=:total_amount,
                                                 status='draft'";
                             
                             $invoice_stmt = $this->db->prepare($invoice_query);
                             
-                            $issue_date = date('Y-m-d');
+                            $invoice_date = date('Y-m-d');
                             $total_amount = $booking['total_amount'] ?? 0;
                             $subtotal = $total_amount;
                             
-                            $invoice_stmt->bindParam(":photographer_id", $user_data['user_id']);
+                            $invoice_stmt->bindParam(":user_id", $user_data['user_id']);
                             $invoice_stmt->bindParam(":client_id", $booking['client_id']);
                             $invoice_stmt->bindParam(":booking_id", $id);
                             $invoice_stmt->bindParam(":invoice_number", $invoice_number);
-                            $invoice_stmt->bindParam(":issue_date", $issue_date);
+                            $invoice_stmt->bindParam(":invoice_date", $invoice_date);
                             $invoice_stmt->bindParam(":subtotal", $subtotal);
                             $invoice_stmt->bindParam(":total_amount", $total_amount);
                             
@@ -409,16 +424,24 @@ class BookingsController {
                                 throw new Exception("Failed to execute invoice insert: " . implode(", ", $invoice_stmt->errorInfo()));
                             }
                             
+                            error_log("Invoice Debug - Invoice created successfully! ID: " . $this->db->lastInsertId());
+                            
                             $response_data["invoice_id"] = $this->db->lastInsertId();
                             $response_data["invoice_number"] = $invoice_number;
                             $response_data["invoice_message"] = "Invoice created automatically";
+                        } else {
+                            error_log("Invoice Debug - Invoice already exists for booking $id");
                         }
+                    } else {
+                        error_log("Invoice Debug - Booking or client_id not found. Booking: " . ($booking ? 'exists' : 'null') . ", Client ID: " . ($booking['client_id'] ?? 'null'));
                     }
                 } catch (Exception $e) {
                     // Log error but don't fail the update
                     error_log("Failed to create invoice for booking $id: " . $e->getMessage());
                     $response_data["invoice_warning"] = "Booking updated but invoice creation failed";
                 }
+            } else {
+                error_log("Invoice Debug - Condition NOT met. New status: " . ($new_status ?? 'null') . ", Old status: " . ($old_status ?? 'null'));
             }
             
             http_response_code(200);
@@ -432,92 +455,137 @@ class BookingsController {
     /**
      * Send booking confirmation email to client
      */
-    private function sendConfirmationEmail($booking_id, $photographer_id, $client_id) {
+    private function sendConfirmationEmail($booking_id, $user_id, $client_id) {
         try {
-            // Generate secure token
+            // Generate token but tolerate schema missing confirmation columns
             $token = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', strtotime('+7 days'));
-            
-            // Store token in booking
-            $tokenQuery = "UPDATE bookings 
-                          SET confirmation_token = :token, 
-                              confirmation_token_expires = :expires 
-                          WHERE id = :id";
-            $tokenStmt = $this->db->prepare($tokenQuery);
-            $tokenStmt->bindParam(':token', $token);
-            $tokenStmt->bindParam(':expires', $expires);
-            $tokenStmt->bindParam(':id', $booking_id);
-            $tokenStmt->execute();
-            
-            // Get client and photographer details
-            $query = "SELECT c.name as client_name, c.email as client_email,
-                             p.first_name, p.last_name, p.business_name, p.business_email, p.email as photographer_email,
+            $tokenStored = false;
+
+            try {
+                $tokenQuery = "UPDATE bookings 
+                               SET confirmation_token = :token, 
+                                   confirmation_token_expires = :expires 
+                               WHERE id = :id";
+                $tokenStmt = $this->db->prepare($tokenQuery);
+                $tokenStmt->bindParam(':token', $token);
+                $tokenStmt->bindParam(':expires', $expires);
+                $tokenStmt->bindParam(':id', $booking_id);
+                $tokenStored = $tokenStmt->execute();
+            } catch (Exception $e) {
+                error_log('[bookings] Skipping token storage (column may be missing): ' . $e->getMessage());
+            }
+
+            // Get client and photographer (user) details
+            $query = "SELECT c.full_name AS client_name, c.email AS client_email,
+                             u.full_name AS photographer_name, u.email AS photographer_email,
+                             u.profile_picture, u.phone,
                              b.booking_date, b.title, b.location
                       FROM bookings b
                       LEFT JOIN clients c ON b.client_id = c.id
-                      LEFT JOIN photographers p ON b.photographer_id = p.id
-                      WHERE b.id = :booking_id";
-            
+                      LEFT JOIN users u ON b.user_id = u.id
+                      WHERE b.id = :booking_id AND b.user_id = :user_id";
+
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':booking_id', $booking_id);
+            $stmt->bindParam(':user_id', $user_id);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$data || !$data['client_email']) {
                 error_log('[bookings] Cannot send confirmation: missing client email for booking ' . $booking_id);
                 return;
             }
-            
-            // Build confirmation link
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $confirmLink = $protocol . '://' . $host . '/api/confirm-booking?token=' . urlencode($token);
-            
+
+            // Build confirmation link only if token stored
+            $confirmLink = null;
+            if ($tokenStored) {
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $confirmLink = $protocol . '://' . $host . '/api/confirm-booking?token=' . urlencode($token);
+            }
+
             // Prepare email
-            $businessName = $data['business_name'] ?: trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
-            $fromEmail = $data['business_email'] ?: ($data['photographer_email'] ?: 'noreply@lensmanager.hireartist.studio');
-            
+            $businessName = $data['photographer_name'] ?: 'Lens Manager';
+            $fromEmail = $data['photographer_email'] ?: 'noreply@lensmanager.hireartist.studio';
+
             $to = $data['client_email'];
-            $subject = 'Booking Confirmation Required - ' . ($businessName ?: 'Lens Manager');
-            
+            $subject = 'Booking Confirmation Required - ' . $businessName;
+
             $message = "Dear {$data['client_name']},\n\n";
             $message .= "Thank you for booking with us!\n\n";
             $message .= "Booking Details:\n";
-            if ($data['title']) $message .= "- Service: {$data['title']}\n";
-            if ($data['booking_date']) $message .= "- Date: " . date('M d, Y', strtotime($data['booking_date'])) . "\n";
-            if ($data['location']) $message .= "- Location: {$data['location']}\n";
+            if (!empty($data['title'])) $message .= "- Service: {$data['title']}\n";
+            if (!empty($data['booking_date'])) $message .= "- Date: " . date('M d, Y', strtotime($data['booking_date'])) . "\n";
+            if (!empty($data['location'])) $message .= "- Location: {$data['location']}\n";
             $message .= "\n";
-            $message .= "Please confirm your booking by clicking the link below:\n";
-            $message .= $confirmLink . "\n\n";
-            $message .= "This confirmation link will expire in 7 days.\n\n";
+
+            if ($confirmLink) {
+                $message .= "Please confirm your booking by clicking the link below:\n";
+                $message .= $confirmLink . "\n\n";
+                $message .= "This confirmation link will expire in 7 days.\n\n";
+            } else {
+                $message .= "Please contact us to confirm your booking details.\n\n";
+            }
+
             $message .= "If you did not make this booking, please ignore this email.\n\n";
             $message .= "Best regards,\n";
-            $message .= $businessName ?: 'Lens Manager';
-            
+            $message .= $businessName;
+
             // Build headers
             $headers = [];
-            $headers[] = 'From: ' . ($businessName ?: 'Lens Manager') . ' <' . $fromEmail . '>';
+            $headers[] = 'From: ' . $businessName . ' <' . $fromEmail . '>';
             $headers[] = 'Reply-To: ' . $fromEmail;
             $headers[] = 'MIME-Version: 1.0';
             $headers[] = 'Content-Type: text/plain; charset=UTF-8';
             $headersStr = implode("\r\n", $headers);
-            
-            // Send email with envelope sender
-            $envelope = '-f ' . escapeshellarg('noreply@lensmanager.hireartist.studio');
-            $sent = @mail($to, $subject, $message, $headersStr, $envelope);
-            
-            if (!$sent) {
-                @ini_set('sendmail_from', 'noreply@lensmanager.hireartist.studio');
-                $sent = @mail($to, $subject, $message, $headersStr);
+
+            // Development mode: log email instead of sending
+            $devMode = true; // Set to false in production
+            if ($devMode) {
+                $this->logBookingEmailToFile($to, $subject, $message, $headersStr);
+                error_log('[bookings] DEV MODE: Confirmation email logged instead of sent to ' . $to . ' for booking ' . $booking_id);
+            } else {
+                // Send email with envelope sender
+                $envelope = '-f ' . escapeshellarg('noreply@lensmanager.hireartist.studio');
+                $sent = @mail($to, $subject, $message, $headersStr, $envelope);
+
+                if (!$sent) {
+                    @ini_set('sendmail_from', 'noreply@lensmanager.hireartist.studio');
+                    $sent = @mail($to, $subject, $message, $headersStr);
+                }
+
+                if (!$sent) {
+                    error_log('[bookings] Failed to send confirmation email to ' . $to . ' for booking ' . $booking_id);
+                }
             }
-            
-            if (!$sent) {
-                error_log('[bookings] Failed to send confirmation email to ' . $to . ' for booking ' . $booking_id);
-            }
-            
+
         } catch (Exception $e) {
             error_log('[bookings] Exception sending confirmation email: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Log booking email to file in development mode
+     */
+    private function logBookingEmailToFile($to, $subject, $message, $headers) {
+        $logFile = __DIR__ . '/../logs/email.log';
+        $logDir = dirname($logFile);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+
+        $logEntry = "\n" . str_repeat('=', 80) . "\n";
+        $logEntry .= "[" . date('Y-m-d H:i:s') . "] BOOKING CONFIRMATION EMAIL LOGGED (DEV MODE)\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "To: " . $to . "\n";
+        $logEntry .= "Subject: " . $subject . "\n";
+        $logEntry .= "Headers:\n" . $headers . "\n";
+        $logEntry .= str_repeat('-', 80) . "\n";
+        $logEntry .= "Message:\n" . $message . "\n";
+        $logEntry .= str_repeat('=', 80) . "\n";
+
+        @file_put_contents($logFile, $logEntry, FILE_APPEND);
     }
 
     /**
