@@ -269,6 +269,29 @@ class PaymentsController {
         $data = json_decode(file_get_contents("php://input"), true);
 
         try {
+            // Handle optional fields with null coalescing - MUST assign to variables first
+            $invoice_id = $data['invoice_id'] ?? null;
+            $booking_id = $data['booking_id'] ?? null;
+            $payment_name = $data['payment_name'] ?? null;
+            $schedule_type = $data['schedule_type'] ?? null;
+            $due_date = $data['due_date'] ?? null;
+            $amount = $data['amount'] ?? null;
+            $paid_amount = $data['paid_amount'] ?? 0;
+            $payment_date = $data['payment_date'] ?? null;
+            $payment_method = $data['payment_method'] ?? null;
+            $transaction_id = $data['transaction_id'] ?? null;
+            $notes = $data['notes'] ?? null;
+            $status = $data['status'] ?? null;
+
+            // Auto-set status to "paid" if paid_amount equals amount
+            if ($paid_amount > 0 && $amount > 0 && $paid_amount >= $amount) {
+                $status = 'paid';
+                // Set payment_date to today if not provided and status is being set to paid
+                if (!$payment_date) {
+                    $payment_date = date('Y-m-d');
+                }
+            }
+
             $query = "UPDATE " . $this->table_name . " 
                      SET invoice_id=:invoice_id, booking_id=:booking_id,
                          payment_name=:payment_name, schedule_type=:schedule_type, due_date=:due_date,
@@ -280,18 +303,18 @@ class PaymentsController {
 
             $stmt = $this->db->prepare($query);
 
-            $stmt->bindParam(":invoice_id", $data['invoice_id']);
-            $stmt->bindParam(":booking_id", $data['booking_id']);
-            $stmt->bindParam(":payment_name", $data['payment_name']);
-            $stmt->bindParam(":schedule_type", $data['schedule_type']);
-            $stmt->bindParam(":due_date", $data['due_date']);
-            $stmt->bindParam(":amount", $data['amount']);
-            $stmt->bindParam(":paid_amount", $data['paid_amount']);
-            $stmt->bindParam(":status", $data['status']);
-            $stmt->bindParam(":payment_date", $data['payment_date']);
-            $stmt->bindParam(":payment_method", $data['payment_method']);
-            $stmt->bindParam(":transaction_id", $data['transaction_id']);
-            $stmt->bindParam(":notes", $data['notes']);
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->bindParam(":booking_id", $booking_id);
+            $stmt->bindParam(":payment_name", $payment_name);
+            $stmt->bindParam(":schedule_type", $schedule_type);
+            $stmt->bindParam(":due_date", $due_date);
+            $stmt->bindParam(":amount", $amount);
+            $stmt->bindParam(":paid_amount", $paid_amount);
+            $stmt->bindParam(":status", $status);
+            $stmt->bindParam(":payment_date", $payment_date);
+            $stmt->bindParam(":payment_method", $payment_method);
+            $stmt->bindParam(":transaction_id", $transaction_id);
+            $stmt->bindParam(":notes", $notes);
             $stmt->bindParam(":id", $id);
             $stmt->bindParam(":photographer_id", $user_data['user_id']);
 

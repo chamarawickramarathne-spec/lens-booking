@@ -272,7 +272,21 @@ class BookingsController {
                         $update_invoice_stmt = $this->db->prepare($update_invoice_query);
                         $update_invoice_stmt->execute($invoice_ids);
                         
-                        // Cancel payment schedules related to these invoices (except completed ones)
+                        // Cancel payment schedules related to these invoices (except paid ones)
+                        $payment_schedule_query = "SELECT id FROM payment_schedules WHERE invoice_id IN ($placeholders) AND status != 'paid'";
+                        $payment_schedule_stmt = $this->db->prepare($payment_schedule_query);
+                        $payment_schedule_stmt->execute($invoice_ids);
+                        $payment_schedules = $payment_schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        if (!empty($payment_schedules)) {
+                            $schedule_ids = array_column($payment_schedules, 'id');
+                            $schedule_placeholders = implode(',', array_fill(0, count($schedule_ids), '?'));
+                            $update_schedule_query = "UPDATE payment_schedules SET status = 'cancelled' WHERE id IN ($schedule_placeholders)";
+                            $update_schedule_stmt = $this->db->prepare($update_schedule_query);
+                            $update_schedule_stmt->execute($schedule_ids);
+                        }
+                        
+                        // Cancel payments related to these invoices (except completed ones)
                         $payment_query = "SELECT id FROM payments WHERE invoice_id IN ($placeholders) AND status != 'completed'";
                         $payment_stmt = $this->db->prepare($payment_query);
                         $payment_stmt->execute($invoice_ids);
@@ -286,9 +300,24 @@ class BookingsController {
                             $update_payment_stmt->execute($payment_ids);
                         }
                     }
+                    
+                    // Also cancel payment schedules directly related to the booking (in case they were created without invoice)
+                    $direct_schedule_query = "SELECT id FROM payment_schedules WHERE booking_id = :booking_id AND status != 'paid'";
+                    $direct_schedule_stmt = $this->db->prepare($direct_schedule_query);
+                    $direct_schedule_stmt->bindParam(':booking_id', $id);
+                    $direct_schedule_stmt->execute();
+                    $direct_schedules = $direct_schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    if (!empty($direct_schedules)) {
+                        $direct_schedule_ids = array_column($direct_schedules, 'id');
+                        $direct_placeholders = implode(',', array_fill(0, count($direct_schedule_ids), '?'));
+                        $update_direct_schedule_query = "UPDATE payment_schedules SET status = 'cancelled' WHERE id IN ($direct_placeholders)";
+                        $update_direct_schedule_stmt = $this->db->prepare($update_direct_schedule_query);
+                        $update_direct_schedule_stmt->execute($direct_schedule_ids);
+                    }
                 } catch (Exception $e) {
                     // Log error but don't fail the status update
-                    error_log("Failed to cancel related invoices/payments for booking $id: " . $e->getMessage());
+                    error_log("Failed to cancel related invoices/payments/schedules for booking $id: " . $e->getMessage());
                 }
             }
             

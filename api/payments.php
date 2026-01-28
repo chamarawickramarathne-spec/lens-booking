@@ -277,17 +277,6 @@ class PaymentsController {
         $data = json_decode(file_get_contents("php://input"), true);
 
         try {
-            $query = "UPDATE " . $this->table_name . " 
-                     SET invoice_id=:invoice_id, booking_id=:booking_id,
-                         schedule_name=:schedule_name, schedule_type=:schedule_type, due_date=:due_date,
-                         amount=:amount, paid_amount=:paid_amount, status=:status,
-                         payment_date=:payment_date, payment_method=:payment_method,
-                         notes=:notes,
-                         updated_at=CURRENT_TIMESTAMP
-                     WHERE id=:id AND user_id=:user_id";
-
-            $stmt = $this->db->prepare($query);
-
             // Handle optional fields with null coalescing - MUST assign to variables first
             // because bindParam() requires references, not expressions
             $invoice_id = $data['invoice_id'] ?? null;
@@ -301,6 +290,26 @@ class PaymentsController {
             $due_date = $data['due_date'] ?? null;
             $amount = $data['amount'] ?? null;
             $status = $data['status'] ?? null;
+
+            // Auto-set status to "paid" if paid_amount equals amount
+            if ($paid_amount > 0 && $amount > 0 && $paid_amount >= $amount) {
+                $status = 'paid';
+                // Set payment_date to today if not provided and status is being set to paid
+                if (!$payment_date) {
+                    $payment_date = date('Y-m-d');
+                }
+            }
+
+            $query = "UPDATE " . $this->table_name . " 
+                     SET invoice_id=:invoice_id, booking_id=:booking_id,
+                         schedule_name=:schedule_name, schedule_type=:schedule_type, due_date=:due_date,
+                         amount=:amount, paid_amount=:paid_amount, status=:status,
+                         payment_date=:payment_date, payment_method=:payment_method,
+                         notes=:notes,
+                         updated_at=CURRENT_TIMESTAMP
+                     WHERE id=:id AND user_id=:user_id";
+
+            $stmt = $this->db->prepare($query);
 
             $stmt->bindParam(":invoice_id", $invoice_id);
             $stmt->bindParam(":booking_id", $booking_id);

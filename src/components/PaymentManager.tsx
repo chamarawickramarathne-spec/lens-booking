@@ -47,8 +47,7 @@ const PaymentManager = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
-  const isCompleted =
-    String(paymentSchedule.status).toLowerCase() === "completed";
+  const isPaid = String(paymentSchedule.status).toLowerCase() === "paid";
 
   // Derived amounts
   const totalAmount = Number(paymentSchedule.amount) || 0;
@@ -98,7 +97,7 @@ const PaymentManager = ({
 
     setIsLoading(true);
     try {
-      const newStatus = paidAmount >= totalAmount ? "completed" : "pending";
+      const newStatus = paidAmount >= totalAmount ? "paid" : "pending";
 
       await apiClient.updatePayment(paymentSchedule.id, {
         ...paymentSchedule,
@@ -155,14 +154,19 @@ const PaymentManager = ({
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
+      case "paid":
         return (
-          <Badge variant="default" className="bg-green-600 text-white">
-            Completed
+          <Badge
+            variant="default"
+            className="bg-success text-success-foreground"
+          >
+            Paid
           </Badge>
         );
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
+      case "overdue":
+        return <Badge variant="destructive">Overdue</Badge>;
       case "cancelled":
         return <Badge variant="destructive">Cancelled</Badge>;
       default:
@@ -174,7 +178,7 @@ const PaymentManager = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          {isCompleted ? "View Payment" : "Manage Payment"}
+          {isPaid ? "View Payment" : "Manage Payment"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -235,7 +239,7 @@ const PaymentManager = ({
                   totalAmount,
                 )})`}
                 className={validationError ? "border-red-500" : ""}
-                disabled={isCompleted}
+                disabled={isPaid}
               />
               {validationError && (
                 <p className="text-sm text-red-500 mt-1">{validationError}</p>
@@ -270,7 +274,7 @@ const PaymentManager = ({
                       "w-full justify-start text-left font-normal",
                       !paymentDate && "text-gray-500",
                     )}
-                    disabled={isCompleted}
+                    disabled={isPaid}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {paymentDate ? (
@@ -284,7 +288,7 @@ const PaymentManager = ({
                   <Calendar
                     mode="single"
                     selected={paymentDate}
-                    onSelect={isCompleted ? () => {} : setPaymentDate}
+                    onSelect={isPaid ? () => {} : setPaymentDate}
                     initialFocus
                   />
                 </PopoverContent>
@@ -293,11 +297,11 @@ const PaymentManager = ({
           </div>
 
           {/* Status Preview */}
-          {!isCompleted && isFullyPaid && (
+          {!isPaid && isFullyPaid && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700 font-medium">
                 Submitting {formatCurrency(clampedPaidAmount)} will mark the
-                schedule as **Completed**!
+                schedule as **Paid**!
               </p>
             </div>
           )}
@@ -307,7 +311,7 @@ const PaymentManager = ({
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            {!isCompleted && (
+            {!isPaid && (
               <Button
                 onClick={handlePaymentUpdate}
                 disabled={

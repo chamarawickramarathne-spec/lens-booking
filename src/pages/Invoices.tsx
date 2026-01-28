@@ -106,7 +106,11 @@ const Invoices = () => {
       case "draft":
         return <Badge variant="secondary">Draft</Badge>;
       case "sent":
-        return <Badge variant="outline">Sent</Badge>;
+        return (
+          <Badge variant="default" className="bg-yellow-500 text-white">
+            Sent
+          </Badge>
+        );
       case "paid":
         return (
           <Badge

@@ -95,17 +95,19 @@ const PaymentSchedules = () => {
   // Updated to use PaymentSchedule type
   const getStatusBadge = (status: PaymentSchedule["status"]) => {
     switch (status) {
-      case "completed":
+      case "paid":
         return (
           <Badge
             variant="default"
             className="bg-success text-success-foreground"
           >
-            Completed
+            Paid
           </Badge>
         );
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
+      case "overdue":
+        return <Badge variant="destructive">Overdue</Badge>;
       case "cancelled":
         return <Badge variant="destructive">Cancelled</Badge>;
       default:
@@ -163,17 +165,21 @@ const PaymentSchedules = () => {
   };
 
   // Calculate totals - using nullish coalescing (?? 0) for safety
-  const totalAmount = paymentSchedules.reduce(
+  // Exclude cancelled payment schedules from totals
+  const activeSchedules = paymentSchedules.filter(
+    (s) => s.status !== "cancelled",
+  );
+  const totalAmount = activeSchedules.reduce(
     (sum, schedule) => sum + (schedule.amount ?? 0),
     0,
   );
-  const paidAmount = paymentSchedules.reduce(
+  const paidAmount = activeSchedules.reduce(
     (sum, schedule) => sum + (schedule.paid_amount ?? 0),
     0,
   );
   const pendingAmount = totalAmount - paidAmount;
-  const completedSchedules = paymentSchedules.filter(
-    (s) => s.status === "completed",
+  const completedSchedules = activeSchedules.filter(
+    (s) => s.status === "paid",
   ).length;
 
   // Sort by ID descending and group by invoice number

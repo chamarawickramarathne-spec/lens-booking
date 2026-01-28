@@ -45,16 +45,22 @@ const InvoiceStatusManager = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPaymentDatesDialog, setShowPaymentDatesDialog] = useState(false);
   const [depositDueDate, setDepositDueDate] = useState<Date | undefined>(
-    new Date()
+    new Date(),
   );
   const [finalDueDate, setFinalDueDate] = useState<Date | undefined>(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   );
   const [pendingStatus, setPendingStatus] = useState("");
   const { toast } = useToast();
 
   const allStatusOptions = [
     { value: "draft", label: "Draft", variant: "secondary" as const, order: 1 },
+    {
+      value: "sent",
+      label: "Sent",
+      variant: "default" as const,
+      order: 2,
+    },
     {
       value: "pending",
       label: "Pending Payment",
@@ -78,7 +84,7 @@ const InvoiceStatusManager = ({
 
   const getCurrentStatusOrder = () => {
     const currentStatus = allStatusOptions.find(
-      (opt) => opt.value === invoice.status
+      (opt) => opt.value === invoice.status,
     );
     return currentStatus?.order || 0;
   };
@@ -103,15 +109,15 @@ const InvoiceStatusManager = ({
     const statusOption = allStatusOptions.find((opt) => opt.value === status);
     if (!statusOption) return <Badge variant="secondary">{status}</Badge>;
 
+    let badgeClassName = "";
+    if (statusOption.value === "paid") {
+      badgeClassName = "bg-success text-success-foreground";
+    } else if (statusOption.value === "sent") {
+      badgeClassName = "bg-yellow-500 text-white";
+    }
+
     return (
-      <Badge
-        variant={statusOption.variant}
-        className={
-          statusOption.value === "paid"
-            ? "bg-success text-success-foreground"
-            : ""
-        }
-      >
+      <Badge variant={statusOption.variant} className={badgeClassName}>
         {statusOption.label}
       </Badge>
     );
@@ -133,7 +139,7 @@ const InvoiceStatusManager = ({
     // Prevent backward status changes (except cancellations)
     const currentOrder = getCurrentStatusOrder();
     const newStatusOption = allStatusOptions.find(
-      (opt) => opt.value === newStatus
+      (opt) => opt.value === newStatus,
     );
     const newOrder = newStatusOption?.order || 0;
 
@@ -309,7 +315,7 @@ const InvoiceStatusManager = ({
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !depositDueDate && "text-muted-foreground"
+                        !depositDueDate && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -343,7 +349,7 @@ const InvoiceStatusManager = ({
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !finalDueDate && "text-muted-foreground"
+                      !finalDueDate && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
