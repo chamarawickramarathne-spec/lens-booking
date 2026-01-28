@@ -50,24 +50,23 @@ export default function Dashboard() {
   const totalBookings = stats.booking_stats?.total_bookings ?? 0;
   const activeClients = stats.client_count ?? 0;
 
-  // Pending invoices: include statuses 'pending' and 'draft'
+  // Pending invoices: include statuses 'pending', 'draft', and 'sent'
   const pendingInvoices = useMemo(
     () =>
-      (invoices || []).filter(
-        (inv) =>
-          String(inv.status).toLowerCase() === "pending" ||
-          String(inv.status).toLowerCase() === "draft"
-      ),
-    [invoices]
+      (invoices || []).filter((inv) => {
+        const status = String(inv.status).toLowerCase();
+        return status === "pending" || status === "draft" || status === "sent";
+      }),
+    [invoices],
   );
 
   const pendingInvoicesAmount = useMemo(
     () =>
       pendingInvoices.reduce(
         (sum, inv) => sum + Number(inv.total_amount ?? inv.amount ?? 0),
-        0
+        0,
       ),
-    [pendingInvoices]
+    [pendingInvoices],
   );
 
   // Current month revenue: prefer paid invoices payment_date within current month
@@ -85,12 +84,12 @@ export default function Dashboard() {
     });
     let total = paidThisMonth.reduce(
       (sum, inv) => sum + Number(inv.total_amount ?? inv.amount ?? 0),
-      0
+      0,
     );
     // Fallback to API monthly_revenue if no paid invoices were found
     if (total === 0 && stats.monthly_revenue && stats.monthly_revenue.length) {
       const apiMatch = stats.monthly_revenue.find(
-        (r) => r.year === y && r.month - 1 === m // API likely 1-based month
+        (r) => r.year === y && r.month - 1 === m, // API likely 1-based month
       );
       if (apiMatch) total = Number(apiMatch.revenue ?? 0);
     }
@@ -100,7 +99,7 @@ export default function Dashboard() {
   // Helpers
   const isActiveBooking = (b: any) =>
     !["completed", "cancelled", "cancel_by_client"].includes(
-      String(b.status || "").toLowerCase()
+      String(b.status || "").toLowerCase(),
     );
 
   const parseDateSafe = (d?: string) => {
@@ -258,11 +257,12 @@ export default function Dashboard() {
                       String(b.status).toLowerCase() === "shoot_completed"
                         ? "bg-green-600 text-white"
                         : String(b.status).toLowerCase() === "cancelled" ||
-                          String(b.status).toLowerCase() === "cancel_by_client"
-                        ? "bg-red-600 text-white"
-                        : String(b.status).toLowerCase() === "completed"
-                        ? "bg-blue-600 text-white"
-                        : ""
+                            String(b.status).toLowerCase() ===
+                              "cancel_by_client"
+                          ? "bg-red-600 text-white"
+                          : String(b.status).toLowerCase() === "completed"
+                            ? "bg-blue-600 text-white"
+                            : ""
                     }
                   >
                     {getStatusLabel(b.status)}
