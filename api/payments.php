@@ -143,6 +143,44 @@ class PaymentsController {
     }
 
     /**
+     * Get all installments for current user
+     */
+    public function getAllInstallments() {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        try {
+            $query = "SELECT id, payment_schedule_id, amount, paid_date, payment_method, notes, created_at
+                      FROM payment_installments
+                      WHERE user_id = :user_id
+                      ORDER BY paid_date DESC, id DESC";
+
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
+            $stmt->execute();
+
+            $installments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            http_response_code(200);
+            echo json_encode([
+                "message" => "All installments retrieved successfully",
+                "data" => $installments
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                "message" => "Failed to retrieve installments",
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Add an installment to a payment schedule
      */
     public function addInstallment($scheduleId) {
@@ -533,7 +571,9 @@ $endpoint = str_replace('/lens-booking/api/payments', '', parse_url($request_uri
 // Get ID from URL if present
 $id = null;
 $isInstallmentsEndpoint = false;
-if (preg_match('/^\/(\d+)\/(installments)$/', $endpoint, $matches)) {
+if (preg_match('/^\/installments$/', $endpoint)) {
+    $endpoint = '/installments';
+} elseif (preg_match('/^\/(\d+)\/(installments)$/', $endpoint, $matches)) {
     $id = (int)$matches[1];
     $isInstallmentsEndpoint = true;
     $endpoint = '/{id}/installments';
@@ -546,6 +586,8 @@ switch ($request_method) {
     case 'GET':
         if ($endpoint === '') {
             $payments_controller->getAll();
+        } elseif ($endpoint === '/installments') {
+            $payments_controller->getAllInstallments();
         } elseif ($endpoint === '/{id}' && $id) {
             $payments_controller->getOne($id);
         } elseif ($endpoint === '/{id}/installments' && $id) {

@@ -20,6 +20,8 @@ type DashboardStats = {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({});
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [installments, setInstallments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { formatCurrency } = useCurrency();
 
@@ -27,14 +29,19 @@ export default function Dashboard() {
     let mounted = true;
     const load = async () => {
       try {
-        const [statsRes, invoicesRes] = await Promise.all([
-          apiClient.getDashboardStats(),
-          apiClient.getInvoices(),
-        ]);
+        const [statsRes, invoicesRes, paymentsRes, installmentsRes] =
+          await Promise.all([
+            apiClient.getDashboardStats(),
+            apiClient.getInvoices(),
+            apiClient.getPayments(),
+            apiClient.getAllInstallments(),
+          ]);
 
         if (!mounted) return;
         setStats(statsRes?.data ?? {});
         setInvoices(invoicesRes?.data ?? []);
+        setPayments(paymentsRes?.data ?? []);
+        setInstallments(installmentsRes?.data ?? []);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
       } finally {
@@ -69,32 +76,24 @@ export default function Dashboard() {
     [pendingInvoices],
   );
 
-  // Current month revenue: prefer paid invoices payment_date within current month
+  // Current month revenue: calculate from installments paid this month
   const monthlyRevenue = useMemo(() => {
-    // Try derive from invoices marked paid within this month
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
-    const paidThisMonth = (invoices || []).filter((inv) => {
-      if (String(inv.status).toLowerCase() !== "paid") return false;
-      const dStr = inv.payment_date || inv.updated_at || inv.issue_date;
+
+    const paidThisMonth = (installments || []).filter((installment) => {
+      const dStr = installment.paid_date;
       if (!dStr || dStr === "0000-00-00") return false;
       const d = new Date(dStr);
       return d.getFullYear() === y && d.getMonth() === m;
     });
-    let total = paidThisMonth.reduce(
-      (sum, inv) => sum + Number(inv.total_amount ?? inv.amount ?? 0),
+
+    return paidThisMonth.reduce(
+      (sum, installment) => sum + Number(installment.amount ?? 0),
       0,
     );
-    // Fallback to API monthly_revenue if no paid invoices were found
-    if (total === 0 && stats.monthly_revenue && stats.monthly_revenue.length) {
-      const apiMatch = stats.monthly_revenue.find(
-        (r) => r.year === y && r.month - 1 === m, // API likely 1-based month
-      );
-      if (apiMatch) total = Number(apiMatch.revenue ?? 0);
-    }
-    return total;
-  }, [invoices, stats.monthly_revenue]);
+  }, [installments]);
 
   // Helpers
   const isActiveBooking = (b: any) =>
