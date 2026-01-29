@@ -200,6 +200,17 @@ const PaymentManager = ({
     }
   };
 
+  const formatPaymentMethod = (method: string | null) => {
+    if (!method) return "-";
+    const methodMap: { [key: string]: string } = {
+      cash: "Cash",
+      e_transfer_bank: "E-Transfer / Bank",
+      card_pay: "Card Pay",
+      other: "Other",
+    };
+    return methodMap[method] || method;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -357,7 +368,7 @@ const PaymentManager = ({
                       {formatCurrency(inst.amount)}
                     </div>
                     <div className="text-[11px]">
-                      {inst.payment_method || "-"}
+                      {formatPaymentMethod(inst.payment_method)}
                     </div>
                   </div>
                 ))}
