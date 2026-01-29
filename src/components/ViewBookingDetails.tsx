@@ -16,9 +16,12 @@ import {
   Phone,
   FileText,
   Check,
+  CreditCard,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/integrations/api/client";
 
 interface ViewBookingDetailsProps {
   booking: any;
@@ -32,6 +35,26 @@ const ViewBookingDetails = ({
   onClose,
 }: ViewBookingDetailsProps) => {
   const { currency, formatCurrency } = useCurrency();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && booking?.id) {
+      loadPayments();
+    }
+  }, [isOpen, booking?.id]);
+
+  const loadPayments = async () => {
+    setLoadingPayments(true);
+    try {
+      const response = await apiClient.getPaymentInstallments(booking.id);
+      setPayments(response?.data ?? []);
+    } catch (error) {
+      console.error("Failed to load payments:", error);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
 
   if (!booking) return null;
 
@@ -415,6 +438,59 @@ const ViewBookingDetails = ({
                 </div>
                 <div className="text-[11px] text-muted-foreground">
                   All prices are final as of booking date.
+                </div>
+
+                {/* Payments Section */}
+                <div className="mt-6 pt-4 border-t">
+                  <h5 className="font-semibold flex items-center gap-2 mb-3">
+                    <CreditCard className="h-4 w-4" /> Payments
+                  </h5>
+                  {loadingPayments ? (
+                    <div className="text-xs text-muted-foreground">
+                      Loading payments...
+                    </div>
+                  ) : payments.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">
+                      No payments recorded
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {payments.map((payment, idx) => (
+                        <div
+                          key={payment.id ?? idx}
+                          className="flex items-start justify-between gap-2 p-2 rounded bg-muted/50 text-xs"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {formatCurrency(payment.amount)}
+                            </div>
+                            <div className="text-muted-foreground">
+                              {format(
+                                new Date(payment.paid_date),
+                                "MMM dd, yyyy"
+                              )}
+                            </div>
+                            {payment.payment_method && (
+                              <div className="text-muted-foreground capitalize">
+                                {payment.payment_method}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-2 border-t mt-3 flex justify-between font-medium text-xs">
+                        <span>Total Paid:</span>
+                        <span>
+                          {formatCurrency(
+                            payments.reduce(
+                              (sum, p) => sum + Number(p.amount ?? 0),
+                              0
+                            )
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
