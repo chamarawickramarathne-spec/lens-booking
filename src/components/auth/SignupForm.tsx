@@ -76,7 +76,7 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
     <form onSubmit={handleSignup} className="space-y-6">
       <div className="flex items-center justify-center mb-8">
         <img
-          src="/hireartist_logo_dim.png"
+          src="hireartist_logo_dim.png"
           alt="HireArtist Logo"
           className="h-24 w-auto object-contain"
         />

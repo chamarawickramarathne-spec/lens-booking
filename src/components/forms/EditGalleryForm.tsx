@@ -192,7 +192,7 @@ const EditGalleryForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No client</SelectItem>
+                        <SelectItem value="/">No client</SelectItem>
                         {clients?.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.full_name}
@@ -218,7 +218,7 @@ const EditGalleryForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No booking</SelectItem>
+                        <SelectItem value="/">No booking</SelectItem>
                         {bookings?.map((booking) => (
                           <SelectItem key={booking.id} value={booking.id}>
                             {booking.title}

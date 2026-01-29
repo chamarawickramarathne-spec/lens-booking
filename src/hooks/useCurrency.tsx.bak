@@ -30,7 +30,7 @@ export const useCurrency = () => {
 
     currency,
 
-    formatCurrency,      style: 'currency',export const useCurrency = () => {import { useAuth } from "./useAuth";import { useAuth } from "./useAuth";
+    formatCurrency,      style: 'currency',export const useCurrency = () => {import { useAuth } from ".useAuth";import { useAuth } from ".useAuth";
 
   };
 
