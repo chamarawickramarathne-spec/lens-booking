@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,15 +35,12 @@ const PaymentManager = ({
   refreshData,
 }: PaymentManagerProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [paidAmount, setPaidAmount] = useState<number>(
-    Number(paymentSchedule.paid_amount) || 0,
+  const [installmentAmount, setInstallmentAmount] = useState<number>(0);
+  const [installmentDate, setInstallmentDate] = useState<Date | undefined>(
+    new Date(),
   );
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>(
-    paymentSchedule.payment_date &&
-      paymentSchedule.payment_date !== "0000-00-00"
-      ? new Date(paymentSchedule.payment_date)
-      : undefined,
-  );
+  const [installments, setInstallments] = useState<any[]>([]);
+  const [isLoadingInstallments, setIsLoadingInstallments] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
@@ -52,32 +49,56 @@ const PaymentManager = ({
   // Derived amounts
   const totalAmount = Number(paymentSchedule.amount) || 0;
   const alreadyPaid = Number(paymentSchedule.paid_amount) || 0;
-  const clampedPaidAmount = Math.min(
-    Math.max(paidAmount, alreadyPaid),
-    totalAmount,
-  );
-  const remainingAmount = Math.max(totalAmount - clampedPaidAmount, 0);
-  const isFullyPaid = clampedPaidAmount >= totalAmount;
+  const remainingAmount = Math.max(totalAmount - alreadyPaid, 0);
+  const isFullyPaid = alreadyPaid >= totalAmount;
 
   // Validation message
   const validationError: string | null = (() => {
-    if (Number.isNaN(paidAmount)) return "Enter a valid amount";
-    if (paidAmount < alreadyPaid)
-      return "New total paid amount cannot be less than already paid amount.";
-    if (paidAmount > totalAmount)
-      return `New total paid amount cannot exceed total amount (${formatCurrency(
-        totalAmount,
-      )}). You can add up to ${formatCurrency(totalAmount - alreadyPaid)}.`;
+    if (Number.isNaN(installmentAmount)) return "Enter a valid amount";
+    if (installmentAmount <= 0)
+      return "Installment amount must be greater than zero.";
+    if (installmentAmount > remainingAmount)
+      return `Installment amount cannot exceed remaining due (${formatCurrency(
+        remainingAmount,
+      )}).`;
     return null;
   })();
 
-  const handlePaidAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInstallmentAmountChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const rawValue = parseFloat(e.target.value);
     const newValue = isNaN(rawValue) ? 0 : rawValue;
-    setPaidAmount(newValue);
+    setInstallmentAmount(newValue);
   };
 
-  const handlePaymentUpdate = async () => {
+  const loadInstallments = async () => {
+    if (!paymentSchedule?.id) return;
+    setIsLoadingInstallments(true);
+    try {
+      const response = await apiClient.getPaymentInstallments(
+        paymentSchedule.id,
+      );
+      setInstallments(response.data || []);
+    } catch (error: any) {
+      console.error("Failed to load installments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load installments",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingInstallments(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadInstallments();
+    }
+  }, [isOpen]);
+
+  const handleAddInstallment = async () => {
     if (validationError) {
       toast({
         title: "Validation Error",
@@ -86,30 +107,24 @@ const PaymentManager = ({
       });
       return;
     }
-    if (paidAmount === alreadyPaid) {
-      toast({
-        title: "Validation Error",
-        description: "No change detected. Increase the amount to update.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const newStatus = paidAmount >= totalAmount ? "paid" : "pending";
+      const response = await apiClient.addPaymentInstallment(
+        paymentSchedule.id,
+        {
+          amount: installmentAmount,
+          paid_date: installmentDate
+            ? format(installmentDate, "yyyy-MM-dd")
+            : format(new Date(), "yyyy-MM-dd"),
+        },
+      );
 
-      await apiClient.updatePayment(paymentSchedule.id, {
-        ...paymentSchedule,
-        paid_amount: paidAmount,
-        payment_date: paymentDate
-          ? format(paymentDate, "yyyy-MM-dd")
-          : format(new Date(), "yyyy-MM-dd"),
-        status: newStatus,
-      });
+      const updatedPaidAmount =
+        response?.data?.paid_amount ?? alreadyPaid + installmentAmount;
+      const updatedStatus = response?.data?.status ?? "pending";
 
       if (
-        paidAmount >= totalAmount &&
+        updatedStatus === "paid" &&
         paymentSchedule.invoice_id &&
         paymentSchedule.schedule_type === "final"
       ) {
@@ -120,8 +135,8 @@ const PaymentManager = ({
           await apiClient.updateInvoice(paymentSchedule.invoice_id, {
             ...invoiceResponse.data,
             status: "paid",
-            payment_date: paymentDate
-              ? format(paymentDate, "yyyy-MM-dd")
+            payment_date: installmentDate
+              ? format(installmentDate, "yyyy-MM-dd")
               : format(new Date(), "yyyy-MM-dd"),
           });
         }
@@ -130,14 +145,15 @@ const PaymentManager = ({
       toast({
         title: "Success",
         description:
-          paidAmount >= totalAmount && paymentSchedule.schedule_type === "final"
-            ? "Payment completed and invoice marked as paid!"
-            : paidAmount >= totalAmount
+          updatedStatus === "paid" && paymentSchedule.schedule_type === "final"
+            ? "Installment added and invoice marked as paid!"
+            : updatedStatus === "paid"
               ? "Payment completed successfully!"
-              : "Payment updated successfully!",
+              : "Installment recorded successfully!",
       });
 
-      setIsOpen(false);
+      setInstallmentAmount(0);
+      loadInstallments();
       onSuccess();
       refreshData();
     } catch (error: any) {
@@ -224,61 +240,85 @@ const PaymentManager = ({
             </div>
           </div>
 
+          {/* Installment History */}
+          <div className="space-y-2">
+            <Label className="text-sm text-gray-500">Installment History</Label>
+            {isLoadingInstallments ? (
+              <p className="text-sm text-muted-foreground">
+                Loading installments...
+              </p>
+            ) : installments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No installments recorded yet.
+              </p>
+            ) : (
+              <div className="rounded-lg border">
+                <div className="grid grid-cols-3 gap-2 bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                  <div>Date</div>
+                  <div>Amount</div>
+                  <div>Method</div>
+                </div>
+                {installments.map((inst) => (
+                  <div
+                    key={inst.id}
+                    className="grid grid-cols-3 gap-2 px-3 py-2 text-sm border-t"
+                  >
+                    <div>
+                      {inst.paid_date && inst.paid_date !== "0000-00-00"
+                        ? format(new Date(inst.paid_date), "PPP")
+                        : "Not set"}
+                    </div>
+                    <div className="font-medium text-success">
+                      {formatCurrency(inst.amount)}
+                    </div>
+                    <div>{inst.payment_method || "-"}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Payment Input */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="paid-amount">New Total Paid Amount</Label>
+              <Label htmlFor="installment-amount">Add Installment Amount</Label>
               <Input
-                id="paid-amount"
+                id="installment-amount"
                 type="number"
                 step="0.01"
-                max={totalAmount}
-                value={paidAmount}
-                onChange={handlePaidAmountChange}
-                placeholder={`Enter total paid amount (Max: ${formatCurrency(
-                  totalAmount,
+                max={remainingAmount}
+                value={installmentAmount}
+                onChange={handleInstallmentAmountChange}
+                placeholder={`Enter installment amount (Max: ${formatCurrency(
+                  remainingAmount,
                 )})`}
                 className={validationError ? "border-red-500" : ""}
-                disabled={isPaid}
+                disabled={isPaid || remainingAmount <= 0}
               />
               {validationError && (
                 <p className="text-sm text-red-500 mt-1">{validationError}</p>
               )}
               <p className="text-sm text-gray-500 mt-1">
-                Amount to be recorded:{" "}
-                <strong>
-                  {formatCurrency(
-                    Math.min(Math.max(paidAmount, alreadyPaid), totalAmount),
-                  )}
-                </strong>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Remaining due after update:{" "}
-                {formatCurrency(
-                  Math.max(
-                    totalAmount -
-                      Math.min(Math.max(paidAmount, alreadyPaid), totalAmount),
-                    0,
-                  ),
-                )}
+                Remaining due:{" "}
+                <strong>{formatCurrency(remainingAmount)}</strong>
               </p>
             </div>
 
             <div>
-              <Label>Payment Date</Label>
+              <Label>Installment Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !paymentDate && "text-gray-500",
+                      !installmentDate && "text-gray-500",
                     )}
-                    disabled={isPaid}
+                    disabled={isPaid || remainingAmount <= 0}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {paymentDate ? (
-                      format(paymentDate, "PPP")
+                    {installmentDate ? (
+                      format(installmentDate, "PPP")
                     ) : (
                       <span>Pick payment date</span>
                     )}
@@ -287,8 +327,8 @@ const PaymentManager = ({
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={paymentDate}
-                    onSelect={isPaid ? () => {} : setPaymentDate}
+                    selected={installmentDate}
+                    onSelect={isPaid ? () => {} : setInstallmentDate}
                     initialFocus
                   />
                 </PopoverContent>
@@ -297,11 +337,10 @@ const PaymentManager = ({
           </div>
 
           {/* Status Preview */}
-          {!isPaid && isFullyPaid && (
+          {!isPaid && remainingAmount <= 0 && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700 font-medium">
-                Submitting {formatCurrency(clampedPaidAmount)} will mark the
-                schedule as **Paid**!
+                This schedule is fully paid.
               </p>
             </div>
           )}
@@ -313,14 +352,15 @@ const PaymentManager = ({
             </Button>
             {!isPaid && (
               <Button
-                onClick={handlePaymentUpdate}
+                onClick={handleAddInstallment}
                 disabled={
                   isLoading ||
                   Boolean(validationError) ||
-                  paidAmount === alreadyPaid
+                  installmentAmount <= 0 ||
+                  remainingAmount <= 0
                 }
               >
-                {isLoading ? "Updating..." : "Update Payment"}
+                {isLoading ? "Saving..." : "Add Installment"}
               </Button>
             )}
           </div>

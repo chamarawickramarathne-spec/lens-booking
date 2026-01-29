@@ -104,6 +104,150 @@ class PaymentsController {
     }
 
     /**
+     * Get installments for a payment schedule
+     */
+    public function getInstallments($scheduleId) {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        try {
+            $query = "SELECT id, payment_schedule_id, amount, paid_date, payment_method, notes, created_at
+                      FROM payment_installments
+                      WHERE payment_schedule_id = :schedule_id AND user_id = :user_id
+                      ORDER BY paid_date ASC, id ASC";
+
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(":schedule_id", $scheduleId);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
+            $stmt->execute();
+
+            $installments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            http_response_code(200);
+            echo json_encode([
+                "message" => "Installments retrieved successfully",
+                "data" => $installments
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                "message" => "Failed to retrieve installments",
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Add an installment to a payment schedule
+     */
+    public function addInstallment($scheduleId) {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (!isset($data['amount'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "Installment amount is required"]);
+            return;
+        }
+
+        try {
+            // Verify schedule ownership and get schedule details
+            $scheduleQuery = "SELECT id, user_id, amount, paid_amount, status, schedule_type, invoice_id
+                              FROM " . $this->table_name . "
+                              WHERE id = :id AND user_id = :user_id";
+            $scheduleStmt = $this->db->prepare($scheduleQuery);
+            $scheduleStmt->bindParam(":id", $scheduleId);
+            $scheduleStmt->bindParam(":user_id", $user_data['user_id']);
+            $scheduleStmt->execute();
+
+            if ($scheduleStmt->rowCount() === 0) {
+                http_response_code(404);
+                echo json_encode(["message" => "Payment schedule not found"]);
+                return;
+            }
+
+            $schedule = $scheduleStmt->fetch(PDO::FETCH_ASSOC);
+
+            $this->db->beginTransaction();
+
+            $amount = $data['amount'];
+            $paid_date = $data['paid_date'] ?? date('Y-m-d');
+            $payment_method = $data['payment_method'] ?? null;
+            $notes = $data['notes'] ?? null;
+
+            $insertQuery = "INSERT INTO payment_installments
+                            SET user_id = :user_id, payment_schedule_id = :schedule_id,
+                                amount = :amount, paid_date = :paid_date,
+                                payment_method = :payment_method, notes = :notes";
+
+            $insertStmt = $this->db->prepare($insertQuery);
+            $insertStmt->bindParam(":user_id", $user_data['user_id']);
+            $insertStmt->bindParam(":schedule_id", $scheduleId);
+            $insertStmt->bindParam(":amount", $amount);
+            $insertStmt->bindParam(":paid_date", $paid_date);
+            $insertStmt->bindParam(":payment_method", $payment_method);
+            $insertStmt->bindParam(":notes", $notes);
+            $insertStmt->execute();
+
+            // Recalculate paid amount
+            $sumQuery = "SELECT COALESCE(SUM(amount), 0) AS total_paid
+                         FROM payment_installments
+                         WHERE payment_schedule_id = :schedule_id AND user_id = :user_id";
+            $sumStmt = $this->db->prepare($sumQuery);
+            $sumStmt->bindParam(":schedule_id", $scheduleId);
+            $sumStmt->bindParam(":user_id", $user_data['user_id']);
+            $sumStmt->execute();
+            $sumResult = $sumStmt->fetch(PDO::FETCH_ASSOC);
+            $totalPaid = (float)($sumResult['total_paid'] ?? 0);
+
+            $status = $totalPaid >= (float)$schedule['amount'] ? 'paid' : 'pending';
+
+            $updateQuery = "UPDATE " . $this->table_name . "
+                            SET paid_amount = :paid_amount, status = :status,
+                                payment_date = :payment_date, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = :id AND user_id = :user_id";
+
+            $updateStmt = $this->db->prepare($updateQuery);
+            $updateStmt->bindParam(":paid_amount", $totalPaid);
+            $updateStmt->bindParam(":status", $status);
+            $updateStmt->bindParam(":payment_date", $paid_date);
+            $updateStmt->bindParam(":id", $scheduleId);
+            $updateStmt->bindParam(":user_id", $user_data['user_id']);
+            $updateStmt->execute();
+
+            $this->db->commit();
+
+            http_response_code(201);
+            echo json_encode([
+                "message" => "Installment added successfully",
+                "data" => [
+                    "paid_amount" => $totalPaid,
+                    "status" => $status
+                ]
+            ]);
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            http_response_code(500);
+            echo json_encode([
+                "message" => "Failed to add installment",
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Get single payment
      */
     public function getOne($id) {
@@ -388,7 +532,12 @@ $endpoint = str_replace('/lens-booking/api/payments', '', parse_url($request_uri
 
 // Get ID from URL if present
 $id = null;
-if (preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
+$isInstallmentsEndpoint = false;
+if (preg_match('/^\/(\d+)\/(installments)$/', $endpoint, $matches)) {
+    $id = (int)$matches[1];
+    $isInstallmentsEndpoint = true;
+    $endpoint = '/{id}/installments';
+} elseif (preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
     $id = (int)$matches[1];
     $endpoint = '/{id}';
 }
@@ -399,6 +548,8 @@ switch ($request_method) {
             $payments_controller->getAll();
         } elseif ($endpoint === '/{id}' && $id) {
             $payments_controller->getOne($id);
+        } elseif ($endpoint === '/{id}/installments' && $id) {
+            $payments_controller->getInstallments($id);
         } else {
             http_response_code(404);
             echo json_encode(["message" => "Endpoint not found"]);
@@ -408,6 +559,8 @@ switch ($request_method) {
     case 'POST':
         if ($endpoint === '') {
             $payments_controller->create();
+        } elseif ($endpoint === '/{id}/installments' && $id) {
+            $payments_controller->addInstallment($id);
         } else {
             http_response_code(404);
             echo json_encode(["message" => "Endpoint not found"]);

@@ -321,6 +321,17 @@ class ApiClient {
     return this.request('/payments');
   }
 
+  async getPaymentInstallments(scheduleId: number) {
+    return this.request(`/payments/${scheduleId}/installments`);
+  }
+
+  async addPaymentInstallment(scheduleId: number, installmentData: any) {
+    return this.request(`/payments/${scheduleId}/installments`, {
+      method: 'POST',
+      body: JSON.stringify(installmentData),
+    });
+  }
+
   async getPayment(id: number) {
     return this.request(`/payments/${id}`);
   }

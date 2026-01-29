@@ -11,6 +11,7 @@ import {
   Check,
   X,
   Mail,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
@@ -98,6 +99,23 @@ const Invoices = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendInvoice = async (invoiceId: number) => {
+    try {
+      await apiClient.sendInvoiceEmail(invoiceId);
+      toast({
+        title: "Success",
+        description: "Invoice email sent successfully with PDF attachment!",
+      });
+    } catch (error: any) {
+      console.error("Failed to send invoice email:", error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to send invoice email",
+        variant: "destructive",
+      });
     }
   };
 
@@ -274,10 +292,24 @@ const Invoices = () => {
                             {!["cancelled", "cancel_by_client"].includes(
                               invoice.status,
                             ) && (
-                              <InvoicePDFDownload
-                                invoice={invoice}
-                                photographer={user}
-                              />
+                              <>
+                                <InvoicePDFDownload
+                                  invoice={invoice}
+                                  photographer={user}
+                                />
+                                {invoice.status !== "draft" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleResendInvoice(invoice.id)
+                                    }
+                                  >
+                                    <Send className="h-3 w-3 mr-1" />
+                                    Resend
+                                  </Button>
+                                )}
+                              </>
                             )}
                             <Dialog>
                               <DialogTrigger asChild>
