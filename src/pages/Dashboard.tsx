@@ -5,7 +5,24 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { apiClient } from "@/integrations/api/client";
 import { useCurrency } from "@/hooks/useCurrency";
-import { format } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Info } from "lucide-react";
 
 type DashboardStats = {
   booking_stats?: {
@@ -23,6 +40,7 @@ export default function Dashboard() {
   const [payments, setPayments] = useState<any[]>([]);
   const [installments, setInstallments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState<string>("12"); // months
   const { formatCurrency } = useCurrency();
 
   useEffect(() => {
@@ -94,6 +112,41 @@ export default function Dashboard() {
       0,
     );
   }, [installments]);
+
+  // Revenue chart data based on selected time range
+  const revenueChartData = useMemo(() => {
+    const months = parseInt(timeRange);
+    const now = new Date();
+    const data = [];
+
+    for (let i = months - 1; i >= 0; i--) {
+      const monthDate = subMonths(now, i);
+      const monthStart = startOfMonth(monthDate);
+      const monthEnd = endOfMonth(monthDate);
+
+      const revenue = (installments || [])
+        .filter((installment) => {
+          const dStr = installment.paid_date;
+          if (!dStr || dStr === "0000-00-00") return false;
+          const d = new Date(dStr);
+          return d >= monthStart && d <= monthEnd;
+        })
+        .reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0);
+
+      data.push({
+        month: format(monthDate, "MMM yyyy"),
+        monthShort: format(monthDate, "MMM"),
+        revenue: revenue,
+      });
+    }
+
+    return data;
+  }, [installments, timeRange]);
+
+  // Total revenue for selected period
+  const totalRevenue = useMemo(() => {
+    return revenueChartData.reduce((sum, item) => sum + item.revenue, 0);
+  }, [revenueChartData]);
 
   // Helpers
   const isActiveBooking = (b: any) =>
@@ -216,6 +269,88 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Revenue Chart */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-medium">Payments</CardTitle>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">Last 3 months</SelectItem>
+                <SelectItem value="6">Last 6 months</SelectItem>
+                <SelectItem value="12">Last 12 months</SelectItem>
+                <SelectItem value="24">Last 24 months</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Total revenue
+                </span>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-3xl font-bold">
+                {formatCurrency(totalRevenue)}
+              </div>
+              <div className="h-[300px] w-full">
+                {revenueChartData.length === 0 || totalRevenue === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">No payments yet</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={revenueChartData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        className="stroke-muted"
+                      />
+                      <XAxis
+                        dataKey="monthShort"
+                        className="text-xs"
+                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      />
+                      <YAxis
+                        className="text-xs"
+                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                        tickFormatter={(value) => `LKR${value}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--background))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "6px",
+                        }}
+                        formatter={(value: number) => [
+                          formatCurrency(value),
+                          "Revenue",
+                        ]}
+                        labelFormatter={(label, payload) =>
+                          payload[0]?.payload?.month || label
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Recent Bookings */}
