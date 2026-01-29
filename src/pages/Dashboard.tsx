@@ -7,8 +7,9 @@ import { apiClient } from "@/integrations/api/client";
 import { useCurrency } from "@/hooks/useCurrency";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -326,8 +327,8 @@ export default function Dashboard() {
         {/* Revenue Chart */}
         {installments.length > 0 && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-medium">Payments</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-2xl font-bold">Payments</CardTitle>
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select time range" />
@@ -360,13 +361,13 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
+                      <ComposedChart
                         data={revenueChartData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          className="stroke-muted"
+                          stroke="hsl(var(--border))"
                         />
                         <XAxis
                           dataKey="monthShort"
@@ -392,6 +393,12 @@ export default function Dashboard() {
                             payload[0]?.payload?.month || label
                           }
                         />
+                        <Bar
+                          dataKey="revenue"
+                          fill="hsl(var(--primary))"
+                          radius={[8, 8, 0, 0]}
+                          opacity={0.7}
+                        />
                         <Line
                           type="monotone"
                           dataKey="revenue"
@@ -400,7 +407,7 @@ export default function Dashboard() {
                           dot={{ fill: "hsl(var(--primary))", r: 4 }}
                           activeDot={{ r: 6 }}
                         />
-                      </LineChart>
+                      </ComposedChart>
                     </ResponsiveContainer>
                   )}
                 </div>
