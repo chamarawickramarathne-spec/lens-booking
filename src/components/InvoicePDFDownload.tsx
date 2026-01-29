@@ -18,11 +18,33 @@ const InvoicePDFDownload = ({
   const { formatCurrency } = useCurrency();
 
   const loadImageAsBase64 = async (
-    url: string
+    url: string,
   ): Promise<{ data: string; format: string }> => {
     try {
-      const response = await fetch(url);
+      console.log("📥 Fetching image from:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "image/*",
+        },
+        mode: "cors",
+      });
+
+      console.log(
+        "📥 Fetch response status:",
+        response.status,
+        response.statusText,
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`,
+        );
+      }
+
       const blob = await response.blob();
+      console.log("📥 Blob received:", { type: blob.type, size: blob.size });
 
       // Detect image format from blob type
       let format = "JPEG";
@@ -30,70 +52,159 @@ const InvoicePDFDownload = ({
         format = "PNG";
       } else if (blob.type.includes("jpg") || blob.type.includes("jpeg")) {
         format = "JPEG";
+      } else if (blob.type.includes("webp")) {
+        format = "WEBP";
       }
 
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () =>
+        reader.onloadend = () => {
+          const data = reader.result as string;
+          console.log("📥 Image converted to base64, length:", data.length);
           resolve({
-            data: reader.result as string,
+            data,
             format: format,
           });
-        reader.onerror = reject;
+        };
+        reader.onerror = (error) => {
+          console.error("📥 FileReader error:", error);
+          reject(error);
+        };
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error("Failed to load image:", error);
+      console.error("❌ Failed to load image:", error);
       return { data: "", format: "JPEG" };
     }
   };
 
   const getImageUrl = (imagePath: string | undefined) => {
-    if (!imagePath) return "";
-    if (imagePath.startsWith("http")) return imagePath;
+    if (!imagePath) {
+      console.warn("❌ getImageUrl - imagePath is empty/undefined");
+      return "";
+    }
 
-    // Remove leading slash and /lens-booking prefix if present
+    console.log("📍 getImageUrl - Input imagePath:", imagePath);
+
     let cleanPath = imagePath;
-    if (cleanPath.startsWith("/lens-booking/")) {
-      cleanPath = cleanPath.substring("/lens-booking/".length);
-    } else if (cleanPath.startsWith("/")) {
-      cleanPath = cleanPath.substring(1);
+
+    // If it's already a full HTTP URL, extract the path part
+    if (imagePath.startsWith("http")) {
+      console.log("📍 getImageUrl - Received full HTTP URL, extracting path");
+      try {
+        const url = new URL(imagePath);
+        // Extract path starting from after the domain
+        cleanPath = url.pathname;
+        // Remove /lens-booking from the start if present
+        if (cleanPath.startsWith("/lens-booking/")) {
+          cleanPath = cleanPath.substring("/lens-booking/".length);
+        } else if (cleanPath.startsWith("/")) {
+          cleanPath = cleanPath.substring(1);
+        }
+        console.log("📍 getImageUrl - Extracted path from URL:", cleanPath);
+      } catch (e) {
+        console.error("📍 getImageUrl - Error parsing URL:", e);
+        return ""; // Return empty if URL parsing fails
+      }
+    } else {
+      // Remove leading slash and /lens-booking prefix if present
+      if (cleanPath.startsWith("/lens-booking/")) {
+        cleanPath = cleanPath.substring("/lens-booking/".length);
+        console.log(
+          "📍 getImageUrl - Removed /lens-booking/ prefix, cleanPath:",
+          cleanPath,
+        );
+      } else if (cleanPath.startsWith("/")) {
+        cleanPath = cleanPath.substring(1);
+        console.log(
+          "📍 getImageUrl - Removed leading /, cleanPath:",
+          cleanPath,
+        );
+      }
     }
 
     // Use the image proxy to get images with proper CORS headers
     const encodedPath = encodeURIComponent(cleanPath);
-    return `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
+    const finalUrl = `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
+    console.log("📍 getImageUrl - Final URL:", finalUrl);
+    return finalUrl;
   };
 
   const generatePDF = async () => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
-      let yPosition = 20;
+      let yPosition = 10;
 
       // Add profile image/logo if available
+      console.log("🔍 PDF Debug - Photographer object:", photographer);
+      console.log(
+        "🔍 PDF Debug - Profile picture path:",
+        photographer?.profile_picture,
+      );
+
+      let imageToUse: { data: string; format: string } = {
+        data: "",
+        format: "JPEG",
+      };
+
+      // Try to load photographer's profile picture
       const profileImageUrl = getImageUrl(photographer?.profile_picture);
+      console.log("🔍 PDF Debug - Profile image URL:", profileImageUrl);
+
       if (profileImageUrl) {
-        try {
-          const imageResult = await loadImageAsBase64(profileImageUrl);
-          if (imageResult.data) {
-            const imgSize = 40; // Larger size to match Email Preview (96px -> ~40 in PDF scale)
-            const imgX = (pageWidth - imgSize) / 2;
-            doc.addImage(
-              imageResult.data,
-              imageResult.format,
-              imgX,
-              yPosition,
-              imgSize,
-              imgSize,
-              undefined,
-              "FAST"
-            );
-            yPosition += imgSize + 8;
-          }
-        } catch (error) {
-          console.error("Failed to add profile image to PDF:", error);
+        console.log(
+          "🔍 PDF Debug - Attempting to load profile image from:",
+          profileImageUrl,
+        );
+        imageToUse = await loadImageAsBase64(profileImageUrl);
+        console.log("🔍 PDF Debug - Image load result:", {
+          hasData: !!imageToUse.data,
+          format: imageToUse.format,
+          dataLength: imageToUse.data?.length || 0,
+        });
+
+        if (!imageToUse.data) {
+          console.error(
+            "❌ PDF Debug - Failed to load image, no base64 data received",
+          );
         }
+      } else {
+        console.error(
+          "❌ PDF Debug - No profile image URL generated from photographer data",
+        );
+      }
+
+      // Add the image to PDF if we have data
+      if (imageToUse.data) {
+        try {
+          const imgSize = 40; // Larger size to match Email Preview (96px -> ~40 in PDF scale)
+          const imgX = (pageWidth - imgSize) / 2;
+          console.log("✅ PDF Debug - Adding image to PDF at position:", {
+            x: imgX,
+            y: yPosition,
+            size: imgSize,
+            format: imageToUse.format,
+          });
+          doc.addImage(
+            imageToUse.data,
+            imageToUse.format,
+            imgX,
+            yPosition,
+            imgSize,
+            imgSize,
+            undefined,
+            "FAST",
+          );
+          yPosition += imgSize + 3;
+          console.log("✅ PDF Debug - Image successfully added to PDF");
+        } catch (error) {
+          console.error("❌ PDF Debug - Failed to add image to PDF:", error);
+        }
+      } else {
+        console.error(
+          "⚠️ PDF Debug - No image data available for PDF - logo will not be shown",
+        );
       }
 
       // Header - Business Name
@@ -105,9 +216,9 @@ const InvoicePDFDownload = ({
           "Photography Studio",
         pageWidth / 2,
         yPosition,
-        { align: "center" }
+        { align: "center" },
       );
-      yPosition += 10;
+      yPosition += 6;
 
       // Contact Info
       doc.setFontSize(10);
@@ -129,7 +240,7 @@ const InvoicePDFDownload = ({
       if (photographer?.business_address) {
         const splitAddress = doc.splitTextToSize(
           photographer.business_address,
-          pageWidth - 40
+          pageWidth - 40,
         );
         doc.text(splitAddress, pageWidth / 2, yPosition, { align: "center" });
         yPosition += splitAddress.length * 5;
@@ -167,7 +278,7 @@ const InvoicePDFDownload = ({
       if (invoice.clients?.address) {
         const splitAddress = doc.splitTextToSize(
           invoice.clients.address,
-          pageWidth / 2 - 20
+          pageWidth / 2 - 20,
         );
         doc.text(splitAddress, leftColX, yPosition);
         yPosition += splitAddress.length * 5;
@@ -193,7 +304,7 @@ const InvoicePDFDownload = ({
       doc.text(
         format(new Date(invoice.issue_date), "MMM dd, yyyy"),
         rightColX + 25,
-        rightYPosition
+        rightYPosition,
       );
       rightYPosition += 6;
 
@@ -203,7 +314,7 @@ const InvoicePDFDownload = ({
       doc.text(
         format(new Date(invoice.due_date), "MMM dd, yyyy"),
         rightColX + 25,
-        rightYPosition
+        rightYPosition,
       );
       rightYPosition += 6;
 
@@ -237,7 +348,7 @@ const InvoicePDFDownload = ({
         doc.text(
           `Photography Service - ${invoice.bookings.title}`,
           20,
-          yPosition
+          yPosition,
         );
       } else {
         doc.text("Photography Services", 20, yPosition);
@@ -255,7 +366,7 @@ const InvoicePDFDownload = ({
           formatCurrency(invoice.deposit_amount),
           pageWidth - 45,
           yPosition,
-          { align: "right" }
+          { align: "right" },
         );
         doc.setTextColor(0, 0, 0);
         yPosition += 8;
@@ -277,7 +388,7 @@ const InvoicePDFDownload = ({
           formatCurrency(invoice.tax_amount),
           pageWidth - 20,
           yPosition,
-          { align: "right" }
+          { align: "right" },
         );
         yPosition += 6;
       }
@@ -294,7 +405,7 @@ const InvoicePDFDownload = ({
         formatCurrency(invoice.total_amount),
         pageWidth - 20,
         yPosition,
-        { align: "right" }
+        { align: "right" },
       );
       yPosition += 15;
 
@@ -308,7 +419,7 @@ const InvoicePDFDownload = ({
       doc.setFont("helvetica", "normal");
       const instructions = doc.splitTextToSize(
         "Please make payment by the due date listed above. Contact us if you have any questions about this invoice.",
-        pageWidth - 30
+        pageWidth - 30,
       );
       doc.text(instructions, 15, yPosition);
       yPosition += instructions.length * 5 + 5;
@@ -333,7 +444,7 @@ const InvoicePDFDownload = ({
         "Thank you for choosing our photography services!",
         pageWidth / 2,
         footerY,
-        { align: "center" }
+        { align: "center" },
       );
       if (photographer?.website) {
         doc.setFontSize(8);
@@ -341,7 +452,7 @@ const InvoicePDFDownload = ({
           `Visit us at: ${photographer.website}`,
           pageWidth / 2,
           footerY + 5,
-          { align: "center" }
+          { align: "center" },
         );
       }
 

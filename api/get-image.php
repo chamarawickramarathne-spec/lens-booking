@@ -4,12 +4,16 @@
  * Serves images with proper CORS headers
  */
 
-// Include CORS configuration
-require_once 'config/cors.php';
+// Set permissive CORS headers for images (they're not sensitive data)
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Set CORS headers
-setCORSHeaders();
-handleCORSPreflight();
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 // Get the image path from query parameter
 $imagePath = $_GET['path'] ?? '';
