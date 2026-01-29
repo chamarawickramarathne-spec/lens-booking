@@ -22,6 +22,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PaymentManagerProps {
   paymentSchedule: any;
@@ -39,6 +46,7 @@ const PaymentManager = ({
   const [installmentDate, setInstallmentDate] = useState<Date | undefined>(
     new Date(),
   );
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [installments, setInstallments] = useState<any[]>([]);
   const [isLoadingInstallments, setIsLoadingInstallments] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,6 +124,7 @@ const PaymentManager = ({
           paid_date: installmentDate
             ? format(installmentDate, "yyyy-MM-dd")
             : format(new Date(), "yyyy-MM-dd"),
+          payment_method: paymentMethod,
         },
       );
 
@@ -153,6 +162,7 @@ const PaymentManager = ({
       });
 
       setInstallmentAmount(0);
+      setPaymentMethod("cash");
       loadInstallments();
       onSuccess();
       refreshData();
@@ -197,16 +207,18 @@ const PaymentManager = ({
           {isPaid ? "View Payment" : "Manage Payment"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Manage Payment - {paymentSchedule.payment_name}
+            Manage Payment - Current Status is{" "}
+            {paymentSchedule.status.charAt(0).toUpperCase() +
+              paymentSchedule.status.slice(1)}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Payment Summary */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <Label className="text-sm text-gray-500">Total Amount</Label>
               <p className="font-medium text-lg">
@@ -220,10 +232,6 @@ const PaymentManager = ({
               </p>
             </div>
             <div>
-              <Label className="text-sm text-gray-500">Current Status</Label>
-              {getStatusBadge(paymentSchedule.status)}
-            </div>
-            <div>
               <Label className="text-sm text-gray-500">Due Date</Label>
               <p className="font-medium">
                 {paymentSchedule.due_date &&
@@ -232,7 +240,7 @@ const PaymentManager = ({
                   : "Not set"}
               </p>
             </div>
-            <div className="col-span-2">
+            <div className="col-span-3">
               <Label className="text-sm text-gray-500">Already Paid</Label>
               <p className="font-medium text-lg">
                 {formatCurrency(paymentSchedule.paid_amount || 0)}
@@ -240,68 +248,49 @@ const PaymentManager = ({
             </div>
           </div>
 
-          {/* Installment History */}
-          <div className="space-y-2">
-            <Label className="text-sm text-gray-500">Installment History</Label>
-            {isLoadingInstallments ? (
-              <p className="text-sm text-muted-foreground">
-                Loading installments...
-              </p>
-            ) : installments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No installments recorded yet.
-              </p>
-            ) : (
-              <div className="rounded-lg border">
-                <div className="grid grid-cols-3 gap-2 bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                  <div>Date</div>
-                  <div>Amount</div>
-                  <div>Method</div>
-                </div>
-                {installments.map((inst) => (
-                  <div
-                    key={inst.id}
-                    className="grid grid-cols-3 gap-2 px-3 py-2 text-sm border-t"
-                  >
-                    <div>
-                      {inst.paid_date && inst.paid_date !== "0000-00-00"
-                        ? format(new Date(inst.paid_date), "PPP")
-                        : "Not set"}
-                    </div>
-                    <div className="font-medium text-success">
-                      {formatCurrency(inst.amount)}
-                    </div>
-                    <div>{inst.payment_method || "-"}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Payment Input */}
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="installment-amount">Add Installment Amount</Label>
-              <Input
-                id="installment-amount"
-                type="number"
-                step="0.01"
-                max={remainingAmount}
-                value={installmentAmount}
-                onChange={handleInstallmentAmountChange}
-                placeholder={`Enter installment amount (Max: ${formatCurrency(
-                  remainingAmount,
-                )})`}
-                className={validationError ? "border-red-500" : ""}
-                disabled={isPaid || remainingAmount <= 0}
-              />
-              {validationError && (
-                <p className="text-sm text-red-500 mt-1">{validationError}</p>
-              )}
-              <p className="text-sm text-gray-500 mt-1">
-                Remaining due:{" "}
-                <strong>{formatCurrency(remainingAmount)}</strong>
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="installment-amount">
+                  Add Installment Amount
+                </Label>
+                <Input
+                  id="installment-amount"
+                  type="number"
+                  step="0.01"
+                  max={remainingAmount}
+                  value={installmentAmount}
+                  onChange={handleInstallmentAmountChange}
+                  placeholder={`Max: ${formatCurrency(remainingAmount)}`}
+                  className={validationError ? "border-red-500" : ""}
+                  disabled={isPaid || remainingAmount <= 0}
+                />
+                {validationError && (
+                  <p className="text-xs text-red-500 mt-1">{validationError}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="payment-method">Payment Method</Label>
+                <Select
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                  disabled={isPaid || remainingAmount <= 0}
+                >
+                  <SelectTrigger id="payment-method">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="e_transfer_bank">
+                      E-Transfer / Bank
+                    </SelectItem>
+                    <SelectItem value="card_pay">Card Pay</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
@@ -334,6 +323,46 @@ const PaymentManager = ({
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+
+          {/* Installment History */}
+          <div className="space-y-2">
+            <Label className="text-sm text-gray-500">Installment History</Label>
+            {isLoadingInstallments ? (
+              <p className="text-xs text-muted-foreground">
+                Loading installments...
+              </p>
+            ) : installments.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No installments recorded yet.
+              </p>
+            ) : (
+              <div className="rounded-lg border">
+                <div className="grid grid-cols-3 gap-2 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500">
+                  <div>Date</div>
+                  <div>Amount</div>
+                  <div>Method</div>
+                </div>
+                {installments.map((inst) => (
+                  <div
+                    key={inst.id}
+                    className="grid grid-cols-3 gap-2 px-3 py-1.5 text-xs border-t"
+                  >
+                    <div>
+                      {inst.paid_date && inst.paid_date !== "0000-00-00"
+                        ? format(new Date(inst.paid_date), "MMM dd, yyyy")
+                        : "Not set"}
+                    </div>
+                    <div className="font-medium text-success">
+                      {formatCurrency(inst.amount)}
+                    </div>
+                    <div className="text-[11px]">
+                      {inst.payment_method || "-"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Status Preview */}

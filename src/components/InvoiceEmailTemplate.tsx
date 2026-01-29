@@ -2,6 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/integrations/api/client";
+import { CheckCircle2 } from "lucide-react";
 
 interface InvoiceEmailTemplateProps {
   invoice: any;
@@ -15,6 +18,43 @@ const InvoiceEmailTemplate = ({
   photographer,
 }: InvoiceEmailTemplateProps) => {
   const { formatCurrency } = useCurrency();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+
+  useEffect(() => {
+    if (invoice?.id) {
+      loadPayments();
+    }
+  }, [invoice?.id]);
+
+  const loadPayments = async () => {
+    setLoadingPayments(true);
+    try {
+      // Get all payment schedules
+      const paymentsRes = await apiClient.getPayments();
+      const schedules = paymentsRes?.data ?? [];
+
+      // Filter schedules for this invoice
+      const invoiceSchedules = schedules.filter(
+        (s: any) => s.invoice_id === invoice.id,
+      );
+
+      // Fetch all installments for these schedules
+      const allInstallments: any[] = [];
+      for (const schedule of invoiceSchedules) {
+        const installmentsRes = await apiClient.getPaymentInstallments(
+          schedule.id,
+        );
+        allInstallments.push(...(installmentsRes?.data ?? []));
+      }
+
+      setPayments(allInstallments);
+    } catch (error) {
+      console.error("Failed to load payments:", error);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
 
   // Construct full image URL if needed
   const getImageUrl = (imagePath: string | undefined) => {
@@ -151,6 +191,48 @@ const InvoiceEmailTemplate = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Payments Section */}
+      {!loadingPayments && payments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {payments.map((payment, idx) => (
+                <div
+                  key={payment.id ?? idx}
+                  className="flex items-start gap-3 pb-4 border-b last:border-b-0 last:pb-0"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base">
+                      <span className="font-semibold">
+                        {formatCurrency(payment.amount)}
+                      </span>{" "}
+                      <span className="text-muted-foreground">
+                        paid with{" "}
+                        {payment.payment_method
+                          ? payment.payment_method
+                              .split("_")
+                              .map(
+                                (word: string) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1),
+                              )
+                              .join(" ")
+                          : "N/A"}{" "}
+                        on {format(new Date(payment.paid_date), "MMM dd, yyyy")}
+                        .
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Payment Instructions */}
       <Card>

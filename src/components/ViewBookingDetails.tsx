@@ -47,8 +47,25 @@ const ViewBookingDetails = ({
   const loadPayments = async () => {
     setLoadingPayments(true);
     try {
-      const response = await apiClient.getPaymentInstallments(booking.id);
-      setPayments(response?.data ?? []);
+      // First get the payment schedule for this booking
+      const paymentsRes = await apiClient.getPayments();
+      const schedules = paymentsRes?.data ?? [];
+
+      // Filter schedules for this booking
+      const bookingSchedules = schedules.filter(
+        (s: any) => s.booking_id === booking.id,
+      );
+
+      // Fetch all installments for these schedules
+      const allInstallments: any[] = [];
+      for (const schedule of bookingSchedules) {
+        const installmentsRes = await apiClient.getPaymentInstallments(
+          schedule.id,
+        );
+        allInstallments.push(...(installmentsRes?.data ?? []));
+      }
+
+      setPayments(allInstallments);
     } catch (error) {
       console.error("Failed to load payments:", error);
     } finally {
@@ -441,10 +458,7 @@ const ViewBookingDetails = ({
                 </div>
 
                 {/* Payments Section */}
-                <div className="mt-6 pt-4 border-t">
-                  <h5 className="font-semibold flex items-center gap-2 mb-3">
-                    <CreditCard className="h-4 w-4" /> Payments
-                  </h5>
+                <div className="mt-6 pt-4 border-t space-y-2">
                   {loadingPayments ? (
                     <div className="text-xs text-muted-foreground">
                       Loading payments...
@@ -454,42 +468,40 @@ const ViewBookingDetails = ({
                       No payments recorded
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <>
                       {payments.map((payment, idx) => (
                         <div
                           key={payment.id ?? idx}
-                          className="flex items-start justify-between gap-2 p-2 rounded bg-muted/50 text-xs"
+                          className="flex items-center justify-between text-sm"
                         >
-                          <div>
-                            <div className="font-medium">
-                              {formatCurrency(payment.amount)}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {format(
-                                new Date(payment.paid_date),
-                                "MMM dd, yyyy"
-                              )}
-                            </div>
-                            {payment.payment_method && (
-                              <div className="text-muted-foreground capitalize">
-                                {payment.payment_method}
-                              </div>
+                          <span className="text-muted-foreground">
+                            Payment on{" "}
+                            {format(
+                              new Date(payment.paid_date),
+                              "MMM dd, yyyy",
                             )}
-                          </div>
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(payment.amount)}
+                          </span>
                         </div>
                       ))}
-                      <div className="pt-2 border-t mt-3 flex justify-between font-medium text-xs">
-                        <span>Total Paid:</span>
-                        <span>
+                      <div className="flex items-center justify-between text-sm pt-2 border-t">
+                        <span className="font-semibold">Amount Due</span>
+                        <span className="font-semibold">
                           {formatCurrency(
-                            payments.reduce(
-                              (sum, p) => sum + Number(p.amount ?? 0),
-                              0
-                            )
+                            Math.max(
+                              0,
+                              Number(booking.total_amount ?? 0) -
+                                payments.reduce(
+                                  (sum, p) => sum + Number(p.amount ?? 0),
+                                  0,
+                                ),
+                            ),
                           )}
                         </span>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
