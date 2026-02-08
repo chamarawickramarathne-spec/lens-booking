@@ -10,6 +10,7 @@ import Bookings from "./pages/Bookings";
 import Clients from "./pages/Clients";
 import Invoices from "./pages/Invoices";
 import PaymentSchedules from "./pages/PaymentSchedules";
+import Reports from "./pages/Reports";
 import Galleries from "./pages/Galleries";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -87,6 +88,14 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <PaymentSchedules />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/reports"
+      element={
+        <ProtectedRoute>
+          <Reports />
         </ProtectedRoute>
       }
     />

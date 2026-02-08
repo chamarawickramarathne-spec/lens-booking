@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Camera,
+  BarChart3,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { apiClient } from "@/integrations/api/client";
@@ -33,7 +34,7 @@ const navigationItems = [
   { title: "Bookings", url: "/bookings", icon: Calendar },
   { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Payment Schedules", url: "/payment-schedules", icon: CreditCard },
-  { title: "Galleries", url: "/galleries", icon: Image },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Profile", url: "/profile", icon: Settings },
 ];
 
