@@ -28,18 +28,20 @@ import {
 const Reports = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("12");
-  const [installments, setInstallments] = useState<Array<{
-    paid_date?: string;
-    amount?: number;
-    payment_method?: string;
-  }>>([]);
+  const [installments, setInstallments] = useState<
+    Array<{
+      paid_date?: string;
+      amount?: number;
+      payment_method?: string;
+    }>
+  >([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const { formatCurrency } = useCurrency();
 
   const fetchReportsData = useCallback(async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       const installmentsResponse = await apiClient.getAllInstallments();
@@ -119,7 +121,10 @@ const Reports = () => {
             const d = new Date(dStr);
             return d >= monthStart && d <= monthEnd;
           })
-          .reduce((sum, installment) => sum + Number(installment.amount ?? 0), 0);
+          .reduce(
+            (sum, installment) => sum + Number(installment.amount ?? 0),
+            0,
+          );
 
         data.push({
           month: format(monthDate, "MMM yyyy"),
@@ -191,7 +196,9 @@ const Reports = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-2xl font-bold">Revenue Overview</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Revenue Overview
+            </CardTitle>
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select time range" />
@@ -291,28 +298,36 @@ const Reports = () => {
                     <div className="w-3 h-3 rounded-full bg-purple-500"></div>
                     <span className="text-sm">E-Transfer / Bank</span>
                   </div>
-                  <span className="font-semibold">{formatCurrency(paymentMethodsData.e_transfer_bank)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(paymentMethodsData.e_transfer_bank)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
                     <span className="text-sm">Cash</span>
                   </div>
-                  <span className="font-semibold">{formatCurrency(paymentMethodsData.cash)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(paymentMethodsData.cash)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                     <span className="text-sm">Card Pay</span>
                   </div>
-                  <span className="font-semibold">{formatCurrency(paymentMethodsData.card_pay)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(paymentMethodsData.card_pay)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-slate-400"></div>
                     <span className="text-sm">Other</span>
                   </div>
-                  <span className="font-semibold">{formatCurrency(paymentMethodsData.other)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(paymentMethodsData.other)}
+                  </span>
                 </div>
               </div>
             </div>
