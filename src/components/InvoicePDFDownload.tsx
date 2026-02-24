@@ -125,7 +125,7 @@ const InvoicePDFDownload = ({
 
     // Use the image proxy to get images with proper CORS headers
     const encodedPath = encodeURIComponent(cleanPath);
-    const finalUrl = `${window.location.origin}/api/get-image.php?path=${encodedPath}`;
+    const finalUrl = `${getBaseUrl()}api/get-image.php?path=${encodedPath}`;
     console.log("📍 getImageUrl - Final URL:", finalUrl);
     return finalUrl;
   };

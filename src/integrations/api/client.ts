@@ -3,8 +3,7 @@
  * Replaces Supabase integration with PHP backend API calls
  */
 
-// For root deployment, default to relative '/api'. Use VITE_API_URL to override in dev.
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_BASE_URL } from "@/lib/utils";
 
 class ApiClient {
   private baseURL: string;
