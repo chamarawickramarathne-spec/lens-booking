@@ -31,6 +31,9 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { useCurrency } from "@/hooks/useCurrency";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
 
 interface InvoiceStatusManagerProps {
   invoice: any;
@@ -52,6 +55,8 @@ const InvoiceStatusManager = ({
   );
   const [pendingStatus, setPendingStatus] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { formatCurrency } = useCurrency();
 
   const allStatusOptions = [
     { value: "draft", label: "Draft", variant: "secondary" as const, order: 1 },
@@ -192,7 +197,15 @@ const InvoiceStatusManager = ({
       // Send invoice email when status changes to pending
       if (newStatus === "pending") {
         try {
-          await apiClient.sendInvoiceEmail(invoice.id);
+          console.log("📄 Generating PDF for invoice send...");
+          const doc = await generateInvoicePDF(updateData, user, formatCurrency);
+          
+          // Convert to base64
+          const pdfBase64 = doc.output('datauristring').split(',')[1];
+          const fileName = `Invoice_${invoice.invoice_number}.pdf`;
+
+          console.log("📧 Sending invoice email with attachment...");
+          await apiClient.sendInvoiceEmail(invoice.id, pdfBase64, fileName);
           toast({
             title: "Success",
             description:

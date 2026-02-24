@@ -302,10 +302,14 @@ class ApiClient {
     });
   }
 
-  async sendInvoiceEmail(invoiceId: number) {
+  async sendInvoiceEmail(invoiceId: number, pdf_base64?: string, file_name?: string) {
     return this.request('/send-invoice-email', {
       method: 'POST',
-      body: JSON.stringify({ invoice_id: invoiceId }),
+      body: JSON.stringify({ 
+        invoice_id: invoiceId,
+        pdf_base64: pdf_base64,
+        file_name: file_name
+      }),
     });
   }
 

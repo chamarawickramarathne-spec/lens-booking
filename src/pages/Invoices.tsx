@@ -22,6 +22,7 @@ import InvoiceForm from "@/components/forms/InvoiceForm";
 import InvoiceEmailTemplate from "@/components/InvoiceEmailTemplate";
 import InvoiceStatusManager from "@/components/InvoiceStatusManager";
 import InvoicePDFDownload from "@/components/InvoicePDFDownload";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
 import {
   Table,
   TableBody,
@@ -102,20 +103,33 @@ const Invoices = () => {
     }
   };
 
-  const handleResendInvoice = async (invoiceId: number) => {
+  const handleResendInvoice = async (invoice: any) => {
+    setIsLoading(true);
     try {
-      await apiClient.sendInvoiceEmail(invoiceId);
+      console.log("📄 Generating PDF for resend...");
+      const doc = await generateInvoicePDF(invoice, user, formatCurrency);
+      
+      // Convert to base64
+      // Get the pure base64 string without the prefix
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      const fileName = `Invoice_${invoice.invoice_number}.pdf`;
+
+      console.log("📧 Sending invoice email with attachment...");
+      await apiClient.sendInvoiceEmail(invoice.id, pdfBase64, fileName);
+      
       toast({
         title: "Success",
         description: "Invoice email sent successfully with PDF attachment!",
       });
     } catch (error: any) {
-      console.error("Failed to send invoice email:", error);
+      console.error("Failed to resend invoice email:", error);
       toast({
         title: "Error",
         description: error?.message || "Failed to send invoice email",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -302,7 +316,7 @@ const Invoices = () => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() =>
-                                      handleResendInvoice(invoice.id)
+                                      handleResendInvoice(invoice)
                                     }
                                   >
                                     <Send className="h-3 w-3 mr-1" />

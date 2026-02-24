@@ -580,8 +580,15 @@ class BookingsController
             $headers[] = 'Content-Type: text/plain; charset=UTF-8';
             $headersStr = implode("\r\n", $headers);
 
-            // Development mode: log email instead of sending
-            $devMode = true; // Set to false in production
+            // Detect environment
+            $isLocal = (
+                isset($_SERVER['HTTP_HOST']) && (
+                    $_SERVER['HTTP_HOST'] === 'localhost' ||
+                    $_SERVER['SERVER_NAME'] === 'localhost' ||
+                    $_SERVER['SERVER_ADDR'] === '127.0.0.1'
+                )
+            );
+            $devMode = $isLocal;
             if ($devMode) {
                 $this->logBookingEmailToFile($to, $subject, $message, $headersStr);
                 error_log('[bookings] DEV MODE: Confirmation email logged instead of sent to ' . $to . ' for booking ' . $booking_id);

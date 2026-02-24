@@ -4,7 +4,8 @@
  * Handles sending emails for verification and notifications
  */
 
-class EmailUtility {
+class EmailUtility
+{
     private $from_email;
     private $from_name;
     private $base_url;
@@ -12,49 +13,59 @@ class EmailUtility {
     private $dev_mode;
     private $email_log_file;
 
-    public function __construct() {
+    public function __construct()
+    {
         // Set default values - these can be overridden
         $this->from_email = 'noreply@lensmanager.hireartist.studio';
         $this->from_name = 'Lens Manager';
         $this->base_url = $this->getBaseUrl();
         $this->envelope_from = $this->from_email; // used with -f to improve deliverability
-        
-        // Development mode: set to true to skip email sending and log only
-        $this->dev_mode = true;
+
+        // Detect environment
+        $isLocal = (
+            isset($_SERVER['HTTP_HOST']) && (
+                $_SERVER['HTTP_HOST'] === 'localhost' ||
+                $_SERVER['SERVER_NAME'] === 'localhost' ||
+                $_SERVER['SERVER_ADDR'] === '127.0.0.1'
+            )
+        );
+        $this->dev_mode = $isLocal;
         $this->email_log_file = __DIR__ . '/../../logs/email.log';
     }
 
     /**
      * Get base URL for the application
      */
-    private function getBaseUrl() {
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        
+    private function getBaseUrl()
+    {
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
         // For production (app is hosted under)
         if (strpos($host, 'lensmanager.hireartist.studio') !== false) {
             return 'https://lensmanager.hireartist.studio';
         }
-        
+
         // For local development
-    // No trailing slash to avoid double '//' when concatenating paths
-    return $protocol . '://' . $host;
+        // No trailing slash to avoid double '//' when concatenating paths
+        return $protocol . '://' . $host;
     }
 
     /**
      * Send verification email
      */
-    public function sendVerificationEmail($to_email, $to_name, $verification_token) {
+    public function sendVerificationEmail($to_email, $to_name, $verification_token)
+    {
         // Add redirect=1 so API shows a friendly page and auto-redirects to app after success
         // Include next to explicitly send users to the SPA landing
         $verification_link = $this->base_url . '/api/auth/verify-email?token=' . $verification_token;
-        
+
         $subject = 'Verify Your Email - Lens Manager';
-        
+
         $message = $this->getVerificationEmailTemplate($to_name, $verification_link);
         $headersArray = $this->getEmailHeadersArray();
         $sent = $this->sendMail($to_email, $subject, $message, $headersArray);
-        
+
         if ($sent) {
             error_log("Verification email sent to: $to_email");
             return true;
@@ -67,7 +78,8 @@ class EmailUtility {
     /**
      * Get email headers
      */
-    private function getEmailHeadersArray() {
+    private function getEmailHeadersArray()
+    {
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=UTF-8';
@@ -77,14 +89,15 @@ class EmailUtility {
         // but we include it for completeness
         $headers[] = 'Return-Path: ' . $this->from_email;
         $headers[] = 'X-Mailer: PHP/' . phpversion();
-        
+
         return $headers;
     }
 
     /**
      * Low-level mail sender with envelope sender (-f) for better deliverability
      */
-    private function sendMail($to, $subject, $message, array $headersArray) {
+    private function sendMail($to, $subject, $message, array $headersArray)
+    {
         $headers = implode("\r\n", $headersArray);
 
         // Development mode: log email instead of sending
@@ -118,7 +131,8 @@ class EmailUtility {
     /**
      * Log email to file in development mode
      */
-    private function logEmail($to, $subject, $message, $headers) {
+    private function logEmail($to, $subject, $message, $headers)
+    {
         $logDir = dirname($this->email_log_file);
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
@@ -140,7 +154,8 @@ class EmailUtility {
     /**
      * Get verification email HTML template
      */
-    private function getVerificationEmailTemplate($name, $verification_link) {
+    private function getVerificationEmailTemplate($name, $verification_link)
+    {
         return '
 <!DOCTYPE html>
 <html lang="en">
@@ -255,17 +270,18 @@ class EmailUtility {
     /**
      * Send welcome email after verification
      */
-    public function sendWelcomeEmail($to_email, $to_name) {
+    public function sendWelcomeEmail($to_email, $to_name)
+    {
         $login_link = $this->base_url . '/login';
-        
+
         $subject = 'Welcome to Lens Manager!';
-        
+
         $message = $this->getWelcomeEmailTemplate($to_name, $login_link);
-        
+
         $headersArray = $this->getEmailHeadersArray();
 
         $sent = $this->sendMail($to_email, $subject, $message, $headersArray);
-        
+
         if ($sent) {
             error_log("Welcome email sent to: $to_email");
             return true;
@@ -278,7 +294,8 @@ class EmailUtility {
     /**
      * Get welcome email HTML template
      */
-    private function getWelcomeEmailTemplate($name, $login_link) {
+    private function getWelcomeEmailTemplate($name, $login_link)
+    {
         return '
 <!DOCTYPE html>
 <html lang="en">

@@ -21,14 +21,16 @@ require_once 'middleware/auth.php';
 // For now, we'll use PHP's built-in mail() function
 // In production, you should use PHPMailer or similar
 
-class InvoiceEmailController {
+class InvoiceEmailController
+{
     private $database;
     private $db;
     private $auth;
     private $envelope_from = 'noreply@lensmanager.hireartist.studio';
     private $logFile;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->auth = new JWTAuth();
@@ -50,7 +52,8 @@ class InvoiceEmailController {
     /**
      * Send invoice email to client
      */
-    public function sendInvoiceEmail() {
+    public function sendInvoiceEmail()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -80,7 +83,7 @@ class InvoiceEmailController {
                 'invoice_id' => $data->invoice_id,
             ]);
             // Get invoice details
-                 $query = "SELECT i.*, 
+            $query = "SELECT i.*, 
                          c.full_name as client_name, c.email as client_email,
                          b.title as booking_title
                      FROM invoices i
@@ -126,7 +129,7 @@ class InvoiceEmailController {
             // Prepare email basics
             $to = $invoice['client_email'];
             $subject = "Invoice #{$invoice['invoice_number']} from " . ($photographer['business_name'] ?: ($photographer['full_name'] ?? 'Lens Manager'));
-            
+
             $businessName = $photographer['business_name'] ?: ($photographer['full_name'] ?? 'Lens Manager');
             $contactEmail = $photographer['business_email'] ?: $photographer['email'];
             $contactPhone = $photographer['business_phone'] ?: $photographer['phone'];
@@ -139,7 +142,7 @@ class InvoiceEmailController {
             $message .= "- Issue Date: " . date('M d, Y', strtotime($invoice['invoice_date'])) . "\n";
             $message .= "- Due Date: " . date('M d, Y', strtotime($invoice['due_date'])) . "\n";
             $message .= "- Total Amount: " . number_format($invoice['total_amount'], 2) . "\n\n";
-            
+
             if ($invoice['booking_title']) {
                 $message .= "Service: Photography Service - {$invoice['booking_title']}\n\n";
             }
@@ -186,7 +189,7 @@ class InvoiceEmailController {
                 'to' => $to,
                 'from' => $fromEmail,
                 'subject' => $subject,
-                'attachment' => (bool)$attachmentBytes,
+                'attachment' => (bool) $attachmentBytes,
                 'attachment_name' => $attachmentName,
                 'attachment_size' => $attachmentBytes ? strlen($attachmentBytes) : 0,
             ]);
@@ -194,17 +197,23 @@ class InvoiceEmailController {
             // Send email using PHP's mail() function
             // Note: In production, you should use PHPMailer or a service like SendGrid
             // For development, we'll just log the email instead of actually sending it
-            
-            // Check if we're in development mode (no proper mail server)
-            $isDevelopment = true; // Set to false in production
-            
-            if ($isDevelopment) {
+
+            // Detect environment
+            $isLocal = (
+                isset($_SERVER['HTTP_HOST']) && (
+                    $_SERVER['HTTP_HOST'] === 'localhost' ||
+                    $_SERVER['SERVER_NAME'] === 'localhost' ||
+                    $_SERVER['SERVER_ADDR'] === '127.0.0.1'
+                )
+            );
+
+            if ($isLocal) {
                 // In development, just log the email and mark invoice as sent
                 $this->logEmailToFile($to, $subject, $email['body'], $email['headers'], $attachmentBytes, $attachmentName);
                 $this->log('info', 'Development mode: email logged instead of sent', [
                     'to' => $to,
                     'subject' => $subject,
-                    'attachment' => (bool)$attachmentBytes,
+                    'attachment' => (bool) $attachmentBytes,
                     'invoice_number' => $invoice['invoice_number'] ?? null,
                 ]);
 
@@ -230,13 +239,13 @@ class InvoiceEmailController {
                     @ini_set('sendmail_from', $this->envelope_from);
                     $emailSent = @mail($to, $subject, $email['body'], $email['headers']);
                 }
-                
+
                 if ($emailSent) {
                     $this->log('info', 'Invoice email sent successfully', [
                         'user_id' => $user_data['user_id'] ?? null,
                         'invoice_id' => $data->invoice_id,
                         'to' => $to,
-                        'attachment' => (bool)$attachmentBytes,
+                        'attachment' => (bool) $attachmentBytes,
                     ]);
 
                     // Update invoice status to sent after successful email delivery
@@ -259,7 +268,7 @@ class InvoiceEmailController {
                         'to' => $to,
                         'from' => $fromEmail,
                         'subject' => $subject,
-                        'attachment' => (bool)$attachmentBytes,
+                        'attachment' => (bool) $attachmentBytes,
                     ]);
                     http_response_code(200);
                     echo json_encode([
@@ -288,7 +297,8 @@ class InvoiceEmailController {
     /**
      * Mark invoice status as sent (skip if already paid/cancelled)
      */
-    private function markInvoiceAsSent($invoice_id, $user_id) {
+    private function markInvoiceAsSent($invoice_id, $user_id)
+    {
         try {
             $update = "UPDATE invoices 
                        SET status = 'sent', updated_at = CURRENT_TIMESTAMP
@@ -310,7 +320,8 @@ class InvoiceEmailController {
     /**
      * Build email headers and body. Uses multipart/mixed when attachmentBytes provided.
      */
-    private function buildEmail($fromName, $fromEmail, $to, $subject, $textBody, $attachmentBytes = null, $attachmentName = null, $attachmentMime = 'application/pdf') {
+    private function buildEmail($fromName, $fromEmail, $to, $subject, $textBody, $attachmentBytes = null, $attachmentName = null, $attachmentMime = 'application/pdf')
+    {
         $headers = [];
         $headers[] = 'From: ' . $fromName . ' <' . $fromEmail . '>';
         $headers[] = 'Reply-To: ' . $fromEmail;
@@ -352,7 +363,8 @@ class InvoiceEmailController {
     /**
      * Write a structured JSON log line to logs/invoice-email.log
      */
-    private function log($level, $message, array $context = []) {
+    private function log($level, $message, array $context = [])
+    {
         $entry = [
             'time' => date('c'),
             'level' => $level,
@@ -382,7 +394,8 @@ class InvoiceEmailController {
     /**
      * Log email to dedicated file in development mode
      */
-    private function logEmailToFile($to, $subject, $body, $headers, $attachmentBytes = null, $attachmentName = null) {
+    private function logEmailToFile($to, $subject, $body, $headers, $attachmentBytes = null, $attachmentName = null)
+    {
         $logFile = __DIR__ . '/../logs/email.log';
         $logDir = dirname($logFile);
         if (!is_dir($logDir)) {
