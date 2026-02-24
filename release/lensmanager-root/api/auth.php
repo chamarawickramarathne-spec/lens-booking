@@ -370,7 +370,7 @@ class AuthController {
 
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            $web_path = '/lens-booking/uploads/profiles/' . $filename;
+            $web_path = '/uploads/profiles/' . $filename;
             
             http_response_code(200);
             echo json_encode([

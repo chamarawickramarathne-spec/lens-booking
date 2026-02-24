@@ -181,7 +181,7 @@ const ClientForm = ({ onSuccess, trigger }: ClientFormProps) => {
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel></FormLabel>
+                      <FormLabel>City</FormLabel>
                       <FormControl>
                         <Input placeholder="City" {...field} />
                       </FormControl>

@@ -371,7 +371,8 @@ class AuthController {
 
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            $web_path = '/lens-booking/uploads/profiles/' . $filename;
+            // Always save as relative path for portability
+            $web_path = '/uploads/profiles/' . $filename;
             
             http_response_code(200);
             echo json_encode([
@@ -392,7 +393,7 @@ $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
+$endpoint = str_replace('/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
 
 // Debug logging
 error_log("Auth API - Method: $request_method, URI: $request_uri, Endpoint: $endpoint");

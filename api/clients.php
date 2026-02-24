@@ -355,7 +355,7 @@ $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 // Remove base path and get endpoint
-$endpoint = str_replace('/lens-booking/api/clients', '', parse_url($request_uri, PHP_URL_PATH));
+$endpoint = str_replace('/api/clients', '', parse_url($request_uri, PHP_URL_PATH));
 
 // Get ID from URL if present
 $id = null;

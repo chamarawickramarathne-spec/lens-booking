@@ -107,8 +107,8 @@ const Profile = () => {
       let imageUrl = imagePath;
 
       if (imagePath && !imagePath.startsWith("http")) {
-        // If it's a relative path, construct full URL
-        imageUrl = `http://localhost${imagePath}`;
+        // If it's a relative path, construct full URL for production
+        imageUrl = `${window.location.origin}${imagePath}`;
       }
 
       setProfileImage(imageUrl);
@@ -180,12 +180,8 @@ const Profile = () => {
       // Upload image if a new one was selected
       if (imageFile) {
         const uploadResponse = await apiClient.uploadProfileImage(imageFile);
+        // Always use only the relative path for saving to DB
         uploadedImageUrl = uploadResponse.file_path;
-
-        // Construct full URL if needed
-        if (uploadedImageUrl && !uploadedImageUrl.startsWith("http")) {
-          uploadedImageUrl = `http://localhost${uploadedImageUrl}`;
-        }
       }
 
       // Use API auth profile update with all fields

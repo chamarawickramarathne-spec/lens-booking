@@ -125,7 +125,7 @@ const InvoicePDFDownload = ({
 
     // Use the image proxy to get images with proper CORS headers
     const encodedPath = encodeURIComponent(cleanPath);
-    const finalUrl = `http://localhost/lens-booking/api/get-image.php?path=${encodedPath}`;
+    const finalUrl = `${window.location.origin}/api/get-image.php?path=${encodedPath}`;
     console.log("📍 getImageUrl - Final URL:", finalUrl);
     return finalUrl;
   };
@@ -163,16 +163,21 @@ const InvoicePDFDownload = ({
           format: imageToUse.format,
           dataLength: imageToUse.data?.length || 0,
         });
+      }
 
+      // If profile image fails, try logo
+      if (!imageToUse.data) {
+        const logoUrl = `${window.location.origin}/hireartist_logo_full.png`;
+        console.log(
+          "🔍 PDF Debug - Attempting to load logo image from:",
+          logoUrl,
+        );
+        imageToUse = await loadImageAsBase64(logoUrl);
         if (!imageToUse.data) {
           console.error(
-            "❌ PDF Debug - Failed to load image, no base64 data received",
+            "⚠️ PDF Debug - No image data available for PDF - logo will not be shown",
           );
         }
-      } else {
-        console.error(
-          "❌ PDF Debug - No profile image URL generated from photographer data",
-        );
       }
 
       // Add the image to PDF if we have data
