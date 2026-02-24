@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { getBaseUrl } from "@/lib/utils";
 
 interface InvoicePDFDownloadProps {
   invoice: any;
@@ -469,9 +470,10 @@ const InvoicePDFDownload = ({
         description: "Invoice PDF downloaded successfully!",
       });
     } catch (error: any) {
+      console.error("PDF generation error details:", error);
       toast({
         title: "Error",
-        description: "Failed to generate PDF",
+        description: "Failed to generate PDF. Check console for details.",
         variant: "destructive",
       });
     }

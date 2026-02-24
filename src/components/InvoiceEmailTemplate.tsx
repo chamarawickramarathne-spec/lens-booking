@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/integrations/api/client";
+import { getBaseUrl } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
 
 interface InvoiceEmailTemplateProps {

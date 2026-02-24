@@ -160,10 +160,18 @@ class PaymentsController
         }
 
         try {
-            $query = "SELECT id, payment_schedule_id, amount, paid_date, payment_method, notes, created_at
-                      FROM payment_installments
-                      WHERE user_id = :user_id
-                      ORDER BY paid_date DESC, id DESC";
+            $query = "SELECT i.*, 
+                             b.title AS booking_title,
+                             COALESCE(c1.full_name, c2.full_name) AS client_name,
+                             COALESCE(c1.id, c2.id) AS client_id
+                      FROM payment_installments i
+                      LEFT JOIN payment_schedules p ON i.payment_schedule_id = p.id
+                      LEFT JOIN bookings b ON p.booking_id = b.id
+                      LEFT JOIN invoices inv ON p.invoice_id = inv.id
+                      LEFT JOIN clients c1 ON b.client_id = c1.id
+                      LEFT JOIN clients c2 ON inv.client_id = c2.id
+                      WHERE i.user_id = :user_id
+                      ORDER BY i.paid_date DESC, i.id DESC";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(":user_id", $user_data['user_id']);
