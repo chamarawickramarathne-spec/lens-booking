@@ -13,4 +13,4 @@ export const getBaseUrl = () => {
   }
 };
 
-export const API_BASE_URL = `${getBaseUrl()}api/`;
+export const API_BASE_URL = `${getBaseUrl()}api`;

@@ -10,13 +10,15 @@ require_once 'config/cors.php';
 require_once 'config/database.php';
 require_once 'middleware/auth.php';
 
-class PaymentsController {
+class PaymentsController
+{
     private $database;
     private $db;
     private $auth;
     private $table_name = "payment_schedules";
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->auth = new JWTAuth();
@@ -25,7 +27,8 @@ class PaymentsController {
     /**
      * Get all payments
      */
-    public function getAll() {
+    public function getAll()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -35,7 +38,7 @@ class PaymentsController {
         }
 
         try {
-                 $query = "SELECT p.*, 
+            $query = "SELECT p.*, 
                          i.invoice_number, i.client_id AS invoice_client_id,
                          b.title AS booking_title, b.client_id AS booking_client_id,
                          c1.full_name AS booking_client_name,
@@ -48,14 +51,14 @@ class PaymentsController {
                      WHERE p.user_id = :user_id
                      ORDER BY p.due_date ASC, p.created_at DESC";
 
-                 $stmt = $this->db->prepare($query);
-                 $stmt->bindParam(":user_id", $user_data['user_id']);
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(":user_id", $user_data['user_id']);
             $stmt->execute();
 
             $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Format the response to match frontend expectations
-            $formatted_payments = array_map(function($payment) {
+            $formatted_payments = array_map(function ($payment) {
                 return [
                     'id' => $payment['id'],
                     'user_id' => $payment['user_id'],
@@ -64,8 +67,8 @@ class PaymentsController {
                     'schedule_name' => $payment['schedule_name'],
                     'schedule_type' => $payment['schedule_type'] ?? null,
                     'due_date' => $payment['due_date'],
-                    'amount' => (float)$payment['amount'],
-                    'paid_amount' => (float)($payment['paid_amount'] ?? 0),
+                    'amount' => (float) $payment['amount'],
+                    'paid_amount' => (float) ($payment['paid_amount'] ?? 0),
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
@@ -106,7 +109,8 @@ class PaymentsController {
     /**
      * Get installments for a payment schedule
      */
-    public function getInstallments($scheduleId) {
+    public function getInstallments($scheduleId)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -145,7 +149,8 @@ class PaymentsController {
     /**
      * Get all installments for current user
      */
-    public function getAllInstallments() {
+    public function getAllInstallments()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -183,7 +188,8 @@ class PaymentsController {
     /**
      * Add an installment to a payment schedule
      */
-    public function addInstallment($scheduleId) {
+    public function addInstallment($scheduleId)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -248,9 +254,9 @@ class PaymentsController {
             $sumStmt->bindParam(":user_id", $user_data['user_id']);
             $sumStmt->execute();
             $sumResult = $sumStmt->fetch(PDO::FETCH_ASSOC);
-            $totalPaid = (float)($sumResult['total_paid'] ?? 0);
+            $totalPaid = (float) ($sumResult['total_paid'] ?? 0);
 
-            $status = $totalPaid >= (float)$schedule['amount'] ? 'paid' : 'pending';
+            $status = $totalPaid >= (float) $schedule['amount'] ? 'paid' : 'pending';
 
             $updateQuery = "UPDATE " . $this->table_name . "
                             SET paid_amount = :paid_amount, status = :status,
@@ -288,7 +294,8 @@ class PaymentsController {
     /**
      * Get single payment
      */
-    public function getOne($id) {
+    public function getOne($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -298,7 +305,7 @@ class PaymentsController {
         }
 
         try {
-                 $query = "SELECT p.*, 
+            $query = "SELECT p.*, 
                          i.invoice_number, i.client_id AS invoice_client_id,
                          b.title AS booking_title, b.client_id AS booking_client_id,
                          c1.full_name AS booking_client_name,
@@ -326,8 +333,8 @@ class PaymentsController {
                     'schedule_name' => $payment['schedule_name'],
                     'schedule_type' => $payment['schedule_type'] ?? null,
                     'due_date' => $payment['due_date'],
-                    'amount' => (float)$payment['amount'],
-                    'paid_amount' => (float)($payment['paid_amount'] ?? 0),
+                    'amount' => (float) $payment['amount'],
+                    'paid_amount' => (float) ($payment['paid_amount'] ?? 0),
                     'status' => $payment['status'],
                     'payment_date' => $payment['payment_date'],
                     'payment_method' => $payment['payment_method'],
@@ -371,7 +378,8 @@ class PaymentsController {
     /**
      * Create new payment
      */
-    public function create() {
+    public function create()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -447,7 +455,8 @@ class PaymentsController {
     /**
      * Update payment
      */
-    public function update($id) {
+    public function update($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -526,7 +535,8 @@ class PaymentsController {
     /**
      * Delete payment
      */
-    public function delete($id) {
+    public function delete($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -565,8 +575,16 @@ $payments_controller = new PaymentsController();
 $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
-// Remove base path and get endpoint
-$endpoint = str_replace('/api/payments', '', parse_url($request_uri, PHP_URL_PATH));
+// Remove base path and get endpoint accurately even in subdirectories
+$path = parse_url($request_uri, PHP_URL_PATH);
+$path = str_replace('//', '/', $path); // Normalize double slashes
+$api_path = '/api/payments';
+$api_pos = strpos($path, $api_path);
+if ($api_pos !== false) {
+    $endpoint = substr($path, $api_pos + strlen($api_path));
+} else {
+    $endpoint = $path;
+}
 
 // Get ID from URL if present
 $id = null;
@@ -574,11 +592,11 @@ $isInstallmentsEndpoint = false;
 if (preg_match('/^\/installments$/', $endpoint)) {
     $endpoint = '/installments';
 } elseif (preg_match('/^\/(\d+)\/(installments)$/', $endpoint, $matches)) {
-    $id = (int)$matches[1];
+    $id = (int) $matches[1];
     $isInstallmentsEndpoint = true;
     $endpoint = '/{id}/installments';
 } elseif (preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
-    $id = (int)$matches[1];
+    $id = (int) $matches[1];
     $endpoint = '/{id}';
 }
 
@@ -597,7 +615,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'POST':
         if ($endpoint === '') {
             $payments_controller->create();
@@ -608,7 +626,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'PUT':
         if ($endpoint === '/{id}' && $id) {
             $payments_controller->update($id);
@@ -617,7 +635,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'DELETE':
         if ($endpoint === '/{id}' && $id) {
             $payments_controller->delete($id);
@@ -626,7 +644,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Method not allowed"]);

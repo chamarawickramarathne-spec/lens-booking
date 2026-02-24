@@ -392,8 +392,16 @@ $auth_controller = new AuthController();
 $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
-// Remove base path and get endpoint
-$endpoint = str_replace('/api/auth', '', parse_url($request_uri, PHP_URL_PATH));
+// Remove base path and get endpoint accurately even in subdirectories
+$path = parse_url($request_uri, PHP_URL_PATH);
+$path = str_replace('//', '/', $path); // Normalize double slashes
+$api_path = '/api/auth';
+$api_pos = strpos($path, $api_path);
+if ($api_pos !== false) {
+    $endpoint = substr($path, $api_pos + strlen($api_path));
+} else {
+    $endpoint = $path;
+}
 
 // Debug logging
 error_log("Auth API - Method: $request_method, URI: $request_uri, Endpoint: $endpoint");

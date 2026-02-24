@@ -13,14 +13,16 @@ require_once 'models/Client.php';
 require_once 'models/AccessLevel.php';
 require_once 'middleware/auth.php';
 
-class ClientsController {
+class ClientsController
+{
     private $database;
     private $db;
     private $client;
     private $access_level;
     private $auth;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->client = new Client($this->db);
@@ -31,7 +33,8 @@ class ClientsController {
     /**
      * Get all clients
      */
-    public function getAll() {
+    public function getAll()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -52,7 +55,8 @@ class ClientsController {
     /**
      * Get single client
      */
-    public function getOne($id) {
+    public function getOne($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -78,7 +82,8 @@ class ClientsController {
     /**
      * Create new client
      */
-    public function create() {
+    public function create()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -92,7 +97,7 @@ class ClientsController {
             $access_info = $this->access_level->getUserAccessInfo($user_data['user_id']);
             $max_clients = $access_info['access_level']['max_clients'];
             $plan_name = $access_info['access_level']['name'];
-            
+
             http_response_code(403);
             echo json_encode([
                 "message" => "You've reached your limit of " . $max_clients . " client" . ($max_clients > 1 ? "s" : "") . ".",
@@ -145,7 +150,8 @@ class ClientsController {
     /**
      * Update client
      */
-    public function update($id) {
+    public function update($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -190,7 +196,8 @@ class ClientsController {
     /**
      * Delete client
      */
-    public function delete($id) {
+    public function delete($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -282,7 +289,8 @@ class ClientsController {
         }
     }
 
-    public function getClientDeletionInfo($id) {
+    public function getClientDeletionInfo($id)
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -297,7 +305,7 @@ class ClientsController {
 
             // Get client info
             $client = $this->client->getById($client_id, $photographer_id);
-            
+
             if (!$client) {
                 http_response_code(404);
                 echo json_encode(["message" => "Client not found"]);
@@ -334,9 +342,9 @@ class ClientsController {
             echo json_encode([
                 "client" => $client,
                 "related_data" => [
-                    "bookings" => (int)$booking_count,
-                    "invoices" => (int)$invoice_count,
-                    "payments" => (int)$payment_count
+                    "bookings" => (int) $booking_count,
+                    "invoices" => (int) $invoice_count,
+                    "payments" => (int) $payment_count
                 ]
             ]);
         } catch (Exception $e) {
@@ -354,16 +362,24 @@ $clients_controller = new ClientsController();
 $request_method = $_SERVER["REQUEST_METHOD"];
 $request_uri = $_SERVER['REQUEST_URI'];
 
-// Remove base path and get endpoint
-$endpoint = str_replace('/api/clients', '', parse_url($request_uri, PHP_URL_PATH));
+// Remove base path and get endpoint accurately even in subdirectories
+$path = parse_url($request_uri, PHP_URL_PATH);
+$path = str_replace('//', '/', $path); // Normalize double slashes
+$api_path = '/api/clients';
+$api_pos = strpos($path, $api_path);
+if ($api_pos !== false) {
+    $endpoint = substr($path, $api_pos + strlen($api_path));
+} else {
+    $endpoint = $path;
+}
 
 // Get ID from URL if present
 $id = null;
 if (preg_match('/^\/(\d+)\/deletion-info$/', $endpoint, $matches)) {
-    $id = (int)$matches[1];
+    $id = (int) $matches[1];
     $endpoint = '/{id}/deletion-info';
 } elseif (preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
-    $id = (int)$matches[1];
+    $id = (int) $matches[1];
     $endpoint = '/{id}';
 }
 
@@ -380,7 +396,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'POST':
         if ($endpoint === '') {
             $clients_controller->create();
@@ -389,7 +405,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'PUT':
         if ($endpoint === '/{id}' && $id) {
             $clients_controller->update($id);
@@ -398,7 +414,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'DELETE':
         if ($endpoint === '/{id}' && $id) {
             $clients_controller->delete($id);
@@ -407,7 +423,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Method not allowed"]);
