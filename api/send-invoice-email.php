@@ -158,18 +158,28 @@ class InvoiceEmailController
                 $message .= "Phone: " . $contactPhone . "\n";
             }
 
-            // Determine From headers (use business email if available; fall back to noreply)
-            $fromEmail = $contactEmail ?: $this->envelope_from;
-            $fromName = $businessName ?: 'Lens Manager';
+            // LOG SERVER VARS FOR DEBUGGING ENVIRONMENT DETECTION
+            $this->log('debug', 'Server environment check', [
+                'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? 'n/a',
+                'SERVER_NAME' => $_SERVER['SERVER_NAME'] ?? 'n/a',
+                'SERVER_ADDR' => $_SERVER['SERVER_ADDR'] ?? 'n/a',
+                'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? 'n/a',
+            ]);
 
-            // Attachment handling: accept base64 PDF in request OR send without attachment
+            // Determine From headers
+            // RELAY FIX: The 'From' address MUST be a local domain email (e.g., @lensmanager.hireartist.studio)
+            // otherwise the server rejects it with "Relaying not permitted".
+            $fromEmail = $this->envelope_from; // Always use local domain email
+            $fromName = $businessName ?: 'Lens Manager';
+            $replyToEmail = $contactEmail ?: $fromEmail;
+
+            // ATTACHMENT HANDLING: Re-enabling after successful relay test
             $attachmentBytes = null;
             $attachmentName = null;
             $attachmentMime = 'application/pdf';
 
             if (isset($data->pdf_base64) && $data->pdf_base64) {
                 $base64 = $data->pdf_base64;
-                // Strip data URI prefix if present
                 if (strpos($base64, 'base64,') !== false) {
                     $base64 = substr($base64, strpos($base64, 'base64,') + 7);
                 }
@@ -180,31 +190,32 @@ class InvoiceEmailController
                 }
             }
 
-            // Build headers and body (multipart/mixed if attachment provided)
-            $email = $this->buildEmail($fromName, $fromEmail, $to, $subject, $message, $attachmentBytes, $attachmentName, $attachmentMime);
+            // Build headers and body
+            $email = $this->buildEmail($fromName, $fromEmail, $to, $subject, $message, $attachmentBytes, $attachmentName, $attachmentMime, $replyToEmail);
 
-            $this->log('info', 'Attempting to send invoice email', [
+            $this->log('info', 'Attempting to send invoice email (with Attachment)', [
                 'user_id' => $user_data['user_id'] ?? null,
                 'invoice_id' => $data->invoice_id,
                 'to' => $to,
                 'from' => $fromEmail,
+                'reply_to' => $replyToEmail,
                 'subject' => $subject,
-                'attachment' => (bool) $attachmentBytes,
-                'attachment_name' => $attachmentName,
+                'attachment_present' => (bool) $attachmentBytes,
                 'attachment_size' => $attachmentBytes ? strlen($attachmentBytes) : 0,
             ]);
 
-            // Send email using PHP's mail() function
-            // Note: In production, you should use PHPMailer or a service like SendGrid
-            // For development, we'll just log the email instead of actually sending it
 
-            // Detect environment
-            $isLocal = (
-                isset($_SERVER['HTTP_HOST']) && (
-                    $_SERVER['HTTP_HOST'] === 'localhost' ||
-                    $_SERVER['SERVER_NAME'] === 'localhost' ||
-                    $_SERVER['SERVER_ADDR'] === '127.0.0.1'
-                )
+            // Detect environment more robustly
+            // If the host contains 'hireartist.studio', it's definitely NOT local
+            $host = $_SERVER['HTTP_HOST'] ?? '';
+            $isProduction = (strpos($host, 'hireartist.studio') !== false);
+
+            $isLocal = !$isProduction && (
+                ($host === 'localhost' ||
+                    ($_SERVER['SERVER_NAME'] ?? '') === 'localhost' ||
+                    ($_SERVER['SERVER_ADDR'] ?? '') === '127.0.0.1' ||
+                    ($_SERVER['SERVER_ADDR'] ?? '') === '::1') ||
+                (strpos($host, 'localhost:') === 0)
             );
 
             if ($isLocal) {
@@ -213,7 +224,6 @@ class InvoiceEmailController
                 $this->log('info', 'Development mode: email logged instead of sent', [
                     'to' => $to,
                     'subject' => $subject,
-                    'attachment' => (bool) $attachmentBytes,
                     'invoice_number' => $invoice['invoice_number'] ?? null,
                 ]);
 
@@ -222,7 +232,7 @@ class InvoiceEmailController
 
                 http_response_code(200);
                 echo json_encode([
-                    "message" => "Invoice emailed (logged) and status set to sent",
+                    "message" => "Invoice emailed (logged in DEV mode)",
                     "data" => [
                         "sent_to" => $to,
                         "invoice_number" => $invoice['invoice_number'],
@@ -231,52 +241,55 @@ class InvoiceEmailController
                     ]
                 ]);
             } else {
-                // In production, actually send the email (with envelope sender for deliverability)
+                // In production, actually send the email
                 $additionalParams = '-f ' . escapeshellarg($this->envelope_from);
-                $emailSent = @mail($to, $subject, $email['body'], $email['headers'], $additionalParams);
+
+                // Attempt to send with encoded subject
+                $emailSent = @mail($to, $email['subject'], $email['body'], $email['headers'], $additionalParams);
+
                 if (!$emailSent) {
-                    // Fallback attempt without -f (Windows/hosts behavior)
+                    // Fallback attempt without -f
                     @ini_set('sendmail_from', $this->envelope_from);
-                    $emailSent = @mail($to, $subject, $email['body'], $email['headers']);
+                    $emailSent = @mail($to, $email['subject'], $email['body'], $email['headers']);
                 }
 
                 if ($emailSent) {
-                    $this->log('info', 'Invoice email sent successfully', [
+                    $this->log('info', 'Invoice email sent successfully via mail()', [
                         'user_id' => $user_data['user_id'] ?? null,
                         'invoice_id' => $data->invoice_id,
                         'to' => $to,
                         'attachment' => (bool) $attachmentBytes,
                     ]);
 
-                    // Update invoice status to sent after successful email delivery
+                    // Update invoice status to sent
                     $this->markInvoiceAsSent($data->invoice_id, $user_data['user_id']);
+
                     http_response_code(200);
                     echo json_encode([
-                        "message" => "Invoice email sent successfully and status set to sent",
+                        "message" => "Invoice email with attachment sent successfully",
                         "data" => [
                             "sent_to" => $to,
                             "invoice_number" => $invoice['invoice_number'],
                             "status" => 'sent',
-                            "attachment" => $attachmentBytes ? ($attachmentName ?: true) : false
+                            "attachment" => $attachmentBytes ? true : false
                         ]
                     ]);
                 } else {
-                    // Return success but warn about email failure
-                    $this->log('error', 'mail() failed to send invoice email', [
-                        'user_id' => $user_data['user_id'] ?? null,
-                        'invoice_id' => $data->invoice_id,
+
+                    $this->log('error', 'mail() function returned FALSE in production', [
                         'to' => $to,
                         'from' => $fromEmail,
                         'subject' => $subject,
-                        'attachment' => (bool) $attachmentBytes,
                     ]);
-                    http_response_code(200);
+
+                    http_response_code(200); // Return 200 to show status update attempt
                     echo json_encode([
-                        "message" => "Invoice status updated, but failed to send email to client.",
+                        "message" => "Invoice status updated, but server failed to send email.",
                         "data" => [
                             "sent_to" => $to,
                             "invoice_number" => $invoice['invoice_number'],
-                            "email_warning" => true
+                            "email_error" => true,
+                            "debug_info" => "Server mail() returned false"
                         ]
                     ]);
                 }
@@ -286,9 +299,10 @@ class InvoiceEmailController
             http_response_code(500);
             $this->log('error', 'Exception while sending invoice email', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             echo json_encode([
-                "message" => "Failed to send invoice email",
+                "message" => "Failed to send invoice email due to server error",
                 "error" => $e->getMessage()
             ]);
         }
@@ -300,10 +314,18 @@ class InvoiceEmailController
     private function markInvoiceAsSent($invoice_id, $user_id)
     {
         try {
+            // Update status to 'sent' if it's currently 'draft' or 'sent'
+            // If it's 'pending', keep it as 'pending' (pending payment)
+            // If it's 'paid' or 'cancelled', don't touch it
             $update = "UPDATE invoices 
-                       SET status = 'sent', updated_at = CURRENT_TIMESTAMP
+                       SET status = CASE 
+                            WHEN status = 'draft' THEN 'sent'
+                            ELSE status 
+                       END, 
+                       updated_at = CURRENT_TIMESTAMP
                        WHERE id = :invoice_id AND user_id = :user_id
                          AND status NOT IN ('paid', 'cancelled')";
+
             $stmt = $this->db->prepare($update);
             $stmt->bindParam(":invoice_id", $invoice_id);
             $stmt->bindParam(":user_id", $user_id);
@@ -320,45 +342,55 @@ class InvoiceEmailController
     /**
      * Build email headers and body. Uses multipart/mixed when attachmentBytes provided.
      */
-    private function buildEmail($fromName, $fromEmail, $to, $subject, $textBody, $attachmentBytes = null, $attachmentName = null, $attachmentMime = 'application/pdf')
+    private function buildEmail($fromName, $fromEmail, $to, $subject, $textBody, $attachmentBytes = null, $attachmentName = null, $attachmentMime = 'application/pdf', $replyToEmail = null)
     {
+        // Encode headers for UTF-8 support
+        $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+        $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+
         $headers = [];
-        $headers[] = 'From: ' . $fromName . ' <' . $fromEmail . '>';
-        $headers[] = 'Reply-To: ' . $fromEmail;
+        $headers[] = 'From: ' . $encodedFromName . ' <' . $fromEmail . '>';
+        $headers[] = 'Reply-To: ' . ($replyToEmail ?: $fromEmail);
         $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'X-Mailer: PHP/' . phpversion();
 
         if ($attachmentBytes) {
-            $boundary = 'b1_' . md5(uniqid('', true));
+            $boundary = 'PMS_' . md5(time()); // Photographer Management System
             $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundary . '"';
 
-            $body = '';
+            $body = "This is a multi-part message in MIME format.\r\n\r\n";
+
             // Text part
             $body .= '--' . $boundary . "\r\n";
             $body .= 'Content-Type: text/plain; charset=UTF-8' . "\r\n";
-            $body .= 'Content-Transfer-Encoding: 7bit' . "\r\n\r\n";
+            $body .= 'Content-Transfer-Encoding: 8bit' . "\r\n\r\n";
             $body .= $textBody . "\r\n\r\n";
 
             // Attachment part
             $safeName = $attachmentName ?: 'invoice.pdf';
+
             $body .= '--' . $boundary . "\r\n";
-            $body .= 'Content-Type: ' . $attachmentMime . '; name="' . addslashes($safeName) . '"' . "\r\n";
+            $body .= 'Content-Type: ' . $attachmentMime . '; name="' . $safeName . '"' . "\r\n";
             $body .= 'Content-Transfer-Encoding: base64' . "\r\n";
-            $body .= 'Content-Disposition: attachment; filename="' . addslashes($safeName) . '"' . "\r\n\r\n";
-            $body .= chunk_split(base64_encode($attachmentBytes)) . "\r\n";
+            $body .= 'Content-Disposition: attachment; filename="' . $safeName . '"' . "\r\n\r\n";
+            $body .= chunk_split(base64_encode($attachmentBytes), 76, "\r\n") . "\r\n";
 
             // End boundary
             $body .= '--' . $boundary . '--';
         } else {
             // No attachment; simple text email
             $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+            $headers[] = 'Content-Transfer-Encoding: 8bit';
             $body = $textBody;
         }
 
         return [
             'headers' => implode("\r\n", $headers),
             'body' => $body,
+            'subject' => $encodedSubject, // Add encoded subject to the return array
         ];
     }
+
 
     /**
      * Write a structured JSON log line to logs/invoice-email.log
