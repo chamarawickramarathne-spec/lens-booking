@@ -31,10 +31,23 @@ const LoginForm = ({ onToggleMode }: LoginFormProps) => {
         description: "Logged in successfully!",
       });
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error) {
+      const authError = error as Error;
+      // Determine a friendly title based on the error message
+      let title = "Login Failed";
+      const message = authError.message.toLowerCase();
+      
+      if (message.includes("activation") || message.includes("verify") || message.includes("unverified")) {
+        title = "Activation Required";
+      } else if (message.includes("credentials") || message.includes("invalid")) {
+        title = "Invalid Credentials";
+      } else if (message.includes("required") || message.includes("missing")) {
+        title = "Missing Information";
+      }
+
       toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials",
+        title: title,
+        description: authError.message || "Invalid credentials. Please check your email and password.",
         variant: "destructive",
       });
     } finally {

@@ -47,24 +47,33 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
       if (response.token && response.user) {
         toast({
           title: "Account Created",
-          description:
-            "Welcome to Lens Booking Pro! Your account has been created successfully.",
+          description: "Welcome to Lens Booking Pro! Your account has been created successfully.",
         });
-
-        // Navigate to dashboard using React Router
         navigate("/dashboard");
       } else {
+        // Successful registration but verification might be required
         toast({
-          title: "Signup Failed",
-          description: response.message || "Failed to create account",
-          variant: "destructive",
+          title: "Registration Successful",
+          description: response.message || "Please check your email to verify your account.",
         });
+        // Switch back to login mode so they can sign in after verification
+        onToggleMode();
       }
-    } catch (error: any) {
+    } catch (error) {
+      const signupError = error as Error;
+      // Determine a friendly title
+      let title = "Error";
+      const message = signupError.message.toLowerCase();
+      
+      if (message.includes("exists") || message.includes("already")) {
+        title = "Account Exists";
+      } else if (message.includes("required") || message.includes("missing")) {
+        title = "Information Required";
+      }
+
       toast({
-        title: "Error",
-        description:
-          error.message || "An unexpected error occurred during registration",
+        title: title,
+        description: signupError.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
     } finally {

@@ -16,8 +16,8 @@ class EmailUtility
     public function __construct()
     {
         // Set default values - these can be overridden
-        $this->from_email = 'noreply@lensmanager.hireartist.studio';
-        $this->from_name = 'Lens Manager';
+        $this->from_email = 'noreply@hireartist.studio';
+        $this->from_name = 'Hire Artist';
         $this->base_url = $this->getBaseUrl();
         $this->envelope_from = $this->from_email; // used with -f to improve deliverability
 
@@ -41,8 +41,8 @@ class EmailUtility
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-        // For production (app is hosted under)
-        if (strpos($host, 'lensmanager.hireartist.studio') !== false) {
+        // For production
+        if (strpos($host, 'hireartist.studio') !== false) {
             return 'https://lensmanager.hireartist.studio';
         }
 
@@ -60,7 +60,7 @@ class EmailUtility
         // Include next to explicitly send users to the SPA landing
         $verification_link = $this->base_url . '/api/auth/verify-email?token=' . $verification_token;
 
-        $subject = 'Verify Your Email - Lens Manager';
+        $subject = 'Activate Your PhotoStudio Manager Account';
 
         $message = $this->getVerificationEmailTemplate($to_name, $verification_link);
         $headersArray = $this->getEmailHeadersArray();
@@ -156,111 +156,57 @@ class EmailUtility
      */
     private function getVerificationEmailTemplate($name, $verification_link)
     {
+        $logo_url = 'https://lensmanager.hireartist.studio/hireartist_logo_dim.png';
+        
         return '
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .container {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4A5568;
-        }
-        .content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #2D3748;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .verify-button {
-            display: inline-block;
-            padding: 15px 30px;
-            background-color: #4299E1;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-        .verify-button:hover {
-            background-color: #3182CE;
-        }
-        .footer {
-            text-align: center;
-            color: #718096;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-        .warning {
-            background-color: #FFF5E6;
-            border-left: 4px solid #F6AD55;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .link-text {
-            word-break: break-all;
-            color: #4299E1;
-            font-size: 12px;
-            margin-top: 15px;
-        }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f8fafc; }
+        .wrapper { padding: 40px 20px; }
+        .container { background-color: #ffffff; border-radius: 16px; padding: 40px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { height: 60px; width: auto; }
+        .welcome-text { color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+        .body-text { color: #64748b; font-size: 16px; margin-bottom: 24px; }
+        .button-container { text-align: center; margin: 35px 0; }
+        .btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #e94560 0%, #533483 100%); color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: transform 0.2s; }
+        .warning { background-color: #fefce8; border-left: 4px solid #eab308; padding: 16px; border-radius: 8px; margin-bottom: 24px; color: #854d0e; font-size: 14px; }
+        .footer { text-align: center; color: #94a3b8; font-size: 13px; margin-top: 30px; }
+        .link-alt { word-break: break-all; color: #6366f1; font-size: 12px; margin-top: 20px; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📸 Lens Manager</div>
-        </div>
-        
-        <div class="content">
-            <h1>Welcome to Lens Manager!</h1>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <img src="' . $logo_url . '" alt="Hire Artist Logo" class="logo">
+            </div>
             
-            <p>Hello ' . htmlspecialchars($name) . ',</p>
+            <h1 class="welcome-text">Activate Your Account</h1>
             
-            <p>Thank you for signing up! To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+            <p class="body-text">Hello ' . htmlspecialchars($name) . ',</p>
             
-            <div style="text-align: center;">
-                <a href="' . htmlspecialchars($verification_link) . '" class="verify-button">Verify Email Address</a>
+            <p class="body-text">Thank you for joining <strong>PhotoStudio Manager</strong>. We\'re excited to help you manage your photography business more efficiently. To get started, please verify your email address.</p>
+            
+            <div class="button-container">
+                <a href="' . htmlspecialchars($verification_link) . '" class="btn">Verify Email Address</a>
             </div>
             
             <div class="warning">
-                <strong>⏰ Important:</strong> This verification link will expire in 24 hours.
+                <strong>Important:</strong> This link will expire in 24 hours. If you did not create this account, you can safely ignore this email.
             </div>
             
-            <p>If the button doesn\'t work, you can copy and paste this link into your browser:</p>
-            <p class="link-text">' . htmlspecialchars($verification_link) . '</p>
-            
-            <p>If you didn\'t create an account with Lens Manager, you can safely ignore this email.</p>
+            <p class="body-text" style="font-size: 14px;">If the button above doesn\'t work, copy and paste this link into your browser:</p>
+            <a href="' . htmlspecialchars($verification_link) . '" class="link-alt">' . htmlspecialchars($verification_link) . '</a>
         </div>
         
         <div class="footer">
-            <p>© ' . date('Y') . ' Lens Manager. All rights reserved.</p>
-            <p>This is an automated email. Please do not reply to this message.</p>
+            <p>© ' . date('Y') . ' Hire Artist. All rights reserved.</p>
+            <p>PhotoStudio Manager by Hire Artist</p>
         </div>
     </div>
 </body>
@@ -274,7 +220,7 @@ class EmailUtility
     {
         $login_link = $this->base_url . '/login';
 
-        $subject = 'Welcome to Lens Manager!';
+        $subject = 'Welcome to PhotoStudio Manager!';
 
         $message = $this->getWelcomeEmailTemplate($to_name, $login_link);
 
@@ -296,87 +242,50 @@ class EmailUtility
      */
     private function getWelcomeEmailTemplate($name, $login_link)
     {
+        $logo_url = 'https://lensmanager.hireartist.studio/hireartist_logo_dim.png';
+        
         return '
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Lens Manager</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .container {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4A5568;
-        }
-        .content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-        }
-        h1 {
-            color: #2D3748;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .login-button {
-            display: inline-block;
-            padding: 15px 30px;
-            background-color: #48BB78;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-        .footer {
-            text-align: center;
-            color: #718096;
-            font-size: 14px;
-            margin-top: 20px;
-        }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f8fafc; }
+        .wrapper { padding: 40px 20px; }
+        .container { background-color: #ffffff; border-radius: 16px; padding: 40px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { height: 60px; width: auto; }
+        .welcome-text { color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 12px; text-align: center; }
+        .body-text { color: #64748b; font-size: 16px; margin-bottom: 24px; }
+        .button-container { text-align: center; margin: 35px 0; }
+        .btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%); color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .footer { text-align: center; color: #94a3b8; font-size: 13px; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">📸 Lens Manager</div>
-        </div>
-        
-        <div class="content">
-            <h1>Welcome Aboard! 🎉</h1>
-            
-            <p>Hello ' . htmlspecialchars($name) . ',</p>
-            
-            <p>Your email has been successfully verified! You can now access all features of Lens Manager.</p>
-            
-            <div style="text-align: center;">
-                <a href="' . htmlspecialchars($login_link) . '" class="login-button">Login Now</a>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <img src="' . $logo_url . '" alt="Hire Artist Logo" class="logo">
             </div>
             
-            <p>Start managing your photography bookings, clients, invoices, and galleries with ease!</p>
+            <h1 class="welcome-text">Account Verified! 🎉</h1>
+            
+            <p class="body-text">Hello ' . htmlspecialchars($name) . ',</p>
+            
+            <p class="body-text">Your email has been successfully verified! You can now start using <strong>PhotoStudio Manager</strong> to manage your photography business.</p>
+            
+            <div class="button-container">
+                <a href="' . htmlspecialchars($login_link) . '" class="btn">Login to Dashboard</a>
+            </div>
+            
+            <p class="body-text">We\'re thrilled to have you on board. Start creating bookings, managing clients, and sending invoices with ease!</p>
         </div>
         
         <div class="footer">
-            <p>© ' . date('Y') . ' Lens Manager. All rights reserved.</p>
+            <p>© ' . date('Y') . ' Hire Artist. All rights reserved.</p>
+            <p>PhotoStudio Manager by Hire Artist</p>
         </div>
     </div>
 </body>
