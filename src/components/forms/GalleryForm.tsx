@@ -23,8 +23,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -33,15 +31,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  title: z.string().min(1, "Collection Name is required"),
+  event_date: z.string().optional(),
+  watermark_id: z.string().optional(),
   client_id: z.string().optional(),
-  booking_id: z.string().optional(),
-  is_public: z.boolean().default(false),
-  expiry_date: z.string().optional(),
-  access_code: z.string().optional(),
 });
 
 interface GalleryFormProps {
@@ -58,61 +62,29 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      description: "",
-      is_public: false,
+      event_date: "",
+      watermark_id: "default",
     },
   });
 
   const { data: clients } = useQuery({
     queryKey: ["clients", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, name")
-        .eq("photographer_id", user.id)
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const { data: bookings } = useQuery({
-    queryKey: ["bookings", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("id, title")
-        .eq("photographer_id", user.id)
-        .order("booking_date", { ascending: false });
-      if (error) throw error;
-      return data;
+      return apiClient.getClients();
     },
     enabled: !!user,
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) return;
-
     try {
-      const { error } = await supabase.from("galleries").insert({
-        photographer_id: user.id,
-        title: values.title,
-        description: values.description || null,
-        client_id: values.client_id || null,
-        booking_id: values.booking_id || null,
-        is_public: values.is_public,
-        expiry_date: values.expiry_date || null,
-        access_code: values.access_code || null,
+      await apiClient.createGallery({
+        ...values,
+        photographer_id: user?.id,
       });
-
-      if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Gallery created successfully",
+        description: "Collection created successfully",
       });
 
       form.reset();
@@ -121,7 +93,7 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create collection",
         variant: "destructive",
       });
     }
@@ -130,23 +102,28 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Gallery</DialogTitle>
-          <DialogDescription>
-            Create a photo gallery for your clients
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[500px] p-8">
+        <DialogHeader className="mb-6">
+          <DialogTitle className="text-2xl font-semibold">
+            Create New Collection
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Gallery Title *</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/80">
+                    Collection Name
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Wedding Photo Gallery" {...field} />
+                    <Input
+                      placeholder="e.g. Jessie & Ryan"
+                      {...field}
+                      className="h-12 border-secondary focus-visible:ring-primary"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -155,136 +132,83 @@ const GalleryForm = ({ onSuccess, trigger }: GalleryFormProps) => {
 
             <FormField
               control={form.control}
-              name="description"
+              name="event_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="text-sm font-medium text-foreground/80 mb-1">
+                    Event Date
+                  </FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "h-12 pl-3 text-left font-normal border-secondary",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(new Date(field.value), "PPP")
+                          ) : (
+                            <span>Event Date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value ? new Date(field.value) : undefined}
+                        onSelect={(date) =>
+                          field.onChange(date ? date.toISOString() : "")
+                        }
+                        disabled={(date) =>
+                          date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="watermark_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Description of this gallery..."
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel className="text-sm font-medium text-foreground/80">
+                    Watermark
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-12 border-secondary">
+                        <SelectValue placeholder="Select watermark" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="default">Glamour watermark</SelectItem>
+                      <SelectItem value="none">No watermark</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="client_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select client" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No client</SelectItem>
-                        {clients?.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="booking_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Booking (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select booking" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No booking</SelectItem>
-                        {bookings?.map((booking) => (
-                          <SelectItem key={booking.id} value={booking.id}>
-                            {booking.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="is_public"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Public Gallery</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Make this gallery accessible via public link
-                    </div>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expiry_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiry Date (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="access_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Code (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Optional password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Create Gallery</Button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium text-lg mt-4"
+            >
+              Create Collection
+            </Button>
           </form>
         </Form>
       </DialogContent>

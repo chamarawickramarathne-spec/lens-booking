@@ -309,6 +309,52 @@ class ApiClient {
     });
   }
 
+  async getGalleryImages(galleryId: number) {
+    return this.request(`/galleries/${galleryId}/images`);
+  }
+
+  async getPublicGallery(id: number, password?: string) {
+    const url = password ? `/galleries/${id}/public?password=${encodeURIComponent(password)}` : `/galleries/${id}/public`;
+    return this.request(url);
+  }
+
+  async uploadGalleryImage(galleryId: number, file: File) {
+    const formData = new FormData();
+    formData.append("gallery_image", file);
+
+    const url = `${this.baseURL}/galleries/${galleryId}/upload`;
+    const headers: HeadersInit = {};
+
+    if (this.token) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+      mode: "cors",
+      credentials: "omit",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to upload gallery image");
+    }
+
+    const rawText = await response.text();
+    const cleaned = rawText.replace(/^\uFEFF/, "").trim();
+    const firstBrace = cleaned.indexOf("{");
+    const candidate = firstBrace > 0 ? cleaned.slice(firstBrace) : cleaned;
+    return JSON.parse(candidate);
+  }
+
+  async deleteGalleryImage(galleryId: number, imageId: number) {
+    return this.request(`/galleries/${galleryId}/images/${imageId}`, {
+      method: "DELETE",
+    });
+  }
+
   // Invoice methods
   async getInvoices() {
     return this.request("/invoices");

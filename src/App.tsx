@@ -13,6 +13,7 @@ import PaymentSchedules from "./pages/PaymentSchedules";
 import Reports from "./pages/Reports";
 import Galleries from "./pages/Galleries";
 import Profile from "./pages/Profile";
+import GalleryPreview from "./pages/GalleryPreview";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -115,6 +116,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route path="/gallery/:id/preview" element={<GalleryPreview />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

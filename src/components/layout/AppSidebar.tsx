@@ -36,6 +36,7 @@ const navigationItems = [
   { title: "Payment Schedules", url: "/payment-schedules", icon: CreditCard },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Profile", url: "/profile", icon: Settings },
+  { title: "Client Gallery", url: "/galleries", icon: Image },
 ];
 
 export function AppSidebar() {
