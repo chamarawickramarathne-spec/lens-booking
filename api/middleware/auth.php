@@ -4,22 +4,25 @@
  * Handles JWT token creation and validation
  */
 
-class JWTAuth {
+class JWTAuth
+{
     private $secret_key = "lens_booking_pro_secret_2024";
     private $issuer = "lens-booking-pro";
     private $audience = "lens-booking-users";
     private $expiry_time = 86400; // 24 hours
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->secret_key = $_ENV['JWT_SECRET'] ?? $this->secret_key;
     }
 
     /**
      * Generate JWT token
      */
-    public function generateToken($user_data) {
+    public function generateToken($user_data)
+    {
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-        
+
         $payload = json_encode([
             'iss' => $this->issuer,
             'aud' => $this->audience,
@@ -44,7 +47,8 @@ class JWTAuth {
     /**
      * Validate JWT token
      */
-    public function validateToken($token) {
+    public function validateToken($token)
+    {
         if (!$token) {
             return false;
         }
@@ -57,8 +61,11 @@ class JWTAuth {
         list($header, $payload, $signature) = $parts;
 
         // Verify signature
-        $validSignature = str_replace(['+', '/', '='], ['-', '_', ''], 
-            base64_encode(hash_hmac('sha256', $header . "." . $payload, $this->secret_key, true)));
+        $validSignature = str_replace(
+            ['+', '/', '='],
+            ['-', '_', ''],
+            base64_encode(hash_hmac('sha256', $header . "." . $payload, $this->secret_key, true))
+        );
 
         if ($signature !== $validSignature) {
             return false;
@@ -76,17 +83,41 @@ class JWTAuth {
     }
 
     /**
+     * Get all request headers
+     * Fallback for getallheaders() if not available
+     */
+    private function getRequestHeaders()
+    {
+        if (function_exists('getallheaders')) {
+            return getallheaders();
+        }
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+
+    /**
      * Get user from token in Authorization header
      */
-    public function getUserFromHeader() {
-        $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
-        
-        if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+    public function getUserFromHeader()
+    {
+        try {
+            $headers = $this->getRequestHeaders();
+            $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+
+            if (!$authHeader || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+                return false;
+            }
+
+            return $this->validateToken($matches[1]);
+        } catch (Exception $e) {
+            error_log("Auth error: " . $e->getMessage());
             return false;
         }
-
-        return $this->validateToken($matches[1]);
     }
 }
 ?>

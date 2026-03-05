@@ -205,75 +205,129 @@ class GalleriesController
 
     public function uploadImage($id)
     {
-        $user_data = $this->auth->getUserFromHeader();
-        if (!$user_data) {
-            http_response_code(401);
-            echo json_encode(["message" => "Access denied"]);
-            return;
-        }
-
-        if (!isset($_FILES['gallery_image'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "No file uploaded"]);
-            return;
-        }
-
-        $file = $_FILES['gallery_image'];
-
-        // 1. Validate file type (only JPEG allowed)
-        $allowed_types = ['image/jpeg', 'image/jpg'];
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime_type = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        if (!in_array($mime_type, $allowed_types)) {
-            http_response_code(400);
-            echo json_encode(["message" => "Only JPEG images are allowed."]);
-            return;
-        }
-
-        // 2. Validate file size (max 1MB)
-        if ($file['size'] > 1048576) { // 1MB in bytes
-            http_response_code(400);
-            echo json_encode(["message" => "Image must be less than 1MB."]);
-            return;
-        }
-
-        // 3. Validate storage limits
-        $access_level = new AccessLevel($this->db);
-        $access_info = $access_level->getUserAccessInfo($user_data['user_id']);
-
-        if ($access_info) {
-            $current_bytes = (int) $access_info['current_usage']['storage_bytes'];
-            $max_gb = (float) $access_info['access_level']['max_storage_gb'];
-            $max_bytes = $max_gb * 1024 * 1024 * 1024;
-
-            if (($current_bytes + $file['size']) > $max_bytes) {
-                http_response_code(403);
-                echo json_encode(["message" => "Storage limit reached. Clear space or upgrade your plan."]);
+        try {
+            $user_data = $this->auth->getUserFromHeader();
+            if (!$user_data) {
+                http_response_code(401);
+                echo json_encode(["message" => "Access denied"]);
                 return;
             }
-        }
 
-        $upload_dir = dirname(__DIR__) . '/uploads/galleries/' . $id . '/';
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
-
-        $filename = time() . '_' . preg_replace("/[^a-zA-Z0-9.]/", "_", basename($file['name']));
-        $filepath = $upload_dir . $filename;
-
-        if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            $web_path = 'uploads/galleries/' . $id . '/' . $filename;
-            if ($this->gallery->addImage($id, $web_path, $file['name'], $file['size'])) {
-                echo json_encode(["message" => "Image uploaded", "url" => $web_path]);
-            } else {
+            if (!$this->db) {
                 http_response_code(500);
-                echo json_encode(["message" => "Failed to save image record"]);
+                echo json_encode(["message" => "Database connection failed"]);
+                return;
             }
-        } else {
+
+            if (!isset($_FILES['gallery_image'])) {
+                http_response_code(400);
+                echo json_encode(["message" => "No file uploaded"]);
+                return;
+            }
+
+            $file = $_FILES['gallery_image'];
+
+            // Handle PHP upload errors
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $error_messages = [
+                    UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+                    UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+                    UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                    UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload'
+                ];
+                $msg = $error_messages[$file['error']] ?? 'Unknown upload error';
+                http_response_code(400);
+                echo json_encode(["message" => $msg]);
+                return;
+            }
+
+            // 1. Validate file type (only JPEG allowed)
+            $allowed_types = ['image/jpeg', 'image/jpg'];
+            $mime_type = '';
+
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $mime_type = finfo_file($finfo, $file['tmp_name']);
+                    finfo_close($finfo);
+                }
+            }
+
+            if (empty($mime_type) && function_exists('mime_content_type')) {
+                $mime_type = mime_content_type($file['tmp_name']);
+            }
+
+            if (empty($mime_type)) {
+                // Fallback to basic extension check
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                if ($ext === 'jpg' || $ext === 'jpeg') {
+                    $mime_type = 'image/jpeg';
+                }
+            }
+
+            if (!in_array($mime_type, $allowed_types)) {
+                http_response_code(400);
+                echo json_encode(["message" => "Only JPEG images are allowed. Detected: " . $mime_type]);
+                return;
+            }
+
+            // 2. Validate file size (max 1MB)
+            if ($file['size'] > 1048576) { // 1MB in bytes
+                http_response_code(400);
+                echo json_encode(["message" => "Image must be less than 1MB."]);
+                return;
+            }
+
+            // 3. Validate storage limits
+            $access_level = new AccessLevel($this->db);
+            $access_info = $access_level->getUserAccessInfo($user_data['user_id']);
+
+            if ($access_info) {
+                $current_bytes = (int) $access_info['current_usage']['storage_bytes'];
+                $max_gb = (float) $access_info['access_level']['max_storage_gb'];
+                $max_bytes = $max_gb * 1024 * 1024 * 1024;
+
+                if (($current_bytes + $file['size']) > $max_bytes) {
+                    http_response_code(403);
+                    echo json_encode(["message" => "Storage limit reached. Clear space or upgrade your plan."]);
+                    return;
+                }
+            }
+
+            $upload_dir = dirname(__DIR__) . '/uploads/galleries/' . $id . '/';
+            if (!file_exists($upload_dir)) {
+                if (!mkdir($upload_dir, 0777, true)) {
+                    error_log("Failed to create directory: " . $upload_dir);
+                    http_response_code(500);
+                    echo json_encode(["message" => "Failed to create upload directory"]);
+                    return;
+                }
+            }
+
+            $filename = time() . '_' . preg_replace("/[^a-zA-Z0-9.]/", "_", basename($file['name']));
+            $filepath = $upload_dir . $filename;
+
+            if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                $web_path = 'uploads/galleries/' . $id . '/' . $filename;
+                if ($this->gallery->addImage($id, $web_path, $file['name'], $file['size'])) {
+                    echo json_encode(["message" => "Image uploaded", "url" => $web_path]);
+                } else {
+                    error_log("Database error: Failed to save image record for gallery " . $id);
+                    http_response_code(500);
+                    echo json_encode(["message" => "Failed to save image record"]);
+                }
+            } else {
+                error_log("File upload error: Failed to move file to " . $filepath);
+                http_response_code(500);
+                echo json_encode(["message" => "Failed to move uploaded file"]);
+            }
+        } catch (Exception $e) {
+            error_log("Upload Exception: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(["message" => "Failed to move uploaded file"]);
+            echo json_encode(["message" => "Internal server error during upload", "details" => $e->getMessage()]);
         }
     }
 }

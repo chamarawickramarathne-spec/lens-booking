@@ -329,24 +329,45 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: formData,
-      mode: "cors",
-      credentials: "omit",
-    });
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+        mode: "cors",
+        credentials: "omit",
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Failed to upload gallery image");
+      const rawText = await response.text();
+      
+      if (!response.ok) {
+        let errorMessage = "";
+        try {
+          const cleaned = rawText.replace(/^\uFEFF/, "").trim();
+          const firstBrace = cleaned.indexOf("{");
+          const candidate = firstBrace >= 0 ? cleaned.slice(firstBrace) : cleaned;
+          const errJson = JSON.parse(candidate);
+          errorMessage = errJson.details 
+            ? `${errJson.message}: ${errJson.details}` 
+            : errJson.message || "Upload failed";
+        } catch (e) {
+          errorMessage = rawText.substring(0, 100) || "Failed to upload gallery image";
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse success response
+      try {
+        const cleaned = rawText.replace(/^\uFEFF/, "").trim();
+        const firstBrace = cleaned.indexOf("{");
+        const candidate = firstBrace >= 0 ? cleaned.slice(firstBrace) : cleaned;
+        return JSON.parse(candidate);
+      } catch (e) {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error) {
+      throw error;
     }
-
-    const rawText = await response.text();
-    const cleaned = rawText.replace(/^\uFEFF/, "").trim();
-    const firstBrace = cleaned.indexOf("{");
-    const candidate = firstBrace > 0 ? cleaned.slice(firstBrace) : cleaned;
-    return JSON.parse(candidate);
   }
 
   async deleteGalleryImage(galleryId: number, imageId: number) {
