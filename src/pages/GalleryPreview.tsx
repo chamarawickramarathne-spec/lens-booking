@@ -36,7 +36,17 @@ const GalleryPreview = () => {
     else setIsUnlocking(true);
 
     try {
-      const data = await apiClient.getPublicGallery(parseInt(id), providedPassword);
+      let decodedId = id;
+      try {
+        const decoded = atob(id);
+        if (decoded.startsWith('gallery_')) {
+          decodedId = decoded.replace('gallery_', '');
+        }
+      } catch (e) {
+        // Fallback for unencrypted IDs
+      }
+
+      const data = await apiClient.getPublicGallery(parseInt(decodedId), providedPassword);
       setGallery(data);
       if (providedPassword && !data.unlocked) {
         setError("Invalid password. Please try again.");

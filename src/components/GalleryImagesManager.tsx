@@ -296,7 +296,8 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
               <DropdownMenuItem 
                 className="gap-2 cursor-pointer"
                 onClick={() => {
-                  navigator.clipboard.writeText(window.location.origin + `/gallery/${gallery.id}/preview`);
+                  const encodedId = btoa('gallery_' + gallery.id);
+                  navigator.clipboard.writeText(window.location.origin + `/gallery/${encodedId}/preview`);
                   toast({
                     title: "Link Copied",
                     description: "Direct link has been copied to your clipboard.",
@@ -335,7 +336,10 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
             variant="ghost" 
             size="sm" 
             className="gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => window.open(`/gallery/${gallery.id}/preview`, '_blank')}
+            onClick={() => {
+              const encodedId = btoa('gallery_' + gallery.id);
+              window.open(`/gallery/${encodedId}/preview`, '_blank');
+            }}
           >
             <Eye className="h-4 w-4" /> Preview
           </Button>
