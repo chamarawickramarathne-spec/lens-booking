@@ -105,6 +105,45 @@ class GalleriesController
         }
     }
 
+    public function update($id)
+    {
+        $user_data = $this->auth->getUserFromHeader();
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        // Fetch existing
+        $existing = $this->gallery->getById($id, $user_data['user_id']);
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(["message" => "Gallery not found"]);
+            return;
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $this->gallery->id = $id;
+        $this->gallery->user_id = $user_data['user_id'];
+        $this->gallery->gallery_name = $data['title'] ?? $existing['gallery_name'];
+        $this->gallery->description = $data['description'] ?? $existing['description'];
+        $this->gallery->gallery_date = $data['event_date'] ?? $existing['gallery_date'];
+        $this->gallery->cover_image = isset($data['cover_image']) ? $data['cover_image'] : $existing['cover_image'];
+        $this->gallery->is_public = isset($data['is_public']) ? $data['is_public'] : $existing['is_public'];
+        $this->gallery->password_protected = isset($data['password_protected']) ? $data['password_protected'] : $existing['password_protected'];
+        $this->gallery->gallery_password = isset($data['gallery_password']) ? $data['gallery_password'] : $existing['gallery_password'];
+        $this->gallery->download_enabled = isset($data['download_enabled']) ? $data['download_enabled'] : $existing['download_enabled'];
+        $this->gallery->expiry_date = isset($data['expiry_date']) ? $data['expiry_date'] : $existing['expiry_date'];
+
+        if ($this->gallery->update()) {
+            echo json_encode(["message" => "Gallery updated"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to update gallery"]);
+        }
+    }
+
     public function delete($id)
     {
         $user_data = $this->auth->getUserFromHeader();
@@ -115,6 +154,19 @@ class GalleriesController
         }
 
         if ($this->gallery->delete($id, $user_data['user_id'])) {
+            // Delete the physical gallery directory and its contents
+            $dirpath = dirname(__DIR__) . '/uploads/galleries/' . $id;
+            if (is_dir($dirpath)) {
+                $files = array_diff(scandir($dirpath), array('.', '..'));
+                foreach ($files as $file) {
+                    $filepath = "$dirpath/$file";
+                    if (is_file($filepath)) {
+                        unlink($filepath);
+                    }
+                }
+                rmdir($dirpath);
+            }
+
             echo json_encode(["message" => "Gallery deleted"]);
         } else {
             http_response_code(500);
@@ -137,13 +189,15 @@ class GalleriesController
 
     public function getPublic($id)
     {
-        // Check if user is logged in (to allow owner to preview)
+        // First try to fetch as a public gallery
+        $g = $this->gallery->getPublicById($id);
+
+        // Check if user is logged in
         $user_data = $this->auth->getUserFromHeader();
 
-        if ($user_data) {
+        // If not public, check if the logged-in user is the owner (so they can preview their private galleries)
+        if (!$g && $user_data) {
             $g = $this->gallery->getById($id, $user_data['user_id']);
-        } else {
-            $g = $this->gallery->getPublicById($id);
         }
 
         if ($g) {
@@ -195,7 +249,20 @@ class GalleriesController
             return;
         }
 
+        // Fetch image path before deleting from DB
+        $stmt = $this->db->prepare("SELECT image_url FROM gallery_images WHERE id = ? AND gallery_id = ?");
+        $stmt->execute([$image_id, $gallery_id]);
+        $img = $stmt->fetch(PDO::FETCH_ASSOC);
+
         if ($this->gallery->deleteImage($image_id, $gallery_id)) {
+            // Remove the physical file
+            if ($img && !empty($img['image_url'])) {
+                $filepath = dirname(__DIR__) . '/' . ltrim($img['image_url'], '/');
+                if (file_exists($filepath) && is_file($filepath)) {
+                    unlink($filepath);
+                }
+            }
+
             echo json_encode(["message" => "Image deleted"]);
         } else {
             http_response_code(500);
@@ -385,6 +452,10 @@ switch ($method) {
             $controller->deleteImage($id, $sub_id);
         elseif ($id)
             $controller->delete($id);
+        break;
+    case 'PUT':
+        if ($id)
+            $controller->update($id);
         break;
     default:
         http_response_code(405);

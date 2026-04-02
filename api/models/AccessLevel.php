@@ -57,7 +57,7 @@ class AccessLevel
         // Get user's access level
         $query = "SELECT u.id as user_id, u.full_name, u.email, u.access_level_id, 
                         al.id as access_level_id, al.level_name, 
-                        al.max_clients, al.max_bookings, al.max_storage_gb
+                        al.max_clients, al.max_bookings
                  FROM users u
                  LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.id = :user_id";
@@ -71,6 +71,21 @@ class AccessLevel
         }
 
         $user_access = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Also try to get max_storage_gb if it exists
+        $storage_limit_query = "SELECT max_storage_gb FROM access_levels WHERE id = :al_id";
+        $storage_limit_stmt = $this->conn->prepare($storage_limit_query);
+        $max_storage = null;
+        try {
+            $storage_limit_stmt->bindParam(":al_id", $user_access['access_level_id']);
+            $storage_limit_stmt->execute();
+            if ($storage_limit_row = $storage_limit_stmt->fetch(PDO::FETCH_ASSOC)) {
+                $max_storage = $storage_limit_row['max_storage_gb'] ?? null;
+            }
+        } catch (PDOException $e) {
+            // Column doesn't exist yet
+            $max_storage = null;
+        }
 
         // Count current clients
         $client_query = "SELECT COUNT(*) as count FROM clients WHERE user_id = :user_id";
@@ -91,16 +106,21 @@ class AccessLevel
                          FROM gallery_images gi 
                          JOIN galleries g ON gi.gallery_id = g.id 
                          WHERE g.user_id = :user_id";
-        $storage_stmt = $this->conn->prepare($storage_query);
-        $storage_stmt->bindParam(":user_id", $user_id);
-        $storage_stmt->execute();
-        $total_bytes = (int) ($storage_stmt->fetch(PDO::FETCH_ASSOC)['total_size'] ?? 0);
+        $total_bytes = 0;
+        try {
+            $storage_stmt = $this->conn->prepare($storage_query);
+            $storage_stmt->bindParam(":user_id", $user_id);
+            $storage_stmt->execute();
+            $total_bytes = (int) ($storage_stmt->fetch(PDO::FETCH_ASSOC)['total_size'] ?? 0);
+        } catch (PDOException $e) {
+            // column might not exist yet
+            $total_bytes = 0;
+        }
 
         // Convert to GB for comparison
         $total_gb = $total_bytes / (1024 * 1024 * 1024);
 
         // Map level names to storage limits if max_storage_gb is not in DB yet
-        $max_storage = $user_access['max_storage_gb'];
         if ($max_storage === null) {
             $limits = [
                 'Free' => 5,

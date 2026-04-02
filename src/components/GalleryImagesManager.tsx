@@ -52,12 +52,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Gallery {
   id: number;
   title: string;
   event_date?: string;
   cover_image?: string;
+  is_public?: boolean;
 }
 
 interface GalleryImage {
@@ -76,6 +84,9 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSettingCover, setIsSettingCover] = useState(false);
+  const [isCoverDialogOpen, setIsCoverDialogOpen] = useState(false);
+  const [isPublic, setIsPublic] = useState<boolean>(gallery.is_public ?? true);
   const [activeTab, setActiveTab] = useState("photos");
   const [settingsTab, setSettingsTab] = useState("general");
   const [tags, setTags] = useState<string[]>([]);
@@ -163,6 +174,54 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
     }
   };
 
+  const handleSetCover = async (imageUrl: string) => {
+    setIsSettingCover(true);
+    try {
+      toast({ title: "Updating cover...", description: "Setting new cover image" });
+      
+      await apiClient.updateGallery(gallery.id, {
+        cover_image: imageUrl
+      });
+      
+      toast({
+        title: "Success",
+        description: "Cover image updated successfully.",
+      });
+      
+      gallery.cover_image = imageUrl;
+      fetchImages();
+      setIsCoverDialogOpen(false);
+      
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update cover image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingCover(false);
+    }
+  };
+
+  const handleTogglePublish = async (publish: boolean) => {
+    try {
+      await apiClient.updateGallery(gallery.id, {
+        is_public: publish
+      });
+      setIsPublic(publish);
+      toast({
+        title: "Success",
+        description: publish ? "Gallery published successfully!" : "Gallery is now hidden.",
+      });
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteImage = async (imageId: number) => {
     try {
       await apiClient.deleteGalleryImage(gallery.id, imageId);
@@ -181,7 +240,7 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
   };
 
   return (
-    <div className="flex flex-col h-full -mt-6 -mx-6 bg-background animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col h-full bg-background animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between px-6 py-3 border-b bg-background sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -191,11 +250,34 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold">{gallery.title}</h1>
-              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 rounded-full px-2 py-0 text-[10px] uppercase font-bold tracking-wider">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5" />
-                Published
-              </Badge>
-              <ChevronDown className="h-4 w-4 text-muted-foreground cursor-pointer" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+                    <Badge 
+                      variant="outline" 
+                      className={`rounded-full px-2 py-0 text-[10px] uppercase font-bold tracking-wider ${
+                        isPublic 
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                          : "bg-gray-100 text-gray-600 border-gray-200"
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${isPublic ? "bg-emerald-500" : "bg-gray-400"}`} />
+                      {isPublic ? "Published" : "Hidden"}
+                    </Badge>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleTogglePublish(true)} className="gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Publish
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleTogglePublish(false)} className="gap-2">
+                    <span className="h-2 w-2 rounded-full bg-gray-400" />
+                    Hide (Unpublish)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <p className="text-xs text-muted-foreground whitespace-nowrap">
               {gallery.event_date ? new Date(gallery.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date set'}
@@ -211,10 +293,41 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="gap-2"><ExternalLink className="h-4 w-4" /> Get direct link</DropdownMenuItem>
-              <DropdownMenuItem className="gap-2"><Clock className="h-4 w-4" /> View email history</DropdownMenuItem>
-              <DropdownMenuItem className="gap-2"><Settings className="h-4 w-4" /> Manage presets</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive gap-2"><Trash2 className="h-4 w-4" /> Delete collection</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="gap-2 cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.origin + `/gallery/${gallery.id}/preview`);
+                  toast({
+                    title: "Link Copied",
+                    description: "Direct link has been copied to your clipboard.",
+                  });
+                }}
+              >
+                <ExternalLink className="h-4 w-4" /> Get direct link
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive gap-2 cursor-pointer"
+                onClick={async () => {
+                  if (window.confirm("Are you sure you want to delete this collection?")) {
+                    try {
+                      await apiClient.deleteGallery(gallery.id);
+                      toast({
+                        title: "Success",
+                        description: "Collection deleted successfully",
+                      });
+                      onBack();
+                    } catch (error: unknown) {
+                      toast({
+                        title: "Error",
+                        description: error instanceof Error ? error.message : "Failed to delete collection",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Delete collection
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -251,12 +364,46 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                   <ImageIcon className="h-10 w-10" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Button size="sm" variant="secondary" className="bg-white hover:bg-white/90 text-black border-none text-xs font-semibold shadow-lg">
-                  <ImageIcon className="h-3.5 w-3.5 mr-2" />
-                  Change Cover
-                </Button>
-              </div>
+              <Dialog open={isCoverDialogOpen} onOpenChange={setIsCoverDialogOpen}>
+                <DialogTrigger asChild>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button size="sm" variant="secondary" className="bg-white hover:bg-white/90 text-black border-none text-xs font-semibold shadow-lg cursor-pointer">
+                      <span>
+                        <ImageIcon className="h-3.5 w-3.5 mr-2 inline-block" />
+                        Change Cover
+                      </span>
+                    </Button>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Select Cover Image</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    {images.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        No images available. Please upload some images to the collection first.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                        {images.map(img => (
+                          <button
+                            key={img.id}
+                            onClick={() => handleSetCover(img.image_url)}
+                            disabled={isSettingCover}
+                            className="relative aspect-square rounded-md overflow-hidden group hover:ring-2 hover:ring-primary focus:outline-none transition-all"
+                          >
+                            <img src={getImageUrl(img.image_url)} className="w-full h-full object-cover" alt="" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <span className="text-white text-xs font-bold uppercase tracking-wider">Set Cover</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -376,15 +523,6 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-[#111827]">Highlights</h2>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 border rounded-md px-1.5 py-1.5 bg-secondary/20 shadow-inner">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-primary bg-white shadow-sm ring-1 ring-black/5">
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                </div>
-                
                 <div>
                   <Input
                     type="file"

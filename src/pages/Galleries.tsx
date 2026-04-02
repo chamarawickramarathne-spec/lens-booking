@@ -104,7 +104,7 @@ const Galleries = () => {
   if (selectedGallery) {
     return (
       <DashboardLayout>
-        <div className="h-screen -m-8 overflow-hidden">
+        <div className="h-[calc(100vh-4rem)] -m-6 overflow-hidden">
           <GalleryImagesManager 
             gallery={selectedGallery} 
             onBack={() => {
@@ -135,9 +135,6 @@ const Galleries = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" className="text-sm font-medium">
-              View Presets
-            </Button>
             <GalleryForm
               onSuccess={fetchGalleries}
               trigger={
@@ -154,36 +151,6 @@ const Galleries = () => {
                 </div>
               }
             />
-          </div>
-        </div>
-
-        {/* Filters Section */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              "Status",
-              "Category Tag",
-              "Event Date",
-              "Expiry Date",
-              "Starred",
-            ].map((filter) => (
-              <Button
-                key={filter}
-                variant="outline"
-                size="sm"
-                className="bg-secondary/30 border-none h-8 text-xs font-medium px-3 rounded-full hover:bg-secondary/50"
-              >
-                {filter} <ChevronDown className="ml-1 h-3 w-3" />
-              </Button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary">
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
