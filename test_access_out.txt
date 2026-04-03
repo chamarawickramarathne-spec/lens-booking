@@ -1,0 +1,23 @@
+{
+    "user_id": 2,
+    "name": "Chamara Wick",
+    "email": "chamara.wickramarathne@gmail.com",
+    "access_level": {
+        "id": 2,
+        "name": "Pro",
+        "max_clients": 5,
+        "max_bookings": 10,
+        "max_storage_gb": 10
+    },
+    "current_usage": {
+        "clients": 1,
+        "bookings": 3,
+        "storage_bytes": 4586223,
+        "storage_gb": 0.0043
+    },
+    "can_create": {
+        "client": true,
+        "booking": true,
+        "storage": true
+    }
+}

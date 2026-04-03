@@ -141,13 +141,18 @@ const Profile = () => {
 
   const fetchAccessLevel = async () => {
     try {
+      console.log("Fetching access level info...");
       const response = await apiClient.getUserAccessInfo();
+      console.log("Access level response:", response);
       if (response?.access_level?.name) {
+        console.log("Setting access level:", response.access_level.name);
         setAccessLevel(response.access_level.name);
         setAccessInfo(response);
+      } else {
+        console.warn("Response missing access_level.name:", response);
       }
     } catch (error) {
-      // Silently handle access level fetch error
+      console.error("Failed to fetch access level info:", error);
     }
   };
 

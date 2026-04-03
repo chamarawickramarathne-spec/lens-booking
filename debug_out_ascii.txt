@@ -1,0 +1,8 @@
+--- ACCESS LEVELS TABLE ---
+ID: 1 | Name: Free | Clients: 1 | Bookings: 1 | Storage: 5GB
+ID: 2 | Name: Pro | Clients: 5 | Bookings: 10 | Storage: 10GB
+ID: 3 | Name: Premium | Clients: 15 | Bookings: 30 | Storage: 20GB
+ID: 4 | Name: Unlimited | Clients: NULL | Bookings: NULL | Storage: 50GB
+
+--- USERS CHECK ---
+ID: 2 | Email: chamara.wickramarathne@gmail.com | Access Level ID: 2

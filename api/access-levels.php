@@ -24,7 +24,7 @@ class AccessLevelsController {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->access_level = new AccessLevel($this->db);
-        $this->auth = new Auth($this->db);
+        $this->auth = new JWTAuth();
     }
 
     /**
@@ -56,13 +56,19 @@ class AccessLevelsController {
      * Get current user's access level info
      */
     public function getUserAccessInfo() {
+        $log_file = dirname(__DIR__) . '/api_debug.log';
+        file_put_contents($log_file, "--- AccessLevelsController::getUserAccessInfo --- \n", FILE_APPEND);
+        
         $user_data = $this->auth->getUserFromHeader();
-
+        
         if (!$user_data) {
+            file_put_contents($log_file, "Auth failed in AccessLevelsController\n", FILE_APPEND);
             http_response_code(401);
             echo json_encode(["message" => "Access denied"]);
             return;
         }
+
+        file_put_contents($log_file, "Auth success, User ID: " . ($user_data['user_id'] ?? 'MISSING') . "\n", FILE_APPEND);
 
         try {
             $access_info = $this->access_level->getUserAccessInfo($user_data['user_id']);

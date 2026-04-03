@@ -103,6 +103,7 @@ class ApiClient {
 
       // Try to parse JSON safely, handling potential BOM or leading warnings
       try {
+        console.log(`API Response OK: ${url}`);
         // Remove BOM and trim
         const cleaned = rawText.replace(/^\uFEFF/, "").trim();
         // If there is noise before the first { or [, slice it out

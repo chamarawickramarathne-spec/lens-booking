@@ -57,8 +57,10 @@ class AccessLevel
         // Get user's access level
         $query = "SELECT u.id as user_id, u.full_name, u.email, u.access_level_id, 
                         u.business_name, u.business_email, u.business_phone, u.business_address,
-                        al.id as access_level_id, al.level_name, 
-                        al.max_clients, al.max_bookings, al.max_storage_gb
+                        al.id as al_id, al.level_name as al_name, 
+                        al.max_clients as al_max_clients, 
+                        al.max_bookings as al_max_bookings, 
+                        al.max_storage_gb as al_max_storage_gb
                  FROM users u
                  LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.id = :user_id";
@@ -66,29 +68,35 @@ class AccessLevel
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
+        $log_file = dirname(__DIR__, 2) . '/api_debug.log';
+        file_put_contents($log_file, "--- AccessLevel::getUserAccessInfo --- \n", FILE_APPEND);
+        file_put_contents($log_file, "User ID from token: " . $user_id . "\n", FILE_APPEND);
 
         if ($stmt->rowCount() === 0) {
+            file_put_contents($log_file, "User not found in DB\n", FILE_APPEND);
             return false;
         }
 
         $user_access = $stmt->fetch(PDO::FETCH_ASSOC);
-        $max_storage = $user_access['max_storage_gb'] ?? 5;
+        file_put_contents($log_file, "User result: " . json_encode($user_access) . "\n", FILE_APPEND);
+        
+        $max_storage = $user_access['al_max_storage_gb'] ?? 5;
 
         // Count current clients
         $client_query = "SELECT COUNT(*) as count FROM clients WHERE user_id = :user_id";
         $client_stmt = $this->conn->prepare($client_query);
         $client_stmt->bindParam(":user_id", $user_id);
         $client_stmt->execute();
-        $client_count = $client_stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $client_count = (int) ($client_stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
 
         // Count current bookings
         $booking_query = "SELECT COUNT(*) as count FROM bookings WHERE user_id = :user_id";
         $booking_stmt = $this->conn->prepare($booking_query);
         $booking_stmt->bindParam(":user_id", $user_id);
         $booking_stmt->execute();
-        $booking_count = $booking_stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $booking_count = (int) ($booking_stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
 
-        // Get total storage usage (sum of file_size in bytes)
+        // Get total storage usage
         $storage_query = "SELECT SUM(gi.file_size) as total_size 
                          FROM gallery_images gi 
                          JOIN galleries g ON gi.gallery_id = g.id 
@@ -99,12 +107,13 @@ class AccessLevel
             $storage_stmt->bindParam(":user_id", $user_id);
             $storage_stmt->execute();
             $total_bytes = (int) ($storage_stmt->fetch(PDO::FETCH_ASSOC)['total_size'] ?? 0);
+            file_put_contents($log_file, "Total storage bytes: " . $total_bytes . "\n", FILE_APPEND);
         } catch (PDOException $e) {
-            // column might not exist yet
+            file_put_contents($log_file, "Storage error: " . $e->getMessage() . "\n", FILE_APPEND);
             $total_bytes = 0;
         }
 
-        // Convert to GB for comparison
+        // Convert to GB
         $total_gb = $total_bytes / (1024 * 1024 * 1024);
 
         return [
@@ -112,22 +121,22 @@ class AccessLevel
             'name' => $user_access['full_name'],
             'email' => $user_access['email'],
             'access_level' => [
-                'id' => $user_access['access_level_id'],
-                'name' => $user_access['level_name'],
-                'max_clients' => $user_access['max_clients'],
-                'max_bookings' => $user_access['max_bookings'],
-                'max_storage_gb' => (float) $max_storage
+                'id' => (int) ($user_access['al_id'] ?? $user_access['access_level_id']),
+                'name' => $user_access['al_name'] ?? 'Free',
+                'max_clients' => $user_access['al_max_clients'] !== null ? (int)$user_access['al_max_clients'] : null,
+                'max_bookings' => $user_access['al_max_bookings'] !== null ? (int)$user_access['al_max_bookings'] : null,
+                'max_storage_gb' => (float)$max_storage
             ],
             'current_usage' => [
-                'clients' => (int) $client_count,
-                'bookings' => (int) $booking_count,
-                'storage_bytes' => (int) $total_bytes,
+                'clients' => $client_count,
+                'bookings' => $booking_count,
+                'storage_bytes' => $total_bytes,
                 'storage_gb' => round($total_gb, 4)
             ],
             'can_create' => [
-                'client' => $user_access['max_clients'] === null || (int) $client_count < (int) $user_access['max_clients'],
-                'booking' => $user_access['max_bookings'] === null || (int) $booking_count < (int) $user_access['max_bookings'],
-                'storage' => $total_gb < (float) $max_storage
+                'client' => $user_access['al_max_clients'] === null || $client_count < (int)$user_access['al_max_clients'],
+                'booking' => $user_access['al_max_bookings'] === null || $booking_count < (int)$user_access['al_max_bookings'],
+                'storage' => $total_gb < (float)$max_storage
             ]
         ];
     }
