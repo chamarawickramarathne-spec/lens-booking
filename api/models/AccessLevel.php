@@ -68,17 +68,12 @@ class AccessLevel
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $user_id);
         $stmt->execute();
-        $log_file = dirname(__DIR__, 2) . '/api_debug.log';
-        file_put_contents($log_file, "--- AccessLevel::getUserAccessInfo --- \n", FILE_APPEND);
-        file_put_contents($log_file, "User ID from token: " . $user_id . "\n", FILE_APPEND);
 
         if ($stmt->rowCount() === 0) {
-            file_put_contents($log_file, "User not found in DB\n", FILE_APPEND);
             return false;
         }
 
         $user_access = $stmt->fetch(PDO::FETCH_ASSOC);
-        file_put_contents($log_file, "User result: " . json_encode($user_access) . "\n", FILE_APPEND);
         
         $max_storage = $user_access['al_max_storage_gb'] ?? 5;
 
@@ -107,9 +102,7 @@ class AccessLevel
             $storage_stmt->bindParam(":user_id", $user_id);
             $storage_stmt->execute();
             $total_bytes = (int) ($storage_stmt->fetch(PDO::FETCH_ASSOC)['total_size'] ?? 0);
-            file_put_contents($log_file, "Total storage bytes: " . $total_bytes . "\n", FILE_APPEND);
         } catch (PDOException $e) {
-            file_put_contents($log_file, "Storage error: " . $e->getMessage() . "\n", FILE_APPEND);
             $total_bytes = 0;
         }
 

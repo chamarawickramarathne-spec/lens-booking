@@ -31,6 +31,7 @@ class ApiClient {
     options: RequestInit = {},
   ): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
+    console.log(`API Request: ${options.method || 'GET'} ${url}`);
 
     const config: RequestInit = {
       mode: "cors",

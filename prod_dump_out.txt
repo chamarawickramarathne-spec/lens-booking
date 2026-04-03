@@ -1,1 +1,0 @@
-Connection error: SQLSTATE[HY000] [1045] Access denied for user 'hiresmcq_lensrun'@'localhost' (using password: YES)
