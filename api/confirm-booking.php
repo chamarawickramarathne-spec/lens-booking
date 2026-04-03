@@ -33,8 +33,8 @@ class BookingConfirmation {
         
         try {
             // Find booking by token
-            $query = "SELECT b.id, b.photographer_id, b.client_id, b.status, b.total_amount, b.deposit_amount,
-                             c.name as client_name, c.email as client_email,
+            $query = "SELECT b.id, b.user_id as photographer_id, b.client_id, b.status, b.total_amount, b.deposit_amount,
+                             c.full_name as client_name, c.email as client_email,
                              b.confirmation_token, b.confirmation_token_expires
                       FROM bookings b
                       LEFT JOIN clients c ON b.client_id = c.id
@@ -117,11 +117,11 @@ class BookingConfirmation {
             
             // Create invoice
             $invoiceQuery = "INSERT INTO invoices 
-                            SET photographer_id = :photographer_id, 
+                            SET user_id = :photographer_id, 
                                 client_id = :client_id, 
                                 booking_id = :booking_id,
                                 invoice_number = :invoice_number, 
-                                issue_date = :issue_date, 
+                                invoice_date = :issue_date, 
                                 due_date = :due_date,
                                 subtotal = :subtotal, 
                                 tax_amount = 0, 

@@ -157,11 +157,11 @@ class Client {
      */
     public function delete($id, $user_id) {
     $query = "DELETE FROM " . $this->table_name . " 
-         WHERE id = :id AND photographer_id = :photographer_id";
+         WHERE id = :id AND user_id = :user_id";
 
     $stmt = $this->conn->prepare($query);
     $stmt->bindParam(":id", $id);
-    $stmt->bindParam(":photographer_id", $user_id);
+    $stmt->bindParam(":user_id", $user_id);
 
     return $stmt->execute();
     }

@@ -20,6 +20,9 @@ import {
   DollarSign,
   Upload,
   X,
+  Database,
+  Users,
+  Calendar,
 } from "lucide-react";
 import {
   Select,
@@ -37,6 +40,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+
+interface AccessInfo {
+  access_level: {
+    name: string;
+    max_clients: number | null;
+    max_bookings: number | null;
+    max_storage_gb: number;
+  };
+  current_usage: {
+    clients: number;
+    bookings: number;
+    storage_gb: number;
+  };
+}
 
 const profileSchema = z.object({
   photographer_name: z.string().min(1, "Name is required"),
@@ -62,6 +80,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [accessLevel, setAccessLevel] = useState<string>("Free");
+  const [accessInfo, setAccessInfo] = useState<AccessInfo | null>(null);
   const [profileImage, setProfileImage] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -125,6 +144,7 @@ const Profile = () => {
       const response = await apiClient.getUserAccessInfo();
       if (response?.access_level?.name) {
         setAccessLevel(response.access_level.name);
+        setAccessInfo(response);
       }
     } catch (error) {
       // Silently handle access level fetch error
@@ -249,63 +269,129 @@ const Profile = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                {/* Profile Image Upload Section */}
-                <div className="flex flex-col items-center gap-4 pb-6 border-b">
-                  <Avatar className="h-32 w-32" key={imagePreview}>
-                    <AvatarImage
-                      src={imagePreview}
-                      alt="Profile"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                    <AvatarFallback className="text-4xl">
-                      {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                {/* Top Section: Limitations & Profile Image */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-6 border-b">
+                  {/* Limitations Box */}
+                  <div className="bg-muted/10 rounded-xl p-6 border shadow-sm flex flex-col justify-center">
+                    <h3 className="text-sm font-semibold text-foreground mb-5 uppercase tracking-wide">Current Plan Limits</h3>
+                    <div className="space-y-5">
+                      {/* Storage */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                            <Database className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-muted-foreground">Storage</span>
+                          </div>
+                          <span className="font-semibold text-foreground">
+                            {accessInfo ? (accessInfo.current_usage.storage_gb < 0.01 && accessInfo.current_usage.storage_gb > 0 ? '<0.01' : accessInfo.current_usage.storage_gb.toFixed(2)) : '0'} / {accessInfo?.access_level.max_storage_gb || 0} GB
+                          </span>
+                        </div>
+                        <Progress 
+                          value={accessInfo ? (accessInfo.current_usage.storage_gb / accessInfo.access_level.max_storage_gb) * 100 : 0} 
+                          className="h-2"
+                        />
+                      </div>
 
-                  {isEditing && (
-                    <div className="flex gap-2">
-                      <label htmlFor="profile-image-upload">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            document
-                              .getElementById("profile-image-upload")
-                              ?.click()
-                          }
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Upload Photo
-                        </Button>
-                      </label>
-                      <input
-                        id="profile-image-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
-                      {imageFile && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleRemoveImage}
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Remove
-                        </Button>
-                      )}
+                      {/* Clients */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-muted-foreground">Clients</span>
+                          </div>
+                          <span className="font-semibold text-foreground">
+                            {accessInfo?.current_usage.clients || 0} / {accessInfo?.access_level.max_clients === null ? 'Unlimited' : accessInfo?.access_level.max_clients || 0}
+                          </span>
+                        </div>
+                        {accessInfo?.access_level.max_clients !== null && (
+                          <Progress 
+                            value={accessInfo ? (accessInfo.current_usage.clients / accessInfo.access_level.max_clients) * 100 : 0} 
+                            className="h-2"
+                          />
+                        )}
+                      </div>
+
+                      {/* Bookings */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-muted-foreground">Bookings</span>
+                          </div>
+                          <span className="font-semibold text-foreground">
+                            {accessInfo?.current_usage.bookings || 0} / {accessInfo?.access_level.max_bookings === null ? 'Unlimited' : accessInfo?.access_level.max_bookings || 0}
+                          </span>
+                        </div>
+                        {accessInfo?.access_level.max_bookings !== null && (
+                          <Progress 
+                            value={accessInfo ? (accessInfo.current_usage.bookings / accessInfo.access_level.max_bookings) * 100 : 0} 
+                            className="h-2"
+                          />
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {imageFile && (
-                    <p className="text-sm text-muted-foreground">
-                      New image selected: {imageFile.name}
-                    </p>
-                  )}
+                  </div>
+
+                  {/* Profile Image Upload Section */}
+                  <div className="flex flex-col items-center justify-center gap-4 py-4">
+                    <Avatar className="h-32 w-32 border-4 border-background shadow-md" key={imagePreview}>
+                      <AvatarImage
+                        src={imagePreview}
+                        alt="Profile"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <AvatarFallback className="text-4xl text-primary bg-primary/10">
+                        {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {isEditing && (
+                      <div className="flex gap-2">
+                        <label htmlFor="profile-image-upload">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shadow-sm transition-all hover:bg-primary hover:text-primary-foreground"
+                            onClick={() =>
+                              document
+                                .getElementById("profile-image-upload")
+                                ?.click()
+                            }
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Photo
+                          </Button>
+                        </label>
+                        <input
+                          id="profile-image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                        {imageFile && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {imageFile && (
+                      <p className="text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-2">
+                        Selected: <span className="font-medium text-foreground">{imageFile.name}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

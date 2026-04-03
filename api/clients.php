@@ -214,10 +214,10 @@ class ClientsController
             $photographer_id = $user_data['user_id'];
 
             // Verify client belongs to photographer
-            $verify_query = "SELECT id FROM clients WHERE id = :id AND photographer_id = :photographer_id";
+            $verify_query = "SELECT id FROM clients WHERE id = :id AND user_id = :user_id";
             $verify_stmt = $this->db->prepare($verify_query);
             $verify_stmt->bindParam(':id', $client_id);
-            $verify_stmt->bindParam(':photographer_id', $photographer_id);
+            $verify_stmt->bindParam(':user_id', $photographer_id);
             $verify_stmt->execute();
 
             if ($verify_stmt->rowCount() === 0) {
@@ -228,19 +228,19 @@ class ClientsController
             }
 
             // Get all booking IDs for this client
-            $booking_query = "SELECT id FROM bookings WHERE client_id = :client_id AND photographer_id = :photographer_id";
+            $booking_query = "SELECT id FROM bookings WHERE client_id = :client_id AND user_id = :user_id";
             $booking_stmt = $this->db->prepare($booking_query);
             $booking_stmt->bindParam(':client_id', $client_id);
-            $booking_stmt->bindParam(':photographer_id', $photographer_id);
+            $booking_stmt->bindParam(':user_id', $photographer_id);
             $booking_stmt->execute();
             $bookings = $booking_stmt->fetchAll(PDO::FETCH_ASSOC);
             $booking_ids = array_column($bookings, 'id');
 
             // Get all invoice IDs for this client
-            $invoice_query = "SELECT id FROM invoices WHERE client_id = :client_id AND photographer_id = :photographer_id";
+            $invoice_query = "SELECT id FROM invoices WHERE client_id = :client_id AND user_id = :user_id";
             $invoice_stmt = $this->db->prepare($invoice_query);
             $invoice_stmt->bindParam(':client_id', $client_id);
-            $invoice_stmt->bindParam(':photographer_id', $photographer_id);
+            $invoice_stmt->bindParam(':user_id', $photographer_id);
             $invoice_stmt->execute();
             $invoices = $invoice_stmt->fetchAll(PDO::FETCH_ASSOC);
             $invoice_ids = array_column($invoices, 'id');
@@ -313,28 +313,28 @@ class ClientsController
             }
 
             // Count bookings
-            $booking_query = "SELECT COUNT(*) as count FROM bookings WHERE client_id = :client_id AND photographer_id = :photographer_id";
+            $booking_query = "SELECT COUNT(*) as count FROM bookings WHERE client_id = :client_id AND user_id = :user_id";
             $booking_stmt = $this->db->prepare($booking_query);
             $booking_stmt->bindParam(':client_id', $client_id);
-            $booking_stmt->bindParam(':photographer_id', $photographer_id);
+            $booking_stmt->bindParam(':user_id', $photographer_id);
             $booking_stmt->execute();
             $booking_count = $booking_stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
             // Count invoices
-            $invoice_query = "SELECT COUNT(*) as count FROM invoices WHERE client_id = :client_id AND photographer_id = :photographer_id";
+            $invoice_query = "SELECT COUNT(*) as count FROM invoices WHERE client_id = :client_id AND user_id = :user_id";
             $invoice_stmt = $this->db->prepare($invoice_query);
             $invoice_stmt->bindParam(':client_id', $client_id);
-            $invoice_stmt->bindParam(':photographer_id', $photographer_id);
+            $invoice_stmt->bindParam(':user_id', $photographer_id);
             $invoice_stmt->execute();
             $invoice_count = $invoice_stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
             // Count payments
             $payment_query = "SELECT COUNT(*) as count FROM payments p 
                             INNER JOIN invoices i ON p.invoice_id = i.id 
-                            WHERE i.client_id = :client_id AND i.photographer_id = :photographer_id";
+                            WHERE i.client_id = :client_id AND i.user_id = :user_id";
             $payment_stmt = $this->db->prepare($payment_query);
             $payment_stmt->bindParam(':client_id', $client_id);
-            $payment_stmt->bindParam(':photographer_id', $photographer_id);
+            $payment_stmt->bindParam(':user_id', $photographer_id);
             $payment_stmt->execute();
             $payment_count = $payment_stmt->fetch(PDO::FETCH_ASSOC)['count'];
 

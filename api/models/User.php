@@ -92,7 +92,7 @@ class User {
                  u.business_name, u.business_email, u.business_phone, u.business_address,
                  u.bio, u.website, u.portfolio_url, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
-                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings
+                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
                  LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.email = :email";
@@ -134,7 +134,8 @@ class User {
                         'name' => $row['access_level_name'],
                         'role' => $row['role'] ?? 'photographer',
                         'max_clients' => $row['max_clients'],
-                        'max_bookings' => $row['max_bookings']
+                        'max_bookings' => $row['max_bookings'],
+                        'max_storage_gb' => $row['max_storage_gb']
                     ],
                     'created_at' => $row['created_at'],
                     'updated_at' => $row['updated_at']
@@ -153,7 +154,7 @@ class User {
                  u.business_phone, u.business_address, u.bio, u.website, 
                  u.portfolio_url, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
-                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings
+                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
                  LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.id = :id";
@@ -185,7 +186,8 @@ class User {
                     'name' => $row['access_level_name'],
                     'role' => $row['role'] ?? 'photographer',
                     'max_clients' => $row['max_clients'],
-                    'max_bookings' => $row['max_bookings']
+                    'max_bookings' => $row['max_bookings'],
+                    'max_storage_gb' => $row['max_storage_gb']
                 ],
                 'created_at' => $row['created_at'],
                 'updated_at' => $row['updated_at']
@@ -258,7 +260,7 @@ class User {
                  u.business_phone, u.business_address, u.bio, u.website, 
                  u.portfolio_url, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
-                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings
+                 al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
                  LEFT JOIN access_levels al ON u.access_level_id = al.id
                  WHERE u.email = :email";
@@ -290,7 +292,8 @@ class User {
                     'name' => $row['access_level_name'],
                     'role' => $row['role'] ?? 'photographer',
                     'max_clients' => $row['max_clients'],
-                    'max_bookings' => $row['max_bookings']
+                    'max_bookings' => $row['max_bookings'],
+                    'max_storage_gb' => $row['max_storage_gb']
                 ],
                 'created_at' => $row['created_at'],
                 'updated_at' => $row['updated_at']

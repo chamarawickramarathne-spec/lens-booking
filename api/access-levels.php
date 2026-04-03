@@ -10,10 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/cors.php';
-require_once __DIR__ . '/../middleware/auth.php';
-require_once __DIR__ . '/../models/AccessLevel.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/cors.php';
+require_once __DIR__ . '/middleware/auth.php';
+require_once __DIR__ . '/models/AccessLevel.php';
 
 class AccessLevelsController {
     private $db;
