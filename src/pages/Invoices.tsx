@@ -106,7 +106,7 @@ const Invoices = () => {
   const handleResendInvoice = async (invoice: any) => {
     setIsLoading(true);
     try {
-      console.log("📄 Generating PDF for resend...");
+      // console.log("📄 Generating PDF for resend...");
       const doc = await generateInvoicePDF(invoice, user, formatCurrency);
       
       // Convert to base64
@@ -114,7 +114,7 @@ const Invoices = () => {
       const pdfBase64 = doc.output('datauristring').split(',')[1];
       const fileName = `Invoice_${invoice.invoice_number}.pdf`;
 
-      console.log("📧 Sending invoice email with attachment...");
+      // console.log("📧 Sending invoice email with attachment...");
       await apiClient.sendInvoiceEmail(invoice.id, pdfBase64, fileName);
       
       toast({

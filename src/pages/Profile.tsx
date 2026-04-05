@@ -155,15 +155,15 @@ const Profile = () => {
 
   const fetchAccessLevel = async () => {
     try {
-      console.log("Fetching access level info...");
+      // console.log("Fetching access level info...");
       const response = await apiClient.getUserAccessInfo();
-      console.log("Access level response:", response);
+      // console.log("Access level response:", response);
       if (response?.access_level?.name) {
-        console.log("Setting access level:", response.access_level.name);
+        // console.log("Setting access level:", response.access_level.name);
         setAccessLevel(response.access_level.name);
         setAccessInfo(response);
       } else {
-        console.warn("Response missing access_level.name:", response);
+        // console.warn("Response missing access_level.name:", response);
       }
     } catch (error) {
       console.error("Failed to fetch access level info:", error);
@@ -758,10 +758,31 @@ const Profile = () => {
                        <AlertTriangle className="h-5 w-5 text-destructive" />
                        Confirm Profile Deletion
                     </AlertDialogTitle>
-                    <AlertDialogDescription>
-                       Are you absolutely sure? This will send a confirmation link to <strong>{user?.email}</strong>. 
-                       Once you click that link, all your data including images, clients, and bookings will be 
-                       permanently deleted from our servers.
+                    <AlertDialogDescription asChild>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        <p>
+                           Are you absolutely sure? This will send a confirmation link to <strong>{user?.email}</strong>. 
+                           Once you click that link, all your data including images, clients, and bookings will be 
+                           permanently deleted from our servers.
+                        </p>
+                        <ul className="list-disc list-inside mt-4 space-y-1 bg-destructive/10 p-3 rounded-md text-foreground">
+                          <li>
+                            <strong>{accessInfo?.current_usage.clients || 0}</strong> client(s)
+                          </li>
+                          <li>
+                            <strong>{accessInfo?.current_usage.bookings || 0}</strong> booking(s)
+                          </li>
+                          <li>
+                            <strong>
+                              {accessInfo ? (accessInfo.current_usage.storage_gb < 0.01 && accessInfo.current_usage.storage_gb > 0 ? '<0.01' : accessInfo.current_usage.storage_gb.toFixed(2)) : '0'} GB
+                            </strong>{" "}
+                            of images and files
+                          </li>
+                          <li>
+                            <strong>All</strong> profile and business information
+                          </li>
+                        </ul>
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

@@ -197,14 +197,14 @@ const InvoiceStatusManager = ({
       // Send invoice email when status changes to pending
       if (newStatus === "pending") {
         try {
-          console.log("📄 Generating PDF for invoice send...");
+          // console.log("📄 Generating PDF for invoice send...");
           const doc = await generateInvoicePDF(updateData, user, formatCurrency);
           
           // Convert to base64
           const pdfBase64 = doc.output('datauristring').split(',')[1];
           const fileName = `Invoice_${invoice.invoice_number}.pdf`;
 
-          console.log("📧 Sending invoice email with attachment...");
+          // console.log("📧 Sending invoice email with attachment...");
           await apiClient.sendInvoiceEmail(invoice.id, pdfBase64, fileName);
           toast({
             title: "Success",
