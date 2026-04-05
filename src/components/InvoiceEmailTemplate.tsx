@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/integrations/api/client";
-import { getBaseUrl } from "@/lib/utils";
+import { getBaseUrl, APP_BASE_PATH } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
 
 interface InvoiceEmailTemplateProps {
@@ -62,10 +62,10 @@ const InvoiceEmailTemplate = ({
     if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
 
-    // Remove leading slash and /lens-booking prefix if present
+    // Remove leading slash and APP_BASE_PATH prefix if present
     let cleanPath = imagePath;
-    if (cleanPath.startsWith("/lens-booking/")) {
-      cleanPath = cleanPath.substring("/lens-booking/".length);
+    if (cleanPath.startsWith(APP_BASE_PATH)) {
+      cleanPath = cleanPath.substring(APP_BASE_PATH.length);
     } else if (cleanPath.startsWith("/")) {
       cleanPath = cleanPath.substring(1);
     }

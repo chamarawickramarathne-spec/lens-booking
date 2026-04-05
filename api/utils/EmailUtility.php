@@ -38,7 +38,7 @@ class EmailUtility
      */
     private function getBaseUrl()
     {
-        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
         // For production
@@ -47,7 +47,10 @@ class EmailUtility
         }
 
         // For local development
-        // No trailing slash to avoid double '//' when concatenating paths
+        if ($host === 'localhost' || $host === '127.0.0.1' || strpos($host, '192.168.') !== false) {
+            return $protocol . '://' . $host . '/lens-booking';
+        }
+
         return $protocol . '://' . $host;
     }
 
@@ -291,5 +294,84 @@ class EmailUtility
 </body>
 </html>';
     }
+
+    /**
+     * Send account deletion confirmation email
+     */
+    public function sendDeletionConfirmationEmail($to_email, $to_name, $token)
+    {
+        $confirmation_link = $this->base_url . '/api/auth/confirm-deletion?token=' . $token;
+
+        $subject = 'Security Notification: Action Required';
+
+        $message = $this->getDeletionEmailTemplate($to_name, $confirmation_link);
+
+        $headersArray = $this->getEmailHeadersArray();
+
+        $sent = $this->sendMail($to_email, $subject, $message, $headersArray);
+
+        if ($sent) {
+            error_log("Deletion confirmation email sent to: $to_email");
+            return true;
+        } else {
+            error_log("Failed to send deletion confirmation email to: $to_email");
+            return false;
+        }
+    }
+
+    /**
+     * Get deletion email HTML template
+     */
+    private function getDeletionEmailTemplate($name, $confirmation_link)
+    {
+        return '
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f8fafc; }
+        .wrapper { padding: 40px 20px; }
+        .container { background-color: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #e2e8f0; }
+        .header { text-align: center; margin-bottom: 24px; }
+        .logo { height: 40px; width: auto; opacity: 0.8; }
+        .title { color: #1e293b; font-size: 22px; font-weight: 600; margin-bottom: 16px; }
+        .body-text { color: #475569; font-size: 15px; margin-bottom: 20px; }
+        .btn-container { text-align: center; margin: 30px 0; }
+        .btn-secure { display: inline-block; padding: 12px 28px; background-color: #f1f5f9; color: #475569 !important; border: 1px solid #cbd5e1; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 15px; }
+        .btn-secure:hover { background-color: #e2e8f0; }
+        .footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 24px; }
+        .metadata { font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 24px; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <h1 class="title">Security Notification</h1>
+            
+            <p class="body-text">Hello ' . htmlspecialchars($name) . ',</p>
+            
+            <p class="body-text">A request has been made to deactivate and remove your account data from <strong>PhotoStudio Manager</strong>. For your security, this request must be confirmed using the secure link below.</p>
+            
+            <p class="body-text" style="color: #64748b;">If you proceed with this confirmation, your profile, clients, bookings, and all stored media will be permanently deleted from our servers.</p>
+            
+            <div class="btn-container">
+                <a href="' . htmlspecialchars($confirmation_link) . '" class="btn-secure">Securely Confirm Deletion</a>
+            </div>
+            
+            <p class="body-text" style="font-size: 14px; color: #94a3b8;">This security link is valid for 2 hours. If you did not initiate this request, no action is required and your account will remain secure.</p>
+            
+            <div class="metadata">
+                This is an automated security notification for account: ' . htmlspecialchars($name) . '
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© ' . date('Y') . ' Hire Artist. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>';
+    }
 }
-?>

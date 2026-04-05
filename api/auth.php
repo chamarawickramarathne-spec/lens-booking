@@ -10,18 +10,28 @@ require_once 'config/cors.php';
 require_once 'config/database.php';
 require_once 'models/User.php';
 require_once 'middleware/auth.php';
-
 class AuthController {
     private $database;
     private $db;
     private $user;
     private $auth;
+    private $appBasePath;
 
     public function __construct() {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->user = new User($this->db);
         $this->auth = new JWTAuth();
+        
+        // Detect environment and set base path
+        $isLocal = (
+            isset($_SERVER['HTTP_HOST']) && (
+                $_SERVER['HTTP_HOST'] === 'localhost' ||
+                $_SERVER['SERVER_NAME'] === 'localhost' ||
+                $_SERVER['SERVER_ADDR'] === '127.0.0.1'
+            )
+        );
+        $this->appBasePath = $isLocal ? '/lens-booking' : '';
     }
 
     /**
@@ -197,10 +207,9 @@ class AuthController {
 
         // Determine if we should redirect to the app after verification
         $shouldRedirect = isset($_GET['redirect']) ? ($_GET['redirect'] !== '0') : true;
-        // Base app path (the SPA lives under /lens-booking)
-        $appBasePath = '/lens-booking';
+        
         // Optional next path (must be a safe relative path)
-        $next = isset($_GET['next']) && str_starts_with($_GET['next'], '/') ? $_GET['next'] : ($appBasePath . '/');
+        $next = isset($_GET['next']) && str_starts_with($_GET['next'], '/') ? $_GET['next'] : ($this->appBasePath . '/');
 
         if ($result['status'] === 'success') {
             // Send welcome email
@@ -385,6 +394,77 @@ class AuthController {
             echo json_encode(["message" => "Failed to save file"]);
         }
     }
+
+    /**
+     * Request account deletion
+     */
+    public function requestDeletion() {
+        $user_data = $this->auth->getUserFromHeader();
+        
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        $this->user->id = $user_data['user_id'];
+        $user_info = $this->user->getById($this->user->id);
+        
+        if (!$user_info) {
+            http_response_code(404);
+            echo json_encode(["message" => "User not found"]);
+            return;
+        }
+
+        $token = $this->user->requestDeletion();
+        if ($token) {
+            require_once 'utils/EmailUtility.php';
+            $emailUtil = new EmailUtility();
+            $emailUtil->sendDeletionConfirmationEmail($user_info['email'], $user_info['full_name'], $token);
+
+            http_response_code(200);
+            echo json_encode(["message" => "Deletion request sent. Please check your email."]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to process deletion request"]);
+        }
+    }
+
+    /**
+     * Confirm account deletion
+     */
+    public function confirmDeletion() {
+        if (!isset($_GET['token'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "Token is required"]);
+            return;
+        }
+
+        $token = $_GET['token'];
+        $result = $this->user->confirmDeletion($token);
+
+        if ($result['status'] === 'success') {
+            // Render a friendly "Account Deleted" page
+            header('Content-Type: text/html; charset=UTF-8');
+            echo '<!doctype html><html><head><meta charset="utf-8">'
+               . '<title>Account Deleted</title>'
+               . '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;'
+               . 'background:#fef2f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
+               . '.card{background:#fff;padding:48px 32px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);'
+               . 'text-align:center;max-width:520px;border-top: 6px solid #ef4444}h1{margin:0 0 12px;font-size:28px;color:#991b1b}'
+               . 'p{margin:0 0 24px;color:#4b5563;line-height:1.6}a.btn{display:inline-block;background:#374151;color:#fff;'
+               . 'padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:600}</style></head><body>'
+               . '<div class="card">'
+               . '<h1>Account Deleted 🗑️</h1>'
+               . '<p>Your profile and all associated data have been permanently removed from our system. We are sorry to see you go.</p>'
+               . '<a class="btn" href="' . ($this->appBasePath ?: '/') . '/">Visit Homepage</a>'
+               . '</div></body></html>';
+            return;
+        } else {
+            http_response_code(400);
+            echo json_encode(["message" => $result['message']]);
+        }
+    }
 }
 
 // Handle request
@@ -416,6 +496,8 @@ switch ($request_method) {
             $auth_controller->uploadProfileImage();
         } elseif ($endpoint === '/resend-verification') {
             $auth_controller->resendVerification();
+        } elseif ($endpoint === '/request-deletion') {
+            $auth_controller->requestDeletion();
         } else {
             http_response_code(404);
             echo json_encode([
@@ -434,6 +516,8 @@ switch ($request_method) {
             $auth_controller->profile();
         } elseif ($endpoint === '/verify-email') {
             $auth_controller->verifyEmail();
+        } elseif ($endpoint === '/confirm-deletion') {
+            $auth_controller->confirmDeletion();
         } else {
             http_response_code(404);
             echo json_encode(["message" => "Endpoint not found"]);

@@ -23,7 +23,20 @@ import {
   Database,
   Users,
   Calendar,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -84,6 +97,7 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user, updateProfile } = useAuth();
 
@@ -243,6 +257,26 @@ const Profile = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await apiClient.requestAccountDeletion();
+      
+      toast({
+        title: "Deletion Requested",
+        description: "A confirmation link has been sent to your email. Your account will only be deleted after you click the link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to request account deletion. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -690,6 +724,59 @@ const Profile = () => {
                 )}
               </form>
             </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive/20 shadow-elegant overflow-hidden">
+          <CardHeader className="bg-destructive/5">
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="space-y-1">
+                <h4 className="font-semibold text-foreground">Delete Account Fully</h4>
+                <p className="text-sm text-muted-foreground max-w-xl">
+                  This will permanently remove your profile, business details, all clients, bookings, 
+                  galleries, and all uploaded images. A confirmation link will be sent to your email.
+                  This action is irreversible.
+                </p>
+              </div>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="shrink-0">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete My Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                   <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                       <AlertTriangle className="h-5 w-5 text-destructive" />
+                       Confirm Profile Deletion
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                       Are you absolutely sure? This will send a confirmation link to <strong>{user?.email}</strong>. 
+                       Once you click that link, all your data including images, clients, and bookings will be 
+                       permanently deleted from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Processing..." : "Send Confirmation Link"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardContent>
         </Card>
       </div>

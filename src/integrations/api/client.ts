@@ -176,6 +176,12 @@ class ApiClient {
     });
   }
 
+  async requestAccountDeletion() {
+    return this.request("/auth/request-deletion", {
+      method: "POST",
+    });
+  }
+
   async uploadProfileImage(file: File) {
     const formData = new FormData();
     formData.append("profile_image", file);

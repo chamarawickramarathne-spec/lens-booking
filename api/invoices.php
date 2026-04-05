@@ -263,17 +263,27 @@ class InvoicesController
             return;
         }
 
-        $data = json_decode(file_get_contents("php://input"), true);
+        $json = file_get_contents("php://input");
+        $data = json_decode($json, true);
+        
+        error_log("Update Invoice #$id - New Status: " . ($data['status'] ?? 'NULL'));
 
         try {
-            // Check if status is changing to pending
-            $check_query = "SELECT status, total_amount, deposit_amount, booking_id FROM " . $this->table_name . " 
+            // Get current invoice data for fallbacks
+            $check_query = "SELECT * FROM " . $this->table_name . " 
                            WHERE id = :id AND user_id = :user_id";
             $check_stmt = $this->db->prepare($check_query);
             $check_stmt->bindParam(":id", $id);
             $check_stmt->bindParam(":user_id", $user_data['user_id']);
             $check_stmt->execute();
             $old_invoice = $check_stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$old_invoice) {
+                error_log("Update Invoice #$id - INVOICE NOT FOUND or not owned by user " . $user_data['user_id']);
+                http_response_code(404);
+                echo json_encode(["message" => "Invoice not found"]);
+                return;
+            }
 
             $is_status_changing_to_pending = ($old_invoice && $old_invoice['status'] !== 'pending' && $data['status'] === 'pending');
             $is_status_changing_to_cancelled = ($old_invoice &&
@@ -289,31 +299,40 @@ class InvoicesController
 
             $stmt = $this->db->prepare($query);
 
-            // Handle optional fields with null coalescing
-            $deposit_amount = $data['deposit_amount'] ?? null;
-            $payment_date = $data['payment_date'] ?? null;
-            $notes = $data['notes'] ?? null;
-            // Map 'issue_date' from frontend to 'invoice_date' in database
-            $invoice_date = $data['issue_date'] ?? $data['invoice_date'] ?? date('Y-m-d');
+            // Use fallbacks from old_invoice for all fields
+            $client_id = $data['client_id'] ?? $old_invoice['client_id'];
+            $booking_id = $data['booking_id'] ?? $old_invoice['booking_id'];
+            $invoice_date = $data['issue_date'] ?? $data['invoice_date'] ?? $old_invoice['invoice_date'] ?? date('Y-m-d');
+            $due_date = $data['due_date'] ?? $old_invoice['due_date'];
+            $subtotal = $data['subtotal'] ?? $old_invoice['subtotal'] ?? 0;
+            $tax_amount = $data['tax_amount'] ?? $old_invoice['tax_amount'] ?? 0;
+            $total_amount = $data['total_amount'] ?? $old_invoice['total_amount'] ?? 0;
+            $deposit_amount = $data['deposit_amount'] ?? $old_invoice['deposit_amount'] ?? 0;
+            $status = $data['status'] ?? $old_invoice['status'];
+            $notes = $data['notes'] ?? $old_invoice['notes'];
+            $payment_date = $data['payment_date'] ?? $old_invoice['payment_date'];
 
-            $stmt->bindParam(":client_id", $data['client_id']);
-            $stmt->bindParam(":booking_id", $data['booking_id']);
+            $stmt->bindParam(":client_id", $client_id);
+            $stmt->bindParam(":booking_id", $booking_id);
             $stmt->bindParam(":invoice_date", $invoice_date);
-            $stmt->bindParam(":due_date", $data['due_date']);
-            $stmt->bindParam(":subtotal", $data['subtotal']);
-            $stmt->bindParam(":tax_amount", $data['tax_amount']);
-            $stmt->bindParam(":total_amount", $data['total_amount']);
+            $stmt->bindParam(":due_date", $due_date);
+            $stmt->bindParam(":subtotal", $subtotal);
+            $stmt->bindParam(":tax_amount", $tax_amount);
+            $stmt->bindParam(":total_amount", $total_amount);
             $stmt->bindParam(":deposit_amount", $deposit_amount);
-            $stmt->bindParam(":status", $data['status']);
+            $stmt->bindParam(":status", $status);
             $stmt->bindParam(":notes", $notes);
             $stmt->bindParam(":payment_date", $payment_date);
             $stmt->bindParam(":id", $id);
             $stmt->bindParam(":user_id", $user_data['user_id']);
 
             if ($stmt->execute()) {
+                error_log("Invoice $id updated successfully.");
+                
                 // Create payment schedules if status changed to pending
                 if ($is_status_changing_to_pending) {
-                    // Fetch updated invoice data to get the latest due_date
+                    error_log("Creating payment schedules for invoice $id...");
+                    // Fetch updated invoice data
                     $updated_invoice = $this->getInvoiceData($id, $user_data['user_id']);
                     $this->createPaymentSchedules($id, $updated_invoice, $user_data['user_id']);
                 }
@@ -326,10 +345,13 @@ class InvoicesController
                 http_response_code(200);
                 echo json_encode(["message" => "Invoice updated successfully"]);
             } else {
+                $errorInfo = $stmt->errorInfo();
+                error_log("Invoice $id update failed: " . json_encode($errorInfo));
                 http_response_code(500);
-                echo json_encode(["message" => "Unable to update invoice"]);
+                echo json_encode(["message" => "Unable to update invoice", "error" => $errorInfo[2]]);
             }
         } catch (Exception $e) {
+            error_log("Invoice update exception: " . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 "message" => "Failed to update invoice",

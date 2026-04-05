@@ -25,6 +25,10 @@ class User {
     public $portfolio_url;
     public $is_active;
     public $email_verified;
+    public $verification_token;
+    public $token_expires_at;
+    public $deletion_token;
+    public $deletion_token_expires_at;
     public $created_at;
     public $updated_at;
 
@@ -389,6 +393,115 @@ class User {
         }
         
         return ['status' => 'not_found', 'message' => 'Email not found'];
+    }
+
+    /**
+     * Request account deletion
+     */
+    public function requestDeletion() {
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+2 hours'));
+
+        $query = "UPDATE " . $this->table_name . " 
+                 SET deletion_token = :token, 
+                     deletion_token_expires_at = :expires 
+                 WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":token", $token);
+        $stmt->bindParam(":expires", $expires);
+        $stmt->bindParam(":id", $this->id);
+        
+        if ($stmt->execute()) {
+            return $token;
+        }
+        return false;
+    }
+
+    /**
+     * Confirm and perform account deletion
+     */
+    public function confirmDeletion($token) {
+        // 1. Find user by token
+        $query = "SELECT id, full_name, email, profile_picture FROM " . $this->table_name . " 
+                 WHERE deletion_token = :token AND deletion_token_expires_at > NOW()";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":token", $token);
+        $stmt->execute();
+
+        if ($stmt->rowCount() == 0) {
+            return ['status' => 'error', 'message' => 'Invalid or expired deletion token'];
+        }
+
+        $user_row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user_id = $user_row['id'];
+
+        // 2. Perform cleanup
+        try {
+            $this->conn->beginTransaction();
+
+            // A. Delete Profile Picture
+            if (!empty($user_row['profile_picture'])) {
+                $profile_path = dirname(__DIR__, 2) . '/' . ltrim($user_row['profile_picture'], '/');
+                if (file_exists($profile_path) && is_file($profile_path)) {
+                    unlink($profile_path);
+                }
+                
+                // Also clean up any other files following the same pattern for this user
+                $profile_dir = dirname(__DIR__, 2) . '/uploads/profiles/';
+                $pattern = $profile_dir . 'profile_' . $user_id . '_*';
+                foreach (glob($pattern) as $old_file) {
+                    if (file_exists($old_file)) {
+                        unlink($old_file);
+                    }
+                }
+            }
+
+            // B. Delete all Galleries and their images
+            $gallery_query = "SELECT id FROM galleries WHERE user_id = :user_id";
+            $gallery_stmt = $this->conn->prepare($gallery_query);
+            $gallery_stmt->bindParam(":user_id", $user_id);
+            $gallery_stmt->execute();
+            $galleries = $gallery_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($galleries as $g) {
+                $gallery_id = $g['id'];
+                // Clean up directory before database delete cascaced!
+                $gallery_dir = dirname(__DIR__, 2) . '/uploads/galleries/' . $gallery_id;
+                $this->deleteDirectory($gallery_dir);
+            }
+
+            // C. Delete all associated database records 
+            // Note: Many tables have ON DELETE CASCADE from Users table!
+            
+            // Delete clients (database says SET NULL in schema, but request says remove all records)
+            $this->conn->prepare("DELETE FROM clients WHERE user_id = ?")->execute([$user_id]);
+            
+            // D. Delete the user itself (Will cascade to most other tables)
+            $this->conn->prepare("DELETE FROM " . $this->table_name . " WHERE id = ?")->execute([$user_id]);
+
+            $this->conn->commit();
+            return ['status' => 'success', 'message' => 'Profile and all associated data deleted successfully'];
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return ['status' => 'error', 'message' => 'Deletion failed: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Recursively delete a directory
+     */
+    private function deleteDirectory($dir) {
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir)) return unlink($dir);
+
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') continue;
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+        }
+
+        return rmdir($dir);
     }
 }
 ?>

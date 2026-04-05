@@ -25,7 +25,7 @@
     <div class="test-section info">
         <h2>📋 Configuration Status</h2>
         <p><span class="status-indicator status-ok"></span><strong>React App:</strong> http://localhost:8080</p>
-        <p><span class="status-indicator status-ok"></span><strong>API Backend:</strong> http://localhost/lens-booking/api</p>
+        <p><span class="status-indicator status-ok"></span><strong>API Backend:</strong> <span id="apiBackendPath">http://localhost/lens-booking/api</span></p>
         <p><span class="status-indicator status-ok"></span><strong>Database:</strong> lens-booking-pro</p>
         <p><span class="status-indicator status-ok"></span><strong>CORS:</strong> Configured for port 8080</p>
     </div>
@@ -61,15 +61,22 @@
     </div>
 
     <script>
-        // Set unique email on load
-        document.getElementById('testEmail').value = 'diag' + Date.now() + '@example.com';
+        // Dynamically determine the base path
+        const getBasePath = () => {
+            if (window.location.hostname === "localhost") {
+                return "http://localhost/lens-booking/";
+            } else {
+                return window.location.origin + "/";
+            }
+        };
+        const baseUrl = getBasePath();
 
         async function testAPIConnection() {
             const result = document.getElementById('apiResult');
             result.innerHTML = '<p><span class="status-indicator status-pending"></span>Testing API...</p>';
             
             try {
-                const response = await fetch('http://localhost/lens-booking/api/test.php');
+                const response = await fetch(`${baseUrl}api/test.php`);
                 const data = await response.json();
                 
                 result.innerHTML = `
@@ -93,7 +100,7 @@
             result.innerHTML = '<p><span class="status-indicator status-pending"></span>Testing CORS...</p>';
             
             try {
-                const response = await fetch('http://localhost/lens-booking/api/auth/register', {
+                const response = await fetch(`${baseUrl}api/auth/register`, {
                     method: 'OPTIONS',
                     mode: 'cors'
                 });
@@ -133,7 +140,7 @@
             result.innerHTML = '<p><span class="status-indicator status-pending"></span>Testing signup...</p>';
             
             try {
-                const response = await fetch('http://localhost/lens-booking/api/auth/register', {
+                const response = await fetch(`${baseUrl}api/auth/register`, {
                     method: 'POST',
                     mode: 'cors',
                     credentials: 'omit',
@@ -192,7 +199,7 @@
             
             try {
                 // This is EXACTLY what the React API client does
-                const url = 'http://localhost/lens-booking/api/auth/register';
+                const url = `${baseUrl}api/auth/register`;
                 const config = {
                     method: 'POST',
                     mode: 'cors',
@@ -251,6 +258,8 @@
 
         // Auto-run connection test on load
         window.onload = function() {
+            document.getElementById('apiBackendPath').textContent = baseUrl + 'api';
+            document.getElementById('testEmail').value = 'diag' + Date.now() + '@example.com';
             testAPIConnection();
         };
     </script>

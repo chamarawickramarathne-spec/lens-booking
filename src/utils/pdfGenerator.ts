@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import { getBaseUrl } from "@/lib/utils";
+import { getBaseUrl, APP_BASE_PATH } from "@/lib/utils";
 
 const loadImageAsBase64 = async (
   url: string,
@@ -61,8 +61,8 @@ const getImageUrl = (imagePath: string | undefined) => {
     try {
       const url = new URL(imagePath);
       cleanPath = url.pathname;
-      if (cleanPath.startsWith("/lens-booking/")) {
-        cleanPath = cleanPath.substring("/lens-booking/".length);
+      if (cleanPath.startsWith(APP_BASE_PATH)) {
+        cleanPath = cleanPath.substring(APP_BASE_PATH.length);
       } else if (cleanPath.startsWith("/")) {
         cleanPath = cleanPath.substring(1);
       }
@@ -70,8 +70,8 @@ const getImageUrl = (imagePath: string | undefined) => {
       return "";
     }
   } else {
-    if (cleanPath.startsWith("/lens-booking/")) {
-      cleanPath = cleanPath.substring("/lens-booking/".length);
+    if (cleanPath.startsWith(APP_BASE_PATH)) {
+      cleanPath = cleanPath.substring(APP_BASE_PATH.length);
     } else if (cleanPath.startsWith("/")) {
       cleanPath = cleanPath.substring(1);
     }
