@@ -26,6 +26,11 @@ import {
   Rss,
   Info,
   X,
+  Lock,
+  Download as DownloadIcon,
+  Heart as HeartIcon,
+  Share2,
+  Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
@@ -38,6 +43,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +59,9 @@ interface Gallery {
   event_date?: string;
   cover_image?: string;
   is_public?: boolean;
+  download_enabled?: boolean;
+  favorites_enabled?: boolean;
+  share_enabled?: boolean;
 }
 
 interface GalleryImage {
@@ -59,6 +69,8 @@ interface GalleryImage {
   image_url: string;
   image_name?: string;
   file_size?: number;
+  set_name?: string;
+  likes_count?: number;
 }
 
 interface GalleryImagesManagerProps {
@@ -77,6 +89,9 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
   const [settingsTab, setSettingsTab] = useState("general");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [activeSet, setActiveSet] = useState("Highlights");
+  const [newSetName, setNewSetName] = useState("");
+  const [isAddSetOpen, setIsAddSetOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -86,6 +101,58 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
     // Remove /api/ prefix if it exists in DB path
     const cleanPath = path.replace(/^\/?api\//, "").replace(/^\//, "");
     return `${API_BASE_URL}/get-image.php?path=${encodeURIComponent(cleanPath)}`;
+  };
+
+  const sets = Array.from(new Set(images.map(img => img.set_name || "Highlights")));
+  if (!sets.includes("Highlights")) sets.unshift("Highlights");
+  
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [gallerySettings, setGallerySettings] = useState({
+    download_enabled: gallery.download_enabled ?? true,
+    favorites_enabled: gallery.favorites_enabled ?? true,
+    share_enabled: gallery.share_enabled ?? true,
+    is_public: gallery.is_public ?? true
+  });
+
+  const handleUpdateSettings = async (updates: Partial<typeof gallerySettings>) => {
+    setIsUpdatingSettings(true);
+    const newSettings = { ...gallerySettings, ...updates };
+    try {
+      await apiClient.updateGallery(gallery.id, {
+        title: gallery.title,
+        ...newSettings
+      });
+      setGallerySettings(newSettings);
+      toast({
+        title: "Success",
+        description: "Gallery settings updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  const filteredImages = images.filter(img => (img.set_name || "Highlights") === activeSet);
+
+  const handleCreateSet = () => {
+    if (!newSetName.trim()) return;
+    if (sets.includes(newSetName.trim())) {
+      toast({
+        title: "Error",
+        description: "Set name already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+    setActiveSet(newSetName.trim());
+    setNewSetName("");
+    setIsAddSetOpen(false);
   };
 
   const fetchImages = useCallback(async () => {
@@ -141,7 +208,7 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
     setIsUploading(true);
     try {
       for (const file of files) {
-        await apiClient.uploadGalleryImage(gallery.id, file);
+        await apiClient.uploadGalleryImage(gallery.id, file, activeSet);
       }
       toast({
         title: "Success",
@@ -427,17 +494,46 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between uppercase text-[10px] font-bold tracking-widest text-[#9CA3AF] px-1">
                     <span>Photos</span>
-                    <span className="flex items-center gap-1 text-primary cursor-pointer hover:underline">
-                      <Plus className="h-3 w-3" /> Add Set
-                    </span>
+                    <Dialog open={isAddSetOpen} onOpenChange={setIsAddSetOpen}>
+                      <DialogTrigger asChild>
+                        <span className="flex items-center gap-1 text-primary cursor-pointer hover:underline">
+                          <Plus className="h-3 w-3" /> Add Set
+                        </span>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Create New Set</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex items-center space-x-2 py-4">
+                          <div className="grid flex-1 gap-2">
+                            <Input
+                              placeholder="Set Name (e.g. Ceremony, Reception)"
+                              value={newSetName}
+                              onChange={(e) => setNewSetName(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleCreateSet()}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button variant="outline" onClick={() => setIsAddSetOpen(false)}>Cancel</Button>
+                          <Button onClick={handleCreateSet}>Create Set</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                   
                   <div className="space-y-1">
-                    <div className="flex items-center gap-3 px-3 py-2.5 bg-primary/5 text-primary border-l-2 border-primary cursor-pointer group rounded-r-md">
-                      <GripVertical className="h-4 w-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100" />
-                      <span className="text-sm font-semibold flex-1">Highlights ({images.length})</span>
-                      <MoreHorizontal className="h-4 w-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100" />
-                    </div>
+                    {sets.map((setName) => (
+                      <div 
+                        key={setName}
+                        onClick={() => setActiveSet(setName)}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer group rounded-md transition-all ${activeSet === setName ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
+                      >
+                        <GripVertical className="h-4 w-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100" />
+                        <span className="text-sm flex-1">{setName} ({images.filter(img => (img.set_name || "Highlights") === setName).length})</span>
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -454,7 +550,7 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
           {activeTab === 'photos' ? (
             <div className="max-w-6xl mx-auto p-8 space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-[#111827]">Highlights</h2>
+              <h2 className="text-2xl font-bold text-[#111827]">{activeSet}</h2>
               <div className="flex items-center gap-4">
                 <div>
                   <Input
@@ -492,7 +588,7 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                 <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
                 <p className="text-muted-foreground font-medium">Loading collection...</p>
               </div>
-            ) : images.length === 0 ? (
+            ) : filteredImages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center border-2 border-dashed rounded-xl bg-secondary/5">
                 <div className="h-16 w-16 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
                   <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
@@ -501,16 +597,24 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                 <p className="text-sm text-muted-foreground mb-6">Start by adding some beautiful photos to this collection.</p>
                 <label htmlFor="media-upload" className="cursor-pointer">
                   <Button variant="outline" className="font-semibold" asChild>
-                    <span>Upload First Photo</span>
+                    <span>Upload to {activeSet}</span>
                   </Button>
                 </label>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {images.map((img) => (
+                {filteredImages.map((img) => (
                   <div key={img.id} className="group relative aspect-square overflow-hidden rounded-lg border bg-secondary/10 shadow-sm transition-all hover:shadow-md">
                     <img src={getImageUrl(img.image_url)} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    {(img.likes_count || 0) > 0 && (
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-red-500 flex items-center gap-1 shadow-sm">
+                        <HeartIcon className="h-3 w-3 fill-current" />
+                        {img.likes_count}
+                      </div>
+                    )}
+
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
                         size="icon" 
@@ -526,11 +630,84 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
               </div>
             )}
           </div>
+          ) : activeTab === 'settings' ? (
+            <div className="max-w-3xl mx-auto p-12 space-y-12">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold text-gray-900">Gallery Settings</h1>
+                <p className="text-muted-foreground">Configure how your clients interact with this gallery.</p>
+              </div>
+
+              <div className="space-y-8 divide-y">
+                {/* Public Access */}
+                <div className="pt-0 flex items-center justify-between gap-8 group">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-5 w-5 text-gray-500" />
+                      <Label className="text-base font-bold text-gray-900">Public Access</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">When disabled, this gallery will only be visible to you.</p>
+                  </div>
+                  <Switch 
+                    checked={gallerySettings.is_public}
+                    onCheckedChange={(val) => handleUpdateSettings({ is_public: val })}
+                    disabled={isUpdatingSettings}
+                  />
+                </div>
+
+                {/* Download */}
+                <div className="pt-8 flex items-center justify-between gap-8 group">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <DownloadIcon className="h-5 w-5 text-gray-500" />
+                      <Label className="text-base font-bold text-gray-900">Allow Downloads</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Give clients the ability to download full-resolution images.</p>
+                  </div>
+                  <Switch 
+                    checked={gallerySettings.download_enabled}
+                    onCheckedChange={(val) => handleUpdateSettings({ download_enabled: val })}
+                    disabled={isUpdatingSettings}
+                  />
+                </div>
+
+                {/* Favorites */}
+                <div className="pt-8 flex items-center justify-between gap-8 group">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <HeartIcon className="h-5 w-5 text-gray-500" />
+                      <Label className="text-base font-bold text-gray-900">Enable Favorites (Like)</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Allow clients to click the heart icon and save their favorite photos.</p>
+                  </div>
+                  <Switch 
+                    checked={gallerySettings.favorites_enabled}
+                    onCheckedChange={(val) => handleUpdateSettings({ favorites_enabled: val })}
+                    disabled={isUpdatingSettings}
+                  />
+                </div>
+
+                {/* Sharing */}
+                <div className="pt-8 flex items-center justify-between gap-8 group">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Share2 className="h-5 w-5 text-gray-500" />
+                      <Label className="text-base font-bold text-gray-900">Social Sharing</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Add a quick share button for clients to share the gallery link.</p>
+                  </div>
+                  <Switch 
+                    checked={gallerySettings.share_enabled}
+                    onCheckedChange={(val) => handleUpdateSettings({ share_enabled: val })}
+                    disabled={isUpdatingSettings}
+                  />
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-24 text-center">
               <Zap className="h-12 w-12 mb-4 opacity-20" />
               <p className="text-xl font-medium italic mb-2">Feature coming soon!</p>
-              <p className="text-sm opacity-60">Additional features and settings are being prepared for your collections.</p>
+              <p className="text-sm opacity-60">Additional features are being prepared for your collections.</p>
             </div>
           )}
         </div>

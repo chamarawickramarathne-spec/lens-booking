@@ -326,9 +326,12 @@ class ApiClient {
     return this.request(url);
   }
 
-  async uploadGalleryImage(galleryId: number, file: File) {
+  async uploadGalleryImage(galleryId: number, file: File, setName?: string) {
     const formData = new FormData();
     formData.append("gallery_image", file);
+    if (setName) {
+      formData.append("set_name", setName);
+    }
 
     const url = `${this.baseURL}/galleries/${galleryId}/upload`;
     const headers: HeadersInit = {};
@@ -376,6 +379,12 @@ class ApiClient {
     } catch (error) {
       throw error;
     }
+  }
+
+  async likeImage(galleryId: number, imageId: number) {
+    return this.request(`/galleries/${galleryId}/images/${imageId}/like`, {
+      method: "POST",
+    });
   }
 
   async deleteGalleryImage(galleryId: number, imageId: number) {

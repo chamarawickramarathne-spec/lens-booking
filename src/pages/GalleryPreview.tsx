@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "@/integrations/api/client";
 import { API_BASE_URL } from "@/lib/utils";
-import { Loader2, Heart, ArrowRight, Lock, Key } from "lucide-react";
+import { Loader2, Heart, ArrowRight, Lock, Key, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -13,12 +13,16 @@ interface GalleryData {
   event_date: string;
   cover_image: string;
   download_enabled: boolean;
+  favorites_enabled: boolean;
+  share_enabled: boolean;
   password_required: boolean;
   unlocked: boolean;
   images: Array<{
     id: number;
     image_url: string;
     image_name: string;
+    set_name?: string;
+    likes_count?: number;
   }>;
 }
 
@@ -27,8 +31,17 @@ const GalleryPreview = () => {
   const [gallery, setGallery] = useState<GalleryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeSet, setActiveSet] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [likedImages, setLikedImages] = useState<number[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`gallery_likes_${id}`);
+    if (saved) {
+      setLikedImages(JSON.parse(saved));
+    }
+  }, [id]);
 
   const fetchGallery = useCallback(async (providedPassword?: string) => {
     if (!id) return;
@@ -77,6 +90,32 @@ const GalleryPreview = () => {
     if (path.startsWith("http")) return path;
     const cleanPath = path.replace(/^\/?api\//, "").replace(/^\//, "");
     return `${API_BASE_URL}/get-image.php?path=${encodeURIComponent(cleanPath)}`;
+  };
+
+  const handleLike = async (imageId: number) => {
+    if (likedImages.includes(imageId) || !gallery) return;
+
+    try {
+      await apiClient.likeImage(gallery.id, imageId);
+      const newLikes = [...likedImages, imageId];
+      setLikedImages(newLikes);
+      localStorage.setItem(`gallery_likes_${id}`, JSON.stringify(newLikes));
+
+      // Update local gallery data count
+      setGallery(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          images: prev.images.map(img => 
+            img.id === imageId 
+              ? { ...img, likes_count: (img.likes_count || 0) + 1 }
+              : img
+          )
+        };
+      });
+    } catch (err) {
+      console.error("Failed to like image:", err);
+    }
   };
 
   if (isLoading) {
@@ -161,6 +200,18 @@ const GalleryPreview = () => {
   }
 
   // If unlocked, show the gallery
+  const sets = gallery?.images ? Array.from(new Set(gallery.images.map(img => img.set_name || "Highlights"))) : [];
+  
+  // Sort sets to put "Highlights" first if it exists
+  const sortedSets = [...sets].sort((a, b) => {
+    if (a === "Highlights") return -1;
+    if (b === "Highlights") return 1;
+    return 0;
+  });
+
+  const currentSet = activeSet || (sortedSets.length > 0 ? sortedSets[0] : "Highlights");
+  const filteredImages = gallery?.images?.filter(img => (img.set_name || "Highlights") === currentSet) || [];
+
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a]">
       {/* Hero Section */}
@@ -220,17 +271,36 @@ const GalleryPreview = () => {
           <p className="text-sm text-muted-foreground uppercase tracking-widest">Glamour Photo</p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 transition-colors">
-            <Heart className="h-5 w-5" />
-          </Button>
-        </div>
       </div>
+
+      {/* Gallery Tabs (Sets) */}
+      {sortedSets.length > 1 && (
+        <div className="max-w-7xl mx-auto px-4 mt-8">
+          <div className="flex items-center gap-8 border-b-2 border-gray-100 pb-0 overflow-x-auto scroller-hide">
+            {sortedSets.map((setName) => (
+              <button
+                key={setName}
+                onClick={() => setActiveSet(setName)}
+                className={`py-4 text-xs font-bold uppercase tracking-[0.2em] relative transition-all duration-300 ${
+                  currentSet === setName 
+                    ? 'text-black' 
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {setName}
+                {currentSet === setName && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Gallery Grid */}
       <div id="gallery-grid" className={`max-w-[1600px] mx-auto px-4 py-12 ${!gallery.download_enabled ? 'select-none' : ''}`}>
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-          {gallery.images.map((img) => (
+          {filteredImages.map((img) => (
             <div 
               key={img.id} 
               className="relative group overflow-hidden bg-gray-100 transition-all duration-500 break-inside-avoid"
@@ -243,10 +313,50 @@ const GalleryPreview = () => {
                 loading="lazy"
                 draggable={gallery.download_enabled}
               />
-              {!gallery.download_enabled && (
-                <div className="absolute inset-0 z-10 bg-transparent" />
-              )}
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                {gallery.favorites_enabled && (
+                  <button 
+                    onClick={() => handleLike(img.id)}
+                    className={`h-10 px-3 rounded-full backdrop-blur-sm flex items-center justify-center gap-2 transition-all shadow-lg ${likedImages.includes(img.id) ? 'bg-red-500 text-white' : 'bg-white/90 text-gray-800 hover:text-red-500 hover:scale-105'}`}
+                    title={likedImages.includes(img.id) ? "Liked" : "Like"}
+                  >
+                    <Heart className={`h-5 w-5 ${likedImages.includes(img.id) ? 'fill-current' : ''}`} />
+                    {(img.likes_count || 0) > 0 && (
+                      <span className="text-xs font-bold">{img.likes_count}</span>
+                    )}
+                  </button>
+                )}
+                
+                {gallery.download_enabled && (
+                  <button 
+                    onClick={() => window.open(getImageUrl(img.image_url), '_blank')}
+                    className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-primary hover:scale-110 transition-all shadow-lg"
+                    title="Download"
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                )}
+
+                {gallery.share_enabled && (
+                  <button 
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: gallery.title,
+                          url: window.location.href
+                        }).catch(console.error);
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("Link copied to clipboard!");
+                      }
+                    }}
+                    className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-blue-500 hover:scale-110 transition-all shadow-lg"
+                    title="Share"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

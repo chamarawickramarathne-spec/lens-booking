@@ -43,6 +43,9 @@ class GalleriesController
                 'event_date' => $g['gallery_date'],
                 'cover_image' => $g['cover_image'] ?: $g['first_image'],
                 'is_public' => (bool) $g['is_public'],
+                'download_enabled' => (bool) $g['download_enabled'],
+                'favorites_enabled' => (bool) $g['favorites_enabled'],
+                'share_enabled' => (bool) $g['share_enabled'],
                 'image_count' => $g['image_count'],
                 'created_at' => $g['created_at']
             ];
@@ -69,6 +72,9 @@ class GalleriesController
                 'event_date' => $g['gallery_date'],
                 'cover_image' => $g['cover_image'] ?: ($g['first_image'] ?? null),
                 'is_public' => (bool) $g['is_public'],
+                'download_enabled' => (bool) $g['download_enabled'],
+                'favorites_enabled' => (bool) $g['favorites_enabled'],
+                'share_enabled' => (bool) $g['share_enabled'],
                 'created_at' => $g['created_at']
             ];
             echo json_encode($formatted);
@@ -95,6 +101,8 @@ class GalleriesController
         $this->gallery->gallery_date = $data['event_date'] ?? date('Y-m-d');
         $this->gallery->booking_id = $data['booking_id'] ?? null;
         $this->gallery->is_public = $data['is_public'] ?? false;
+        $this->gallery->favorites_enabled = $data['favorites_enabled'] ?? true;
+        $this->gallery->share_enabled = $data['share_enabled'] ?? true;
 
         if ($this->gallery->create()) {
             http_response_code(201);
@@ -134,6 +142,8 @@ class GalleriesController
         $this->gallery->password_protected = isset($data['password_protected']) ? $data['password_protected'] : $existing['password_protected'];
         $this->gallery->gallery_password = isset($data['gallery_password']) ? $data['gallery_password'] : $existing['gallery_password'];
         $this->gallery->download_enabled = isset($data['download_enabled']) ? $data['download_enabled'] : $existing['download_enabled'];
+        $this->gallery->favorites_enabled = isset($data['favorites_enabled']) ? $data['favorites_enabled'] : $existing['favorites_enabled'];
+        $this->gallery->share_enabled = isset($data['share_enabled']) ? $data['share_enabled'] : $existing['share_enabled'];
         $this->gallery->expiry_date = isset($data['expiry_date']) ? $data['expiry_date'] : $existing['expiry_date'];
 
         if ($this->gallery->update()) {
@@ -210,6 +220,8 @@ class GalleriesController
                 'cover_image' => $g['cover_image'] ?: ($g['first_image'] ?? null),
                 'is_public' => (bool) $g['is_public'],
                 'download_enabled' => (bool) $g['download_enabled'],
+                'favorites_enabled' => (bool) $g['favorites_enabled'],
+                'share_enabled' => (bool) $g['share_enabled'],
                 'password_required' => (bool) $g['password_protected'],
                 'created_at' => $g['created_at'],
             ];
@@ -224,7 +236,9 @@ class GalleriesController
                     return [
                         'id' => $img['id'],
                         'image_url' => $img['image_url'],
-                        'image_name' => $img['image_name']
+                        'image_name' => $img['image_name'],
+                        'set_name' => $img['set_name'] ?? 'Highlights',
+                        'likes_count' => (int) ($img['likes_count'] ?? 0)
                     ];
                 }, $images);
                 $formatted['unlocked'] = true;
@@ -377,9 +391,11 @@ class GalleriesController
             $filename = time() . '_' . preg_replace("/[^a-zA-Z0-9.]/", "_", basename($file['name']));
             $filepath = $upload_dir . $filename;
 
+            $set_name = $_POST['set_name'] ?? 'Highlights';
+
             if (move_uploaded_file($file['tmp_name'], $filepath)) {
                 $web_path = 'uploads/galleries/' . $id . '/' . $filename;
-                if ($this->gallery->addImage($id, $web_path, $file['name'], $file['size'])) {
+                if ($this->gallery->addImage($id, $web_path, $file['name'], $file['size'], $set_name)) {
                     echo json_encode(["message" => "Image uploaded", "url" => $web_path]);
                 } else {
                     error_log("Database error: Failed to save image record for gallery " . $id);
@@ -395,6 +411,16 @@ class GalleriesController
             error_log("Upload Exception: " . $e->getMessage());
             http_response_code(500);
             echo json_encode(["message" => "Internal server error during upload", "details" => $e->getMessage()]);
+        }
+    }
+
+    public function likeImage($image_id)
+    {
+        if ($this->gallery->likeImage($image_id)) {
+            echo json_encode(["message" => "Image liked"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Failed to like image"]);
         }
     }
 }
@@ -428,6 +454,10 @@ if (preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
 } elseif (preg_match('/^\/(\d+)\/public$/', $endpoint, $matches)) {
     $id = (int) $matches[1];
     $sub = 'public';
+} elseif (preg_match('/^\/(\d+)\/images\/(\d+)\/like$/', $endpoint, $matches)) {
+    $id = (int) $matches[1];
+    $sub = 'like';
+    $sub_id = (int) $matches[2];
 }
 
 switch ($method) {
@@ -444,6 +474,8 @@ switch ($method) {
     case 'POST':
         if ($sub === 'upload')
             $controller->uploadImage($id);
+        elseif ($sub === 'like' && $sub_id)
+            $controller->likeImage($sub_id);
         else
             $controller->create();
         break;

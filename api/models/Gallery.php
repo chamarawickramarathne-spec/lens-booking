@@ -21,6 +21,8 @@ class Gallery
     public $password_protected;
     public $gallery_password;
     public $download_enabled;
+    public $favorites_enabled;
+    public $share_enabled;
     public $expiry_date;
     public $created_at;
     public $updated_at;
@@ -40,6 +42,7 @@ class Gallery
                      description=:description, gallery_date=:gallery_date, cover_image=:cover_image,
                      is_public=:is_public, password_protected=:password_protected, 
                      gallery_password=:gallery_password, download_enabled=:download_enabled, 
+                     favorites_enabled=:favorites_enabled, share_enabled=:share_enabled,
                      expiry_date=:expiry_date";
 
         $stmt = $this->conn->prepare($query);
@@ -55,6 +58,8 @@ class Gallery
         $stmt->bindValue(":password_protected", $this->password_protected ? 1 : 0);
         $stmt->bindParam(":gallery_password", $this->gallery_password);
         $stmt->bindValue(":download_enabled", $this->download_enabled ? 1 : 0);
+        $stmt->bindValue(":favorites_enabled", $this->favorites_enabled ? 1 : 0);
+        $stmt->bindValue(":share_enabled", $this->share_enabled ? 1 : 0);
         $stmt->bindParam(":expiry_date", $this->expiry_date);
 
         if ($stmt->execute()) {
@@ -131,6 +136,7 @@ class Gallery
                      gallery_date=:gallery_date, cover_image=:cover_image,
                      is_public=:is_public, password_protected=:password_protected, 
                      gallery_password=:gallery_password, download_enabled=:download_enabled, 
+                     favorites_enabled=:favorites_enabled, share_enabled=:share_enabled,
                      expiry_date=:expiry_date, updated_at=CURRENT_TIMESTAMP
                  WHERE id=:id AND user_id=:user_id";
 
@@ -145,6 +151,8 @@ class Gallery
         $stmt->bindValue(":password_protected", $this->password_protected ? 1 : 0);
         $stmt->bindParam(":gallery_password", $this->gallery_password);
         $stmt->bindValue(":download_enabled", $this->download_enabled ? 1 : 0);
+        $stmt->bindValue(":favorites_enabled", $this->favorites_enabled ? 1 : 0);
+        $stmt->bindValue(":share_enabled", $this->share_enabled ? 1 : 0);
         $stmt->bindParam(":expiry_date", $this->expiry_date);
         $stmt->bindParam(":id", $this->id);
         $stmt->bindParam(":user_id", $this->user_id);
@@ -170,17 +178,18 @@ class Gallery
     /**
      * Gallery Images methods
      */
-    public function addImage($gallery_id, $image_url, $image_name = null, $file_size = null)
+    public function addImage($gallery_id, $image_url, $image_name = null, $file_size = null, $set_name = 'Highlights')
     {
         $query = "INSERT INTO " . $this->images_table . " 
                  SET gallery_id=:gallery_id, image_url=:image_url, 
-                     image_name=:image_name, file_size=:file_size";
+                     image_name=:image_name, file_size=:file_size, set_name=:set_name";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":gallery_id", $gallery_id);
         $stmt->bindParam(":image_url", $image_url);
         $stmt->bindParam(":image_name", $image_name);
         $stmt->bindParam(":file_size", $file_size);
+        $stmt->bindParam(":set_name", $set_name);
 
         return $stmt->execute();
     }
@@ -196,6 +205,18 @@ class Gallery
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function likeImage($image_id)
+    {
+        $query = "UPDATE " . $this->images_table . " 
+                 SET likes_count = likes_count + 1 
+                 WHERE id = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $image_id);
+
+        return $stmt->execute();
     }
 
     public function deleteImage($image_id, $gallery_id)
