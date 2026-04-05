@@ -21,12 +21,7 @@ import {
   GripVertical,
   MoreHorizontal,
   Loader2,
-  Lock,
-  Download,
-  Heart,
-  ShoppingCart,
   RefreshCw,
-  Wrench,
   Palette,
   Rss,
   Info,
@@ -43,15 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -344,14 +330,6 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
             <Eye className="h-4 w-4" /> Preview
           </Button>
           
-          <div className="flex items-center bg-primary rounded-md overflow-hidden h-9 ml-2 shadow-sm">
-            <Button className="bg-primary hover:bg-primary/90 text-white border-r border-white/20 h-full px-4 rounded-none shadow-none font-medium">
-              Share
-            </Button>
-            <Button variant="outline" className="bg-primary hover:bg-primary/90 text-white border-none h-full px-2 rounded-none shadow-none">
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -463,55 +441,6 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                   </div>
                 </div>
               </div>
-            ) : activeTab === 'settings' ? (
-              <div className="flex flex-col">
-                <div className="p-4 uppercase text-[10px] font-bold tracking-widest text-[#9CA3AF]">
-                  Settings
-                </div>
-                <div className="space-y-1">
-                  <button 
-                    onClick={() => setSettingsTab('general')}
-                    className={`w-full flex items-center gap-4 px-6 py-4 transition-colors ${settingsTab === 'general' ? 'bg-[#F3F4F6] text-[#111827] border-l-4 border-[#10B981]' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                  >
-                    <Wrench className="h-5 w-5" />
-                    <span className="text-base font-medium">General</span>
-                  </button>
-                  <button 
-                    onClick={() => setSettingsTab('privacy')}
-                    className={`w-full flex items-center gap-4 px-6 py-4 transition-colors ${settingsTab === 'privacy' ? 'bg-[#F3F4F6] text-[#111827] border-l-4 border-[#10B981]' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                  >
-                    <Lock className="h-5 w-5" />
-                    <span className="text-base font-medium">Privacy</span>
-                  </button>
-                  <div className="flex items-center justify-between px-6 py-4 text-[#4B5563] hover:bg-gray-50 group">
-                    <button 
-                      onClick={() => setSettingsTab('download')}
-                      className="flex items-center gap-4 flex-1 text-left"
-                    >
-                      <Download className="h-5 w-5" />
-                      <span className="text-base font-medium">Download</span>
-                    </button>
-                    <Badge variant="secondary" className="bg-[#F3F4F6] text-[10px] font-bold uppercase rounded-full px-3 py-0.5">OFF</Badge>
-                  </div>
-                  <div className="flex items-center justify-between px-6 py-4 text-[#4B5563] hover:bg-gray-50 group">
-                    <button 
-                      onClick={() => setSettingsTab('favorite')}
-                      className="flex items-center gap-4 flex-1 text-left"
-                    >
-                      <Heart className="h-5 w-5" />
-                      <span className="text-base font-medium">Favorite</span>
-                    </button>
-                    <Badge className="bg-[#ECFDF5] text-[#059669] text-[10px] font-bold uppercase rounded-full px-3 py-0.5 shadow-none hover:bg-[#ECFDF5]">ON</Badge>
-                  </div>
-                  <div className="flex items-center justify-between px-6 py-4 text-[#4B5563] hover:bg-gray-50 opacity-60">
-                    <div className="flex items-center gap-4">
-                      <ShoppingCart className="h-5 w-5" />
-                      <span className="text-base font-medium">Store</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-[#F3F4F6] text-[10px] font-bold uppercase rounded-full px-3 py-0.5 whitespace-nowrap">COMING SOON</Badge>
-                  </div>
-                </div>
-              </div>
             ) : (
               <div className="p-8 text-center text-muted-foreground italic text-sm">
                 Additional features coming soon...
@@ -597,199 +526,11 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
               </div>
             )}
           </div>
-          ) : activeTab === 'settings' ? (
-            <div className="max-w-4xl mx-auto p-12 space-y-12">
-              {settingsTab === 'general' && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-[#111827]">General Settings</h1>
-                    <Info className="h-4 w-4 text-[#9CA3AF] cursor-help" />
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Collection Contact</Label>
-                      <p className="text-sm text-[#6B7280]">Link this collection to one or more contacts and view in Studio Manager. <span className="text-[#10B981] cursor-pointer hover:underline font-medium">Learn more</span></p>
-                      <Button variant="ghost" className="text-[#10B981] hover:text-[#059669] hover:bg-transparent p-0 flex items-center gap-2 font-medium">
-                        <Plus className="h-4 w-4" /> Add Contact
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Collection URL</Label>
-                      <div className="max-w-xl">
-                        <Input 
-                          defaultValue={gallery.title.toLowerCase().replace(/\s+/g, '-')} 
-                          className="h-12 border-gray-200 focus:ring-1 focus:ring-[#10B981] focus:border-[#10B981]"
-                        />
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Choose a unique url for visitors to access your collection.</p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Category Tags</Label>
-                      <div className="max-w-xl">
-                        <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-white border-gray-200 min-h-[48px] focus-within:ring-1 focus-within:ring-[#10B981] focus-within:border-[#10B981]">
-                          {tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="bg-[#F3F4F6] text-[#4B5563] border-none font-medium px-2 py-0.5 flex items-center gap-1">
-                              {tag}
-                              <button 
-                                onClick={() => setTags(tags.filter((_, i) => i !== index))}
-                                className="hover:text-destructive text-muted-foreground/50 transition-colors"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                          <input
-                            type="text"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (tagInput.trim()) {
-                                  setTags([...tags, tagInput.trim()]);
-                                  setTagInput("");
-                                }
-                              }
-                            }}
-                            className="flex-1 bg-transparent border-none focus:outline-none text-sm min-w-[120px] h-7"
-                            placeholder={tags.length === 0 ? "Add tags e.g. wedding, outdoor..." : ""}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Add tags to categorize different collections. Press Enter to add each tag.</p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Default Watermark</Label>
-                      <div className="max-w-xl">
-                        <Select defaultValue="glamour">
-                          <SelectTrigger className="h-12 border-gray-200">
-                            <SelectValue placeholder="Select watermark" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No Watermark</SelectItem>
-                            <SelectItem value="glamour">Glamour watermark</SelectItem>
-                            <SelectItem value="custom">Custom watermark</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {settingsTab === 'privacy' && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <h1 className="text-3xl font-bold text-[#111827]">Privacy Settings</h1>
-
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Collection Password</Label>
-                      <div className="max-w-xl relative">
-                        <Input 
-                          placeholder="Add a password" 
-                          className="h-12 pr-24 border-gray-200 focus:ring-1 focus:ring-[#10B981] focus:border-[#10B981]"
-                        />
-                        <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[#10B981] flex items-center gap-1.5 text-sm font-semibold hover:text-[#059669]">
-                          <RefreshCw className="h-3.5 w-3.5" /> Generate
-                        </button>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Require visitors to enter this password in order to see the collection.</p>
-                    </div>
-
-                    <div className="space-y-3 opacity-60">
-                      <Label className="text-base font-bold text-[#111827]">Show on Homepage</Label>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="bg-[#F3F4F6] text-[10px] font-bold uppercase rounded-full px-3 py-0.5 whitespace-nowrap">COMING SOON</Badge>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Show this collection on your <span className="text-[#10B981] font-medium">Homepage</span>. Manage Homepage in <span className="text-[#10B981] font-medium">Homepage settings</span>.</p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Client Exclusive Access</Label>
-                      <div className="flex items-center gap-3">
-                        <Switch id="exclusive-access" />
-                        <Label htmlFor="exclusive-access" className="text-sm text-[#111827] font-medium">Off</Label>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Give clients exclusive access to sets and the ability to mark photos private. <span className="text-[#10B981] cursor-pointer hover:underline font-medium">Learn more</span></p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {settingsTab === 'download' && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-[#111827]">Download Settings</h1>
-                    <Info className="h-4 w-4 text-[#9CA3AF] cursor-help" />
-                  </div>
-
-                  <div className="space-y-8">
-                    <h2 className="text-lg font-bold text-[#111827] border-b-2 border-[#10B981] inline-block pb-1">General Settings</h2>
-                    
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold text-[#111827]">Photo Download</Label>
-                      <div className="flex items-center gap-3">
-                        <Switch id="photo-download" />
-                        <Label htmlFor="photo-download" className="text-sm text-[#111827] font-medium">Off</Label>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Allow visitors to download photos in your gallery</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {settingsTab === 'favorite' && (
-                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-[#111827]">Favorite Settings</h1>
-                    <Info className="h-4 w-4 text-[#9CA3AF] cursor-help" />
-                  </div>
-
-                  <div className="space-y-10">
-                    <div className="space-y-4">
-                      <Label className="text-base font-bold text-[#111827]">Favorite Photos</Label>
-                      <div className="flex items-center gap-3">
-                        <Switch id="favorite-photos" defaultChecked />
-                        <Label htmlFor="favorite-photos" className="text-sm text-[#111827] font-medium">On</Label>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Allow visitors to favorite photos. You can review these afterwards in Favorite Activity.</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <Label className="text-base font-bold text-[#111827]">Favorite Notes</Label>
-                      <div className="flex items-center gap-3">
-                        <Switch id="favorite-notes" defaultChecked />
-                        <Label htmlFor="favorite-notes" className="text-sm text-[#111827] font-medium">On</Label>
-                      </div>
-                      <p className="text-sm text-[#6B7280]">Allow clients to add notes to photos they have favorited. <span className="text-[#10B981] cursor-pointer hover:underline font-medium">Learn more</span></p>
-                    </div>
-
-                    <div className="bg-[#F8FAFC] border border-gray-100 p-8 rounded-lg space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="h-10 w-10 flex items-center justify-center text-[#10B981]">
-                          <Heart className="h-8 w-8" />
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="font-bold text-[#111827]">Preset Favorite Lists</h3>
-                          <p className="text-sm text-[#6B7280] leading-relaxed max-w-lg">
-                            Create Favorite lists and set selection limits for your clients to make selections for albums, free downloads, retouching and more.
-                          </p>
-                          <button className="text-[#10B981] font-bold text-sm hover:underline pt-2">Create Favorite List</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-12">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-24 text-center">
               <Zap className="h-12 w-12 mb-4 opacity-20" />
-              <p className="text-lg font-medium italic">Design and Feedback tools coming soon...</p>
+              <p className="text-xl font-medium italic mb-2">Feature coming soon!</p>
+              <p className="text-sm opacity-60">Additional features and settings are being prepared for your collections.</p>
             </div>
           )}
         </div>

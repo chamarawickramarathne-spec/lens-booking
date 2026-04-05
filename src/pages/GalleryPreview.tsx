@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { apiClient } from "@/integrations/api/client";
 import { API_BASE_URL } from "@/lib/utils";
-import { Loader2, Heart, Share2, ArrowRight, Lock, Key } from "lucide-react";
+import { Loader2, Heart, ArrowRight, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -223,9 +223,6 @@ const GalleryPreview = () => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 transition-colors">
             <Heart className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-primary transition-colors">
-            <Share2 className="h-5 w-5" />
           </Button>
         </div>
       </div>
