@@ -31,13 +31,13 @@ class AccessLevelsController {
      * Get all access levels
      */
     public function getAll() {
-        $user_data = $this->auth->getUserFromHeader();
-
-        if (!$user_data) {
-            http_response_code(401);
-            echo json_encode(["message" => "Access denied"]);
-            return;
-        }
+        // Removed auth check to allow unauthenticated access to pricing data
+        // $user_data = $this->auth->getUserFromHeader();
+        // if (!$user_data) {
+        //     http_response_code(401);
+        //     echo json_encode(["message" => "Access denied"]);
+        //     return;
+        // }
 
         try {
             $access_levels = $this->access_level->getAll();

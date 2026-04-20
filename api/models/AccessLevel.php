@@ -14,6 +14,8 @@ class AccessLevel
     public $max_clients;
     public $max_bookings;
     public $max_storage_gb;
+    public $package_price;
+    public $discount_percentage;
     public $created_at;
     public $updated_at;
 
@@ -27,7 +29,11 @@ class AccessLevel
      */
     public function getAll()
     {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY id ASC";
+        $query = "SELECT id, level_name, max_clients, max_bookings, max_storage_gb,
+                         COALESCE(package_price, 0.00) as package_price,
+                         COALESCE(discount_percentage, 0.00) as discount_percentage,
+                         created_at, updated_at
+                  FROM " . $this->table_name . " ORDER BY id ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
