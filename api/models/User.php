@@ -94,7 +94,7 @@ class User {
         $query = "SELECT u.id, u.email, u.password_hash, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, 
                  u.business_name, u.business_email, u.business_phone, u.business_address,
-                 u.bio, u.website, u.portfolio_url, u.email_verified, u.access_level_id,
+                 u.bio, u.website, u.portfolio_url, u.is_active, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
                  al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
@@ -115,6 +115,14 @@ class User {
                         'message' => 'Please check your email to confirm your signup and activate your account.'
                     ];
                 }
+
+                // Check if account is active
+                if (isset($row['is_active']) && $row['is_active'] == 0) {
+                    return [
+                        'error' => 'inactive',
+                        'message' => 'Your account is inactive. Please contact support.'
+                    ];
+                }
                 
                 // Return user data
                 return [
@@ -132,6 +140,7 @@ class User {
                     'bio' => $row['bio'] ?? '',
                     'website' => $row['website'] ?? '',
                     'portfolio_url' => $row['portfolio_url'] ?? '',
+                    'is_active' => $row['is_active'],
                     'email_verified' => $row['email_verified'],
                     'access_level' => [
                         'id' => $row['access_level_id'],
@@ -156,7 +165,7 @@ class User {
         $query = "SELECT u.id, u.email, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, u.business_name, u.business_email, 
                  u.business_phone, u.business_address, u.bio, u.website, 
-                 u.portfolio_url, u.email_verified, u.access_level_id,
+                 u.portfolio_url, u.is_active, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
                  al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
@@ -184,6 +193,7 @@ class User {
                 'bio' => $row['bio'] ?? '',
                 'website' => $row['website'] ?? '',
                 'portfolio_url' => $row['portfolio_url'] ?? '',
+                'is_active' => $row['is_active'],
                 'email_verified' => $row['email_verified'],
                 'access_level' => [
                     'id' => $row['access_level_id'],
@@ -262,7 +272,7 @@ class User {
         $query = "SELECT u.id, u.email, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, u.business_name, u.business_email, 
                  u.business_phone, u.business_address, u.bio, u.website, 
-                 u.portfolio_url, u.email_verified, u.access_level_id,
+                 u.portfolio_url, u.is_active, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
                  al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
@@ -290,6 +300,7 @@ class User {
                 'bio' => $row['bio'] ?? '',
                 'website' => $row['website'] ?? '',
                 'portfolio_url' => $row['portfolio_url'] ?? '',
+                'is_active' => $row['is_active'],
                 'email_verified' => $row['email_verified'],
                 'access_level' => [
                     'id' => $row['access_level_id'],

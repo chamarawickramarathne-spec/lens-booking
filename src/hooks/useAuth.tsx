@@ -14,6 +14,9 @@ export const useAuth = () => {
       if (apiClient.isAuthenticated()) {
         try {
           const response = await apiClient.getProfile();
+          if (response.user.is_active === 0 || response.user.is_active === false) {
+            throw new Error("Your account is inactive. Please contact support.");
+          }
           setUser(response.user);
           try {
             localStorage.setItem("user_data", JSON.stringify(response.user));
@@ -36,6 +39,10 @@ export const useAuth = () => {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiClient.login(email, password);
+      if (response.user.is_active === 0 || response.user.is_active === false) {
+        apiClient.logout();
+        throw new Error("Your account is inactive. Please contact support.");
+      }
       setUser(response.user);
       return response;
     } catch (error) {

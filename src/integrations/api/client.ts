@@ -544,6 +544,7 @@ export interface User {
     max_clients: number | null;
     max_bookings: number | null;
   };
+  is_active?: number | boolean;
   created_at: string;
   updated_at: string;
 }

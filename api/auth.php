@@ -60,6 +60,16 @@ class AuthController {
                 return;
             }
 
+            // Check if account is inactive
+            if (isset($user_data['error']) && $user_data['error'] === 'inactive') {
+                http_response_code(403);
+                echo json_encode([
+                    "message" => $user_data['message'],
+                    "error" => "inactive"
+                ]);
+                return;
+            }
+
             $token = $this->auth->generateToken($user_data);
             
             http_response_code(200);
