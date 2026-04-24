@@ -227,23 +227,69 @@ class ClientsController
                 return;
             }
 
-            // Get all booking IDs for this client
+            // Delete related data in order
+            
+            // 1. Get all IDs to delete
+            
+            // Get all booking IDs
             $booking_query = "SELECT id FROM bookings WHERE client_id = :client_id AND user_id = :user_id";
             $booking_stmt = $this->db->prepare($booking_query);
             $booking_stmt->bindParam(':client_id', $client_id);
             $booking_stmt->bindParam(':user_id', $photographer_id);
             $booking_stmt->execute();
-            $bookings = $booking_stmt->fetchAll(PDO::FETCH_ASSOC);
-            $booking_ids = array_column($bookings, 'id');
+            $booking_ids = $booking_stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            // Get all invoice IDs for this client
+            // Get all invoice IDs
             $invoice_query = "SELECT id FROM invoices WHERE client_id = :client_id AND user_id = :user_id";
             $invoice_stmt = $this->db->prepare($invoice_query);
             $invoice_stmt->bindParam(':client_id', $client_id);
             $invoice_stmt->bindParam(':user_id', $photographer_id);
             $invoice_stmt->execute();
-            $invoices = $invoice_stmt->fetchAll(PDO::FETCH_ASSOC);
-            $invoice_ids = array_column($invoices, 'id');
+            $invoice_ids = $invoice_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Get all payment schedule IDs linked to these bookings or invoices
+            $schedule_ids = [];
+            if (!empty($booking_ids) || !empty($invoice_ids)) {
+                $conditions = [];
+                $params = [':user_id' => $photographer_id];
+                
+                if (!empty($booking_ids)) {
+                    $placeholders = implode(',', array_fill(0, count($booking_ids), '?'));
+                    $conditions[] = "booking_id IN ($placeholders)";
+                    foreach ($booking_ids as $i => $id_val) $params[] = $id_val;
+                }
+                
+                if (!empty($invoice_ids)) {
+                    $placeholders = implode(',', array_fill(0, count($invoice_ids), '?'));
+                    $conditions[] = "invoice_id IN ($placeholders)";
+                    foreach ($invoice_ids as $i => $id_val) $params[] = $id_val;
+                }
+                
+                if (!empty($conditions)) {
+                    $schedule_query = "SELECT id FROM payment_schedules WHERE user_id = ? AND (" . implode(' OR ', $conditions) . ")";
+                    $schedule_stmt = $this->db->prepare($schedule_query);
+                    $schedule_stmt->execute(array_merge([$photographer_id], !empty($booking_ids) ? $booking_ids : [], !empty($invoice_ids) ? $invoice_ids : []));
+                    $schedule_ids = $schedule_stmt->fetchAll(PDO::FETCH_COLUMN);
+                }
+            }
+
+            // 2. Perform deletions
+            
+            // Delete payment installments
+            if (!empty($schedule_ids)) {
+                $placeholders = implode(',', array_fill(0, count($schedule_ids), '?'));
+                $delete_installments_query = "DELETE FROM payment_installments WHERE payment_schedule_id IN ($placeholders) AND user_id = ?";
+                $delete_installments_stmt = $this->db->prepare($delete_installments_query);
+                $delete_installments_stmt->execute(array_merge($schedule_ids, [$photographer_id]));
+            }
+
+            // Delete payment schedules
+            if (!empty($schedule_ids)) {
+                $placeholders = implode(',', array_fill(0, count($schedule_ids), '?'));
+                $delete_schedules_query = "DELETE FROM payment_schedules WHERE id IN ($placeholders) AND user_id = ?";
+                $delete_schedules_stmt = $this->db->prepare($delete_schedules_query);
+                $delete_schedules_stmt->execute(array_merge($schedule_ids, [$photographer_id]));
+            }
 
             // Delete payments related to invoices
             if (!empty($invoice_ids)) {
@@ -256,21 +302,21 @@ class ClientsController
             // Delete invoices
             if (!empty($invoice_ids)) {
                 $placeholders = implode(',', array_fill(0, count($invoice_ids), '?'));
-                $delete_invoices_query = "DELETE FROM invoices WHERE id IN ($placeholders)";
+                $delete_invoices_query = "DELETE FROM invoices WHERE id IN ($placeholders) AND user_id = ?";
                 $delete_invoices_stmt = $this->db->prepare($delete_invoices_query);
-                $delete_invoices_stmt->execute($invoice_ids);
+                $delete_invoices_stmt->execute(array_merge($invoice_ids, [$photographer_id]));
             }
 
             // Delete bookings
             if (!empty($booking_ids)) {
                 $placeholders = implode(',', array_fill(0, count($booking_ids), '?'));
-                $delete_bookings_query = "DELETE FROM bookings WHERE id IN ($placeholders)";
+                $delete_bookings_query = "DELETE FROM bookings WHERE id IN ($placeholders) AND user_id = ?";
                 $delete_bookings_stmt = $this->db->prepare($delete_bookings_query);
-                $delete_bookings_stmt->execute($booking_ids);
+                $delete_bookings_stmt->execute(array_merge($booking_ids, [$photographer_id]));
             }
 
             // Finally, delete the client
-            if ($this->client->delete($id, $user_data['user_id'])) {
+            if ($this->client->delete($id, $photographer_id)) {
                 $this->db->commit();
                 http_response_code(200);
                 echo json_encode(["message" => "Client and all related data deleted successfully"]);
@@ -328,7 +374,57 @@ class ClientsController
             $invoice_stmt->execute();
             $invoice_count = $invoice_stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-            // Count payments
+            // Get IDs for deeper counting
+            $booking_ids_query = "SELECT id FROM bookings WHERE client_id = :client_id AND user_id = :user_id";
+            $booking_ids_stmt = $this->db->prepare($booking_ids_query);
+            $booking_ids_stmt->bindParam(':client_id', $client_id);
+            $booking_ids_stmt->bindParam(':user_id', $photographer_id);
+            $booking_ids_stmt->execute();
+            $booking_ids = $booking_ids_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            $invoice_ids_query = "SELECT id FROM invoices WHERE client_id = :client_id AND user_id = :user_id";
+            $invoice_ids_stmt = $this->db->prepare($invoice_ids_query);
+            $invoice_ids_stmt->bindParam(':client_id', $client_id);
+            $invoice_ids_stmt->bindParam(':user_id', $photographer_id);
+            $invoice_ids_stmt->execute();
+            $invoice_ids = $invoice_ids_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Count payment schedules
+            $schedule_count = 0;
+            $installment_count = 0;
+            $schedule_ids = [];
+            
+            if (!empty($booking_ids) || !empty($invoice_ids)) {
+                $conditions = [];
+                if (!empty($booking_ids)) {
+                    $placeholders = implode(',', array_fill(0, count($booking_ids), '?'));
+                    $conditions[] = "booking_id IN ($placeholders)";
+                }
+                if (!empty($invoice_ids)) {
+                    $placeholders = implode(',', array_fill(0, count($invoice_ids), '?'));
+                    $conditions[] = "invoice_id IN ($placeholders)";
+                }
+                
+                if (!empty($conditions)) {
+                    $schedule_query = "SELECT id FROM payment_schedules WHERE user_id = ? AND (" . implode(' OR ', $conditions) . ")";
+                    $schedule_stmt = $this->db->prepare($schedule_query);
+                    $schedule_stmt->execute(array_merge([$photographer_id], !empty($booking_ids) ? $booking_ids : [], !empty($invoice_ids) ? $invoice_ids : []));
+                    $schedules = $schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $schedule_count = count($schedules);
+                    $schedule_ids = array_column($schedules, 'id');
+                }
+            }
+
+            // Count installments
+            if (!empty($schedule_ids)) {
+                $placeholders = implode(',', array_fill(0, count($schedule_ids), '?'));
+                $installment_query = "SELECT COUNT(*) as count FROM payment_installments WHERE payment_schedule_id IN ($placeholders) AND user_id = ?";
+                $installment_stmt = $this->db->prepare($installment_query);
+                $installment_stmt->execute(array_merge($schedule_ids, [$photographer_id]));
+                $installment_count = $installment_stmt->fetch(PDO::FETCH_ASSOC)['count'];
+            }
+
+            // Count payments (original logic)
             $payment_query = "SELECT COUNT(*) as count FROM payments p 
                             INNER JOIN invoices i ON p.invoice_id = i.id 
                             WHERE i.client_id = :client_id AND i.user_id = :user_id";
@@ -344,6 +440,8 @@ class ClientsController
                 "related_data" => [
                     "bookings" => (int) $booking_count,
                     "invoices" => (int) $invoice_count,
+                    "payment_schedules" => (int) $schedule_count,
+                    "payment_installments" => (int) $installment_count,
                     "payments" => (int) $payment_count
                 ]
             ]);

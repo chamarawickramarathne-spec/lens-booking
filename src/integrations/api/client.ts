@@ -385,6 +385,13 @@ class ApiClient {
     }
   }
 
+  async updateSetVisibility(galleryId: number, setName: string, isPublic: boolean) {
+    return this.request(`/galleries/${galleryId}/sets/visibility`, {
+      method: "POST",
+      body: JSON.stringify({ set_name: setName, is_public: isPublic }),
+    });
+  }
+
   async likeImage(galleryId: number, imageId: number) {
     return this.request(`/galleries/${galleryId}/images/${imageId}/like`, {
       method: "POST",

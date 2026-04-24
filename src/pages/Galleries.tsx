@@ -41,6 +41,7 @@ interface Gallery {
   image_count?: number;
   created_at?: string;
   is_public?: boolean;
+  set_settings?: Array<{ set_name: string; is_public: boolean }>;
 }
 
 const Galleries = () => {

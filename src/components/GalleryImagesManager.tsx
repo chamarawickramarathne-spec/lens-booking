@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ import {
   Info,
   X,
   Lock,
+  Key,
   Download as DownloadIcon,
   Heart as HeartIcon,
   Share2,
@@ -62,6 +63,9 @@ interface Gallery {
   download_enabled?: boolean;
   favorites_enabled?: boolean;
   share_enabled?: boolean;
+  sets_enabled?: boolean;
+  client_password?: string;
+  set_settings?: Array<{ set_name: string; is_public: boolean }>;
 }
 
 interface GalleryImage {
@@ -111,8 +115,58 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
     download_enabled: gallery.download_enabled ?? true,
     favorites_enabled: gallery.favorites_enabled ?? true,
     share_enabled: gallery.share_enabled ?? true,
-    is_public: gallery.is_public ?? true
+    sets_enabled: gallery.sets_enabled ?? true,
+    is_public: gallery.is_public ?? true,
+    client_password: gallery.client_password || ""
   });
+  const [setSettings, setSetSettings] = useState<Record<string, boolean>>({});
+
+  const lastGalleryId = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (lastGalleryId.current === gallery.id) return;
+    
+    setGallerySettings({
+      download_enabled: gallery.download_enabled ?? true,
+      favorites_enabled: gallery.favorites_enabled ?? true,
+      share_enabled: gallery.share_enabled ?? true,
+      sets_enabled: gallery.sets_enabled ?? true,
+      is_public: gallery.is_public ?? true,
+      client_password: gallery.client_password || ""
+    });
+    
+    if (gallery.set_settings && Array.isArray(gallery.set_settings)) {
+      const settingsMap: Record<string, boolean> = {};
+      gallery.set_settings.forEach(curr => {
+        settingsMap[curr.set_name] = Number(curr.is_public) === 1;
+      });
+      setSetSettings(settingsMap);
+    } else {
+      setSetSettings({});
+    }
+    setIsPublic(gallery.is_public ?? true);
+    lastGalleryId.current = gallery.id;
+  }, [gallery]);
+
+  const handleToggleSetVisibility = async (setName: string) => {
+    const isNowPublic = !setSettings[setName];
+    setSetSettings(prev => ({ ...prev, [setName]: isNowPublic }));
+    
+    try {
+      await apiClient.updateSetVisibility(gallery.id, setName, isNowPublic);
+      toast({
+        title: "Visibility Updated",
+        description: `"${setName}" is now ${isNowPublic ? 'public' : 'private (hidden from preview)'}.`,
+      });
+    } catch (error: any) {
+      setSetSettings(prev => ({ ...prev, [setName]: !isNowPublic })); // Revert
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update set visibility",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleUpdateSettings = async (updates: Partial<typeof gallerySettings>) => {
     setIsUpdatingSettings(true);
@@ -527,11 +581,28 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                       <div 
                         key={setName}
                         onClick={() => setActiveSet(setName)}
-                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer group rounded-md transition-all ${activeSet === setName ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
+                        className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer group rounded-md transition-all ${activeSet === setName ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary shadow-sm' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}`}
                       >
-                        <GripVertical className="h-4 w-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100" />
-                        <span className="text-sm flex-1">{setName} ({images.filter(img => (img.set_name || "Highlights") === setName).length})</span>
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100" />
+                        <GripVertical className="h-4 w-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100 shrink-0" />
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className={`text-sm truncate ${setSettings[setName] === false ? 'text-muted-foreground' : ''}`}>
+                            {setName} ({images.filter(img => (img.set_name || "Highlights") === setName).length})
+                          </span>
+                          {setSettings[setName] === false && (
+                            <Badge variant="secondary" className="w-fit text-[9px] px-1 h-4 bg-orange-100 text-orange-700">Private</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <Switch
+                            checked={setSettings[setName] !== false}
+                            onCheckedChange={() => handleToggleSetVisibility(setName)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="scale-75"
+                            title={setSettings[setName] === false ? "Hidden from public preview" : "Visible in public preview"}
+                          />
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -700,6 +771,34 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
                     onCheckedChange={(val) => handleUpdateSettings({ share_enabled: val })}
                     disabled={isUpdatingSettings}
                   />
+                </div>
+
+                {/* Client Access Password */}
+                <div className="pt-8 space-y-4 border-t border-gray-100">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Key className="h-5 w-5 text-gray-500" />
+                      <Label className="text-base font-bold text-gray-900">Client Access Password</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">This password allows clients to unlock private photo sets in the public preview.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input 
+                      type="password"
+                      placeholder="Enter client password"
+                      value={gallerySettings.client_password}
+                      onChange={(e) => setGallerySettings(prev => ({ ...prev, client_password: e.target.value }))}
+                      className="max-w-xs rounded-none border-gray-200 focus:ring-black focus:border-black"
+                    />
+                    <Button 
+                      variant="outline" 
+                      className="rounded-none border-black hover:bg-black hover:text-white"
+                      onClick={() => handleUpdateSettings({ client_password: gallerySettings.client_password })}
+                      disabled={isUpdatingSettings}
+                    >
+                      Save Password
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

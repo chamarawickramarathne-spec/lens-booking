@@ -20,9 +20,11 @@ class Gallery
     public $is_public;
     public $password_protected;
     public $gallery_password;
+    public $client_password;
     public $download_enabled;
     public $favorites_enabled;
     public $share_enabled;
+    public $sets_enabled;
     public $expiry_date;
     public $created_at;
     public $updated_at;
@@ -41,8 +43,10 @@ class Gallery
                  SET user_id=:user_id, booking_id=:booking_id, gallery_name=:gallery_name, 
                      description=:description, gallery_date=:gallery_date, cover_image=:cover_image,
                      is_public=:is_public, password_protected=:password_protected, 
-                     gallery_password=:gallery_password, download_enabled=:download_enabled, 
+                     gallery_password=:gallery_password, client_password=:client_password,
+                     download_enabled=:download_enabled, 
                      favorites_enabled=:favorites_enabled, share_enabled=:share_enabled,
+                     sets_enabled=:sets_enabled,
                      expiry_date=:expiry_date";
 
         $stmt = $this->conn->prepare($query);
@@ -57,9 +61,11 @@ class Gallery
         $stmt->bindValue(":is_public", $this->is_public ? 1 : 0);
         $stmt->bindValue(":password_protected", $this->password_protected ? 1 : 0);
         $stmt->bindParam(":gallery_password", $this->gallery_password);
+        $stmt->bindParam(":client_password", $this->client_password);
         $stmt->bindValue(":download_enabled", $this->download_enabled ? 1 : 0);
         $stmt->bindValue(":favorites_enabled", $this->favorites_enabled ? 1 : 0);
         $stmt->bindValue(":share_enabled", $this->share_enabled ? 1 : 0);
+        $stmt->bindValue(":sets_enabled", $this->sets_enabled ? 1 : 0);
         $stmt->bindParam(":expiry_date", $this->expiry_date);
 
         if ($stmt->execute()) {
@@ -143,8 +149,10 @@ class Gallery
                  SET gallery_name=:gallery_name, description=:description, 
                      gallery_date=:gallery_date, cover_image=:cover_image,
                      is_public=:is_public, password_protected=:password_protected, 
-                     gallery_password=:gallery_password, download_enabled=:download_enabled, 
+                     gallery_password=:gallery_password, client_password=:client_password,
+                     download_enabled=:download_enabled, 
                      favorites_enabled=:favorites_enabled, share_enabled=:share_enabled,
+                     sets_enabled=:sets_enabled,
                      expiry_date=:expiry_date, updated_at=CURRENT_TIMESTAMP
                  WHERE id=:id AND user_id=:user_id";
 
@@ -158,9 +166,11 @@ class Gallery
         $stmt->bindValue(":is_public", $this->is_public ? 1 : 0);
         $stmt->bindValue(":password_protected", $this->password_protected ? 1 : 0);
         $stmt->bindParam(":gallery_password", $this->gallery_password);
+        $stmt->bindParam(":client_password", $this->client_password);
         $stmt->bindValue(":download_enabled", $this->download_enabled ? 1 : 0);
         $stmt->bindValue(":favorites_enabled", $this->favorites_enabled ? 1 : 0);
         $stmt->bindValue(":share_enabled", $this->share_enabled ? 1 : 0);
+        $stmt->bindValue(":sets_enabled", $this->sets_enabled ? 1 : 0);
         $stmt->bindParam(":expiry_date", $this->expiry_date);
         $stmt->bindParam(":id", $this->id);
         $stmt->bindParam(":user_id", $this->user_id);
@@ -237,5 +247,33 @@ class Gallery
         $stmt->bindParam(":gallery_id", $gallery_id);
 
         return $stmt->execute();
+    }
+
+    /**
+     * Set-level settings methods
+     */
+    public function updateSetSetting($gallery_id, $set_name, $is_public)
+    {
+        $query = "INSERT INTO gallery_set_settings (gallery_id, set_name, is_public) 
+                 VALUES (:gallery_id, :set_name, :is_public)
+                 ON DUPLICATE KEY UPDATE is_public = :is_public_update";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":gallery_id", $gallery_id);
+        $stmt->bindParam(":set_name", $set_name);
+        $stmt->bindValue(":is_public", $is_public ? 1 : 0);
+        $stmt->bindValue(":is_public_update", $is_public ? 1 : 0);
+
+        return $stmt->execute();
+    }
+
+    public function getSetSettings($gallery_id)
+    {
+        $query = "SELECT * FROM gallery_set_settings WHERE gallery_id = :gallery_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":gallery_id", $gallery_id);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

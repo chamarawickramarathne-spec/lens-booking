@@ -298,10 +298,28 @@ const Clients = () => {
                                             <strong>
                                               {
                                                 deletionInfo.related_data
-                                                  .payments
+                                                  .payment_schedules
                                               }
                                             </strong>{" "}
                                             payment schedule(s)
+                                          </li>
+                                          <li>
+                                            <strong>
+                                              {
+                                                deletionInfo.related_data
+                                                  .payment_installments
+                                              }
+                                            </strong>{" "}
+                                            payment installment(s)
+                                          </li>
+                                          <li>
+                                            <strong>
+                                              {
+                                                deletionInfo.related_data
+                                                  .payments
+                                              }
+                                            </strong>{" "}
+                                            manual payment(s)
                                           </li>
                                         </ul>
                                       )}

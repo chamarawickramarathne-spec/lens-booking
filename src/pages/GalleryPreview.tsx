@@ -5,6 +5,14 @@ import { API_BASE_URL } from "@/lib/utils";
 import { Loader2, Heart, ArrowRight, Lock, Key, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface GalleryData {
   id: number;
@@ -14,6 +22,8 @@ interface GalleryData {
   cover_image: string;
   download_enabled: boolean;
   favorites_enabled: boolean;
+  sets_enabled: boolean;
+  set_settings: Array<{ set_name: string; is_public: boolean }>;
   share_enabled: boolean;
   password_required: boolean;
   unlocked: boolean;
@@ -212,17 +222,33 @@ const GalleryPreview = () => {
   }
 
   // If unlocked, show the gallery
-  const sets = gallery?.images ? Array.from(new Set(gallery.images.map(img => img.set_name || "Highlights"))) : [];
+  const hasSets = gallery?.sets_enabled !== false;
+  const isUnlocked = gallery?.unlocked === true;
+  const setSettingsMap = (gallery?.set_settings || []).reduce((acc, curr) => ({ ...acc, [curr.set_name]: Number(curr.is_public) === 1 }), {} as Record<string, boolean>);
   
+  const allSets = gallery?.images ? Array.from(new Set(gallery.images.map(img => img.set_name || "Highlights"))) : [];
+  
+  // Filter sets based on visibility if not unlocked
+  const visibleSets = isUnlocked 
+    ? allSets 
+    : allSets.filter(setName => setSettingsMap[setName] !== false);
+
   // Sort sets to put "Highlights" first if it exists
-  const sortedSets = [...sets].sort((a, b) => {
+  const sortedSets = hasSets ? [...visibleSets].sort((a, b) => {
     if (a === "Highlights") return -1;
     if (b === "Highlights") return 1;
     return 0;
-  });
+  }) : ["All Photos"];
 
   const currentSet = activeSet || (sortedSets.length > 0 ? sortedSets[0] : "Highlights");
-  const filteredImages = gallery?.images?.filter(img => (img.set_name || "Highlights") === currentSet) || [];
+  
+  // Filter images based on current set AND overall visibility if not unlocked
+  const filteredImages = hasSets 
+    ? (gallery?.images?.filter(img => {
+        const setName = img.set_name || "Highlights";
+        return setName === currentSet && (isUnlocked || setSettingsMap[setName] !== false);
+      }) || [])
+    : (gallery?.images?.filter(img => isUnlocked || setSettingsMap[img.set_name || "Highlights"] !== false) || []);
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a]">
@@ -319,6 +345,42 @@ const GalleryPreview = () => {
         <div>
           <h2 className="text-xl font-bold uppercase tracking-wider mb-1">{gallery.title}</h2>
         </div>
+        
+        {/* Client Access Unlock Button */}
+        {!isUnlocked && allSets.length > visibleSets.length && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="rounded-none border-black hover:bg-black hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest gap-2">
+                <Lock className="h-3 w-3" /> Client Access
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-none border-2 border-black">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold uppercase tracking-tight">Client Access</DialogTitle>
+                <DialogDescription className="text-xs uppercase tracking-wider text-gray-400">
+                  Enter the collection password to view all photo sets.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4 py-4">
+                <Input
+                  type="password"
+                  placeholder="Collection Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="rounded-none border-gray-200 focus:ring-black focus:border-black h-12"
+                  autoFocus
+                />
+                <Button 
+                  type="submit" 
+                  disabled={isUnlocking}
+                  className="w-full h-12 bg-black text-white hover:bg-gray-800 rounded-none font-bold uppercase tracking-widest text-[10px]"
+                >
+                  {isUnlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlock All Sets"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Gallery Tabs (Sets) */}
@@ -328,7 +390,9 @@ const GalleryPreview = () => {
             {sortedSets.map((setName) => (
               <button
                 key={setName}
-                onClick={() => setActiveSet(setName)}
+                onClick={() => {
+                  setActiveSet(setName);
+                }}
                 className={`py-4 text-xs font-bold uppercase tracking-[0.2em] relative transition-all duration-300 ${
                   currentSet === setName 
                     ? 'text-black' 
@@ -345,8 +409,16 @@ const GalleryPreview = () => {
         </div>
       )}
 
-      {/* Gallery Grid */}
-      <div id="gallery-grid" className={`max-w-[1600px] mx-auto px-4 py-12 ${!gallery.download_enabled ? 'select-none' : ''}`}>
+      {/* Gallery Images (Current Set) */}
+      <div id="gallery-grid" className={`max-w-[1600px] mx-auto px-4 py-12 space-y-10 ${!gallery.download_enabled ? 'select-none' : ''}`}>
+        {hasSets && sortedSets.length > 1 && (
+          <div className="flex items-center gap-4">
+            <h3 className="text-2xl font-bold uppercase tracking-tight whitespace-nowrap">{currentSet}</h3>
+            <div className="h-[1px] w-full bg-gray-100" />
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">{filteredImages.length} Photos</span>
+          </div>
+        )}
+        
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
           {filteredImages.map((img) => (
             <div 
@@ -378,7 +450,7 @@ const GalleryPreview = () => {
                 {gallery.download_enabled && (
                   <button 
                     onClick={() => window.open(getImageUrl(img.image_url), '_blank')}
-                    className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-primary hover:scale-110 transition-all shadow-lg"
+                    className="h-10 w-10 bg-white/90 rounded-full backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-primary hover:scale-105 transition-all shadow-lg"
                     title="Download"
                   >
                     <Download className="h-5 w-5" />
@@ -398,7 +470,7 @@ const GalleryPreview = () => {
                         alert("Link copied to clipboard!");
                       }
                     }}
-                    className="h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-blue-500 hover:scale-110 transition-all shadow-lg"
+                    className="h-10 w-10 bg-white/90 rounded-full backdrop-blur-sm flex items-center justify-center text-gray-800 hover:text-blue-500 hover:scale-105 transition-all shadow-lg"
                     title="Share"
                   >
                     <Share2 className="h-5 w-5" />
