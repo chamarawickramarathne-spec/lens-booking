@@ -224,6 +224,18 @@ class GalleriesController
                 'share_enabled' => (bool) $g['share_enabled'],
                 'password_required' => (bool) $g['password_protected'],
                 'created_at' => $g['created_at'],
+                'photographer' => [
+                    'name' => $g['photographer_name'],
+                    'business_name' => $g['business_name'],
+                    'image' => $g['photographer_image'],
+                    'business_email' => $g['business_email'],
+                    'business_phone' => $g['business_phone'],
+                    'personal_email' => $g['personal_email'],
+                    'personal_phone' => $g['personal_phone'],
+                    'address' => $g['business_address'],
+                    'website' => $g['website'],
+                    'portfolio' => $g['portfolio_url']
+                ]
             ];
 
             // Only return images if not password protected OR if correct password is provided

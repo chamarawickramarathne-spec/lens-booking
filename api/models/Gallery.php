@@ -95,9 +95,13 @@ class Gallery
     public function getById($id, $user_id)
     {
         $query = "SELECT g.*, b.title as booking_title,
+                  u.full_name as photographer_name, u.business_name, u.profile_picture as photographer_image,
+                  u.business_email, u.business_phone, u.business_address,
+                  u.email as personal_email, u.phone as personal_phone, u.website, u.portfolio_url,
                   (SELECT image_url FROM gallery_images WHERE gallery_id = g.id ORDER BY image_order ASC, created_at ASC LIMIT 1) as first_image 
                   FROM " . $this->table_name . " g
                   LEFT JOIN bookings b ON g.booking_id = b.id
+                  LEFT JOIN users u ON g.user_id = u.id
                   WHERE g.id = :id AND g.user_id = :user_id";
 
         $stmt = $this->conn->prepare($query);
@@ -114,9 +118,13 @@ class Gallery
     public function getPublicById($id)
     {
         $query = "SELECT g.*, b.title as booking_title,
+                  u.full_name as photographer_name, u.business_name, u.profile_picture as photographer_image,
+                  u.business_email, u.business_phone, u.business_address,
+                  u.email as personal_email, u.phone as personal_phone, u.website, u.portfolio_url,
                   (SELECT image_url FROM gallery_images WHERE gallery_id = g.id ORDER BY image_order ASC, created_at ASC LIMIT 1) as first_image 
                   FROM " . $this->table_name . " g
                   LEFT JOIN bookings b ON g.booking_id = b.id
+                  LEFT JOIN users u ON g.user_id = u.id
                   WHERE g.id = :id AND g.is_public = 1";
 
         $stmt = $this->conn->prepare($query);

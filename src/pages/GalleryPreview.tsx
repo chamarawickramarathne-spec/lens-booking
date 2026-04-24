@@ -17,6 +17,18 @@ interface GalleryData {
   share_enabled: boolean;
   password_required: boolean;
   unlocked: boolean;
+  photographer?: {
+    name: string;
+    business_name: string;
+    image: string;
+    business_email: string;
+    business_phone: string;
+    personal_email: string;
+    personal_phone: string;
+    address: string;
+    website: string;
+    portfolio: string;
+  };
   images: Array<{
     id: number;
     image_url: string;
@@ -192,7 +204,7 @@ const GalleryPreview = () => {
            )}
 
            <div className="mt-12">
-             <p className="text-white/30 text-[10px] font-bold tracking-[0.3em] uppercase">Powered by Glamour Photo Studio</p>
+             <p className="text-white/30 text-[10px] font-bold tracking-[0.3em] uppercase">Powered by {gallery?.photographer?.business_name || gallery?.photographer?.name || 'Lens Booking'}</p>
            </div>
         </div>
       </div>
@@ -228,10 +240,16 @@ const GalleryPreview = () => {
         <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
           <div className="mb-6 opacity-90">
              <div className="flex items-center gap-2 border border-white/30 px-3 py-1.5 rounded bg-black/20 backdrop-blur-sm">
-                <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
-                   <div className="h-4 w-4 border-2 border-white rounded-full" />
+                <div className="h-8 w-8 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                   {gallery.photographer?.image ? (
+                     <img src={getImageUrl(gallery.photographer.image)} className="w-full h-full object-cover" alt="" />
+                   ) : (
+                     <div className="h-4 w-4 border-2 border-white rounded-full" />
+                   )}
                 </div>
-                <span className="text-white text-sm font-semibold tracking-widest uppercase">Glamour Photo</span>
+                <span className="text-white text-sm font-semibold tracking-widest uppercase">
+                  {gallery.photographer?.business_name || gallery.photographer?.name || "Lens Booking"}
+                </span>
              </div>
           </div>
           
@@ -249,17 +267,49 @@ const GalleryPreview = () => {
           
           <Button 
             variant="outline" 
-            className="bg-transparent border-white text-white hover:bg-white hover:text-black transition-all duration-300 rounded-none px-8 py-6 text-sm font-bold uppercase tracking-widest gap-2"
+            className="bg-transparent border-white text-white hover:bg-white hover:text-black transition-all duration-300 rounded-none px-8 py-6 text-sm font-bold uppercase tracking-widest gap-2 mb-12"
             onClick={() => document.getElementById('gallery-grid')?.scrollIntoView({ behavior: 'smooth' })}
           >
             View Gallery <ArrowRight className="h-4 w-4" />
           </Button>
           
-          <div className="absolute bottom-12 flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-               <div className="h-5 w-5 border border-white rounded-md flex items-center justify-center text-[8px] text-white font-bold px-0.5">GP</div>
+          <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 backdrop-blur-md shadow-2xl flex items-center justify-center">
+               {gallery.photographer?.image ? (
+                 <img src={getImageUrl(gallery.photographer.image)} className="w-full h-full object-cover" alt="" />
+               ) : (
+                 <div className="h-8 w-8 border-2 border-white rounded-full opacity-50" />
+               )}
             </div>
-            <span className="text-white/60 text-[10px] font-bold tracking-[0.3em] uppercase">Glamour Photo</span>
+            
+            <div className="space-y-3">
+              <h3 className="text-white text-xl font-bold tracking-[0.2em] uppercase">
+                {gallery.photographer?.business_name || gallery.photographer?.name || "Lens Booking"}
+              </h3>
+              
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
+                { (gallery.photographer?.business_phone || gallery.photographer?.personal_phone) && (
+                  <span className="flex items-center gap-2">
+                    {gallery.photographer?.business_phone || gallery.photographer?.personal_phone}
+                  </span>
+                )}
+                { (gallery.photographer?.business_email || gallery.photographer?.personal_email) && (
+                  <span className="flex items-center gap-2">
+                    {gallery.photographer?.business_email || gallery.photographer?.personal_email}
+                  </span>
+                )}
+                { (gallery.photographer?.website || gallery.photographer?.portfolio) && (
+                  <a 
+                    href={gallery.photographer?.website || gallery.photographer?.portfolio} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="hover:text-white transition-colors underline underline-offset-4 decoration-white/30"
+                  >
+                    Website
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -268,9 +318,7 @@ const GalleryPreview = () => {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-xl font-bold uppercase tracking-wider mb-1">{gallery.title}</h2>
-          <p className="text-sm text-muted-foreground uppercase tracking-widest">Glamour Photo</p>
         </div>
-        
       </div>
 
       {/* Gallery Tabs (Sets) */}
@@ -364,11 +412,35 @@ const GalleryPreview = () => {
       
       {/* Footer */}
       <footer className="py-20 border-t bg-gray-50 flex flex-col items-center text-center px-4">
-        <div className="mb-8 h-12 w-12 rounded-full border border-gray-200 flex items-center justify-center">
-           <div className="h-6 w-6 border-2 border-gray-400 rounded-full" />
+        <div className="mb-8 h-12 w-12 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
+           {gallery.photographer?.image ? (
+             <img src={getImageUrl(gallery.photographer.image)} className="w-full h-full object-cover" alt="" />
+           ) : (
+             <div className="h-6 w-6 border-2 border-gray-400 rounded-full" />
+           )}
         </div>
         <p className="text-sm text-gray-500 font-medium tracking-widest uppercase mb-4">Powered by Lens Booking Pro</p>
-        <p className="text-xs text-gray-400 uppercase tracking-widest">&copy; {new Date().getFullYear()} Glamour Photo. All rights reserved.</p>
+        <p className="text-xs text-gray-400 uppercase tracking-widest mb-6">
+          &copy; {new Date().getFullYear()} {gallery.photographer?.business_name || gallery.photographer?.name || "Lens Booking"}. All rights reserved.
+        </p>
+        
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+          { (gallery.photographer?.business_phone || gallery.photographer?.personal_phone) && (
+            <a href={`tel:${gallery.photographer?.business_phone || gallery.photographer?.personal_phone}`} className="hover:text-black transition-colors">
+              {gallery.photographer?.business_phone || gallery.photographer?.personal_phone}
+            </a>
+          )}
+          { (gallery.photographer?.business_email || gallery.photographer?.personal_email) && (
+            <a href={`mailto:${gallery.photographer?.business_email || gallery.photographer?.personal_email}`} className="hover:text-black transition-colors">
+              {gallery.photographer?.business_email || gallery.photographer?.personal_email}
+            </a>
+          )}
+          { (gallery.photographer?.website || gallery.photographer?.portfolio) && (
+            <a href={gallery.photographer?.website || gallery.photographer?.portfolio} target="_blank" rel="noreferrer" className="hover:text-black transition-colors">
+              Website
+            </a>
+          )}
+        </div>
       </footer>
     </div>
   );
