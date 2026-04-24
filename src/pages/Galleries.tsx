@@ -135,6 +135,42 @@ const Galleries = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 h-10">
+                  <ExternalLink className="h-4 w-4" /> Portfolio
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem 
+                  className="gap-2 cursor-pointer"
+                  onClick={() => {
+                    if (user) {
+                      const encodedId = btoa('photographer_' + user.id);
+                      navigator.clipboard.writeText(window.location.origin + `/portfolio/${encodedId}`);
+                      toast({
+                        title: "Portfolio Link Copied",
+                        description: "Public portfolio link has been copied to your clipboard.",
+                      });
+                    }
+                  }}
+                >
+                  <Search className="h-4 w-4" /> Copy public link
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="gap-2 cursor-pointer"
+                  onClick={() => {
+                    if (user) {
+                      const encodedId = btoa('photographer_' + user.id);
+                      window.open(`/portfolio/${encodedId}`, '_blank');
+                    }
+                  }}
+                >
+                  <ImageIcon className="h-4 w-4" /> View portfolio
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <GalleryForm
               onSuccess={fetchGalleries}
               trigger={

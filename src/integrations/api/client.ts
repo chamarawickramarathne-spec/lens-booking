@@ -326,6 +326,10 @@ class ApiClient {
     return this.request(url);
   }
 
+  async getPublicPortfolio(id: number) {
+    return this.request(`/portfolio/${id}`);
+  }
+
   async uploadGalleryImage(galleryId: number, file: File, setName?: string) {
     const formData = new FormData();
     formData.append("gallery_image", file);

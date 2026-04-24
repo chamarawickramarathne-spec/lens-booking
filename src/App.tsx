@@ -14,6 +14,7 @@ import Reports from "./pages/Reports";
 import Galleries from "./pages/Galleries";
 import Profile from "./pages/Profile";
 import GalleryPreview from "./pages/GalleryPreview";
+import PortfolioPreview from "./pages/PortfolioPreview";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -117,6 +118,7 @@ const AppRoutes = () => (
       }
     />
     <Route path="/gallery/:id/preview" element={<GalleryPreview />} />
+    <Route path="/portfolio/:id" element={<PortfolioPreview />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
