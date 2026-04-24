@@ -86,9 +86,22 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; currentFile: string } | null>(null);
   const [isSettingCover, setIsSettingCover] = useState(false);
   const [isCoverDialogOpen, setIsCoverDialogOpen] = useState(false);
   const [isPublic, setIsPublic] = useState<boolean>(gallery.is_public ?? true);
+
+  // Prevent closing the tab while uploading
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isUploading) {
+        e.preventDefault();
+        e.returnValue = "Upload in progress. Are you sure you want to leave?";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isUploading]);
   const [activeTab, setActiveTab] = useState("photos");
   const [settingsTab, setSettingsTab] = useState("general");
   const [tags, setTags] = useState<string[]>([]);
@@ -260,10 +273,17 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
     }
 
     setIsUploading(true);
+    setUploadProgress({ current: 0, total: files.length, currentFile: "Preparing..." });
+    
     try {
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress({ current: i, total: files.length, currentFile: file.name });
         await apiClient.uploadGalleryImage(gallery.id, file, activeSet);
       }
+      
+      setUploadProgress({ current: files.length, total: files.length, currentFile: "Finishing up..." });
+      
       toast({
         title: "Success",
         description: `${files.length} image(s) uploaded successfully`,
@@ -277,6 +297,7 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
       if (e.target) e.target.value = "";
     }
   };
@@ -811,6 +832,40 @@ const GalleryImagesManager = ({ gallery, onBack }: GalleryImagesManagerProps) =>
           )}
         </div>
       </div>
+      
+      {/* Upload Progress Overlay */}
+      {uploadProgress && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white border shadow-2xl p-8 max-w-md w-full flex flex-col items-center text-center space-y-6">
+            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+              <Upload className="h-8 w-8 text-primary animate-bounce" />
+            </div>
+            
+            <div className="space-y-2 w-full">
+              <h3 className="text-xl font-bold tracking-tight">Uploading Photos</h3>
+              <p className="text-sm text-muted-foreground">
+                Please do not close or refresh this page.
+              </p>
+            </div>
+
+            <div className="w-full space-y-2 pt-4">
+              <div className="flex justify-between text-xs font-medium text-muted-foreground mb-1">
+                <span className="truncate max-w-[250px] text-left">{uploadProgress.currentFile}</span>
+                <span>{uploadProgress.current} of {uploadProgress.total}</span>
+              </div>
+              <div className="h-2 w-full bg-secondary overflow-hidden rounded-full">
+                <div 
+                  className="h-full bg-primary transition-all duration-300 ease-out rounded-full" 
+                  style={{ width: `${Math.round((uploadProgress.current / uploadProgress.total) * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs font-bold text-primary text-right pt-1">
+                {Math.round((uploadProgress.current / Math.max(uploadProgress.total, 1)) * 100)}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
