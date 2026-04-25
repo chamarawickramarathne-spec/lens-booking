@@ -10,19 +10,21 @@ require_once 'config/cors.php';
 require_once 'config/database.php';
 require_once 'models/User.php';
 require_once 'middleware/auth.php';
-class AuthController {
+class AuthController
+{
     private $database;
     private $db;
     private $user;
     private $auth;
     private $appBasePath;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->database = new Database();
         $this->db = $this->database->getConnection();
         $this->user = new User($this->db);
         $this->auth = new JWTAuth();
-        
+
         // Detect environment and set base path
         $isLocal = (
             isset($_SERVER['HTTP_HOST']) && (
@@ -37,7 +39,8 @@ class AuthController {
     /**
      * User login
      */
-    public function login() {
+    public function login()
+    {
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['email']) || !isset($data['password'])) {
@@ -71,7 +74,7 @@ class AuthController {
             }
 
             $token = $this->auth->generateToken($user_data);
-            
+
             http_response_code(200);
             echo json_encode([
                 "message" => "Login successful",
@@ -94,7 +97,8 @@ class AuthController {
     /**
      * User registration
      */
-    public function register() {
+    public function register()
+    {
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['email']) || !isset($data['password']) || !isset($data['full_name'])) {
@@ -143,7 +147,8 @@ class AuthController {
     /**
      * Get current user profile
      */
-    public function profile() {
+    public function profile()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -169,7 +174,8 @@ class AuthController {
     /**
      * Update user profile
      */
-    public function updateProfile() {
+    public function updateProfile()
+    {
         $user_data = $this->auth->getUserFromHeader();
 
         if (!$user_data) {
@@ -180,18 +186,18 @@ class AuthController {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-    $this->user->id = $user_data['user_id'];
-    $this->user->full_name = $data['full_name'] ?? '';
-    $this->user->phone = $data['phone'] ?? '';
-    $this->user->profile_picture = $data['profile_picture'] ?? '';
-    $this->user->currency_type = $data['currency_type'] ?? 'USD';
-    $this->user->business_name = $data['business_name'] ?? '';
-    $this->user->business_email = $data['business_email'] ?? '';
-    $this->user->business_phone = $data['business_phone'] ?? '';
-    $this->user->business_address = $data['business_address'] ?? '';
-    $this->user->bio = $data['bio'] ?? '';
-    $this->user->website = $data['website'] ?? '';
-    $this->user->portfolio_url = $data['portfolio_url'] ?? '';
+        $this->user->id = $user_data['user_id'];
+        $this->user->full_name = $data['full_name'] ?? '';
+        $this->user->phone = $data['phone'] ?? '';
+        $this->user->profile_picture = $data['profile_picture'] ?? '';
+        $this->user->currency_type = $data['currency_type'] ?? 'USD';
+        $this->user->business_name = $data['business_name'] ?? '';
+        $this->user->business_email = $data['business_email'] ?? '';
+        $this->user->business_phone = $data['business_phone'] ?? '';
+        $this->user->business_address = $data['business_address'] ?? '';
+        $this->user->bio = $data['bio'] ?? '';
+        $this->user->website = $data['website'] ?? '';
+        $this->user->portfolio_url = $data['portfolio_url'] ?? '';
 
         if ($this->user->update()) {
             http_response_code(200);
@@ -205,7 +211,8 @@ class AuthController {
     /**
      * Verify email with token
      */
-    public function verifyEmail() {
+    public function verifyEmail()
+    {
         if (!isset($_GET['token'])) {
             http_response_code(400);
             echo json_encode(["message" => "Verification token is required"]);
@@ -217,7 +224,7 @@ class AuthController {
 
         // Determine if we should redirect to the app after verification
         $shouldRedirect = isset($_GET['redirect']) ? ($_GET['redirect'] !== '0') : true;
-        
+
         // Optional next path (must be a safe relative path)
         $next = isset($_GET['next']) && str_starts_with($_GET['next'], '/') ? $_GET['next'] : ($this->appBasePath . '/');
 
@@ -231,19 +238,19 @@ class AuthController {
                 // Render a minimal HTML welcome page and redirect to landing
                 header('Content-Type: text/html; charset=UTF-8');
                 echo '<!doctype html><html><head><meta charset="utf-8">'
-                   . '<title>Email Verified</title>'
-                   . '<meta http-equiv="refresh" content="2;url=' . htmlspecialchars($next, ENT_QUOTES) . '">'
-                   . '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;'
-                   . 'background:#f7fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
-                   . '.card{background:#fff;padding:32px 28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);'
-                   . 'text-align:center;max-width:520px}h1{margin:0 0 8px;font-size:24px;color:#2d3748}'
-                   . 'p{margin:0 0 18px;color:#4a5568}a.btn{display:inline-block;background:#4f46e5;color:#fff;'
-                   . 'padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600}</style></head><body>'
-                   . '<div class="card">'
-                   . '<h1>Welcome 🎉</h1>'
-                   . '<p>Your email has been verified. Redirecting to the app...</p>'
-                   . '<a class="btn" href="' . htmlspecialchars($next, ENT_QUOTES) . '">Go to Lens Manager</a>'
-                   . '</div></body></html>';
+                    . '<title>Email Verified</title>'
+                    . '<meta http-equiv="refresh" content="2;url=' . htmlspecialchars($next, ENT_QUOTES) . '">'
+                    . '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;'
+                    . 'background:#f7fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
+                    . '.card{background:#fff;padding:32px 28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);'
+                    . 'text-align:center;max-width:520px}h1{margin:0 0 8px;font-size:24px;color:#2d3748}'
+                    . 'p{margin:0 0 18px;color:#4a5568}a.btn{display:inline-block;background:#4f46e5;color:#fff;'
+                    . 'padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600}</style></head><body>'
+                    . '<div class="card">'
+                    . '<h1>Welcome 🎉</h1>'
+                    . '<p>Your email has been verified. Redirecting to the app...</p>'
+                    . '<a class="btn" href="' . htmlspecialchars($next, ENT_QUOTES) . '">Go to Lens Manager</a>'
+                    . '</div></body></html>';
                 return;
             }
 
@@ -276,7 +283,8 @@ class AuthController {
     /**
      * Resend verification email
      */
-    public function resendVerification() {
+    public function resendVerification()
+    {
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['email'])) {
@@ -291,10 +299,10 @@ class AuthController {
             // Send new verification email
             require_once 'utils/EmailUtility.php';
             $emailUtil = new EmailUtility();
-            
+
             // Get user's name
             $user_info = $this->user->getByEmail($data['email']);
-            
+
             $email_sent = $emailUtil->sendVerificationEmail(
                 $data['email'],
                 $user_info['full_name'] ?? 'User',
@@ -324,9 +332,10 @@ class AuthController {
     /**
      * Upload profile image
      */
-    public function uploadProfileImage() {
+    public function uploadProfileImage()
+    {
         $user_data = $this->auth->getUserFromHeader();
-        
+
         if (!$user_data) {
             http_response_code(401);
             echo json_encode(["message" => "Access denied"]);
@@ -392,7 +401,7 @@ class AuthController {
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
             // Always save as relative path for portability
             $web_path = '/uploads/profiles/' . $filename;
-            
+
             http_response_code(200);
             echo json_encode([
                 "message" => "Image uploaded successfully",
@@ -408,9 +417,10 @@ class AuthController {
     /**
      * Request account deletion
      */
-    public function requestDeletion() {
+    public function requestDeletion()
+    {
         $user_data = $this->auth->getUserFromHeader();
-        
+
         if (!$user_data) {
             http_response_code(401);
             echo json_encode(["message" => "Access denied"]);
@@ -419,7 +429,7 @@ class AuthController {
 
         $this->user->id = $user_data['user_id'];
         $user_info = $this->user->getById($this->user->id);
-        
+
         if (!$user_info) {
             http_response_code(404);
             echo json_encode(["message" => "User not found"]);
@@ -443,7 +453,8 @@ class AuthController {
     /**
      * Confirm account deletion
      */
-    public function confirmDeletion() {
+    public function confirmDeletion()
+    {
         if (!isset($_GET['token'])) {
             http_response_code(400);
             echo json_encode(["message" => "Token is required"]);
@@ -457,22 +468,108 @@ class AuthController {
             // Render a friendly "Account Deleted" page
             header('Content-Type: text/html; charset=UTF-8');
             echo '<!doctype html><html><head><meta charset="utf-8">'
-               . '<title>Account Deleted</title>'
-               . '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;'
-               . 'background:#fef2f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
-               . '.card{background:#fff;padding:48px 32px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);'
-               . 'text-align:center;max-width:520px;border-top: 6px solid #ef4444}h1{margin:0 0 12px;font-size:28px;color:#991b1b}'
-               . 'p{margin:0 0 24px;color:#4b5563;line-height:1.6}a.btn{display:inline-block;background:#374151;color:#fff;'
-               . 'padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:600}</style></head><body>'
-               . '<div class="card">'
-               . '<h1>Account Deleted 🗑️</h1>'
-               . '<p>Your profile and all associated data have been permanently removed from our system. We are sorry to see you go.</p>'
-               . '<a class="btn" href="' . ($this->appBasePath ?: '/') . '/">Visit Homepage</a>'
-               . '</div></body></html>';
+                . '<title>Account Deleted</title>'
+                . '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;'
+                . 'background:#fef2f2;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}'
+                . '.card{background:#fff;padding:48px 32px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);'
+                . 'text-align:center;max-width:520px;border-top: 6px solid #ef4444}h1{margin:0 0 12px;font-size:28px;color:#991b1b}'
+                . 'p{margin:0 0 24px;color:#4b5563;line-height:1.6}a.btn{display:inline-block;background:#374151;color:#fff;'
+                . 'padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:600}</style></head><body>'
+                . '<div class="card">'
+                . '<h1>Account Deleted 🗑️</h1>'
+                . '<p>Your profile and all associated data have been permanently removed from our system. We are sorry to see you go.</p>'
+                . '<a class="btn" href="' . ($this->appBasePath ?: '/') . '/">Visit Homepage</a>'
+                . '</div></body></html>';
             return;
         } else {
             http_response_code(400);
             echo json_encode(["message" => $result['message']]);
+        }
+    }
+
+    /**
+     * Upload portfolio cover image
+     */
+    public function uploadPortfolioCoverImage()
+    {
+        $user_data = $this->auth->getUserFromHeader();
+
+        if (!$user_data) {
+            http_response_code(401);
+            echo json_encode(["message" => "Access denied"]);
+            return;
+        }
+
+        if (!isset($_FILES['portfolio_cover'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "No file uploaded"]);
+            return;
+        }
+
+        $file = $_FILES['portfolio_cover'];
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $max_file_size = 5242880; // 5MB
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(["message" => "Upload error: " . $file['error']]);
+            return;
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_types)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Invalid file type. Only images are allowed."]);
+            return;
+        }
+
+        if ($file['size'] > $max_file_size) {
+            http_response_code(400);
+            echo json_encode(["message" => "File too large. Maximum size is 5MB."]);
+            return;
+        }
+
+        $upload_dir = dirname(__DIR__) . '/uploads/profiles/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'portfolio_cover_' . $user_data['user_id'] . '_' . time() . '.' . $extension;
+        $filepath = $upload_dir . $filename;
+
+        // Delete old portfolio cover files for this user
+        $pattern = $upload_dir . 'portfolio_cover_' . $user_data['user_id'] . '_*';
+        foreach (glob($pattern) as $old_file) {
+            if (file_exists($old_file)) {
+                unlink($old_file);
+            }
+        }
+
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            $web_path = 'uploads/profiles/' . $filename;
+
+            // Update the portfolio_cover_image in the database
+            $this->user->id = $user_data['user_id'];
+            $stmt = $this->db->prepare(
+                "UPDATE users SET portfolio_cover_image = :path WHERE id = :id"
+            );
+            $stmt->bindParam(':path', $web_path);
+            $stmt->bindParam(':id', $user_data['user_id']);
+            $stmt->execute();
+
+            http_response_code(200);
+            echo json_encode([
+                "message" => "Image uploaded successfully",
+                "file_path" => $web_path,
+                "filename" => $filename
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Failed to save file"]);
         }
     }
 }
@@ -504,6 +601,8 @@ switch ($request_method) {
             $auth_controller->register();
         } elseif ($endpoint === '/upload-profile-image') {
             $auth_controller->uploadProfileImage();
+        } elseif ($endpoint === '/upload-portfolio-cover') {
+            $auth_controller->uploadPortfolioCoverImage();
         } elseif ($endpoint === '/resend-verification') {
             $auth_controller->resendVerification();
         } elseif ($endpoint === '/request-deletion') {
@@ -511,7 +610,7 @@ switch ($request_method) {
         } else {
             http_response_code(404);
             echo json_encode([
-                "message" => "Endpoint not found", 
+                "message" => "Endpoint not found",
                 "debug" => [
                     "method" => $request_method,
                     "uri" => $request_uri,
@@ -520,7 +619,7 @@ switch ($request_method) {
             ]);
         }
         break;
-    
+
     case 'GET':
         if ($endpoint === '/profile') {
             $auth_controller->profile();
@@ -533,7 +632,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     case 'PUT':
         if ($endpoint === '/profile') {
             $auth_controller->updateProfile();
@@ -542,7 +641,7 @@ switch ($request_method) {
             echo json_encode(["message" => "Endpoint not found"]);
         }
         break;
-    
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Method not allowed"]);

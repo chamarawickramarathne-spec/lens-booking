@@ -18,6 +18,7 @@ interface PortfolioData {
     address: string;
     website: string;
     portfolio: string;
+    portfolio_cover_image?: string;
   };
   collections: Array<{
     id: number;
@@ -110,7 +111,13 @@ const PortfolioPreview = () => {
       {/* Hero Section */}
       <div className="relative h-[60vh] w-full overflow-hidden">
         <div className="absolute inset-0">
-          {collections.length > 0 && collections[0].cover_image ? (
+          {photographer.portfolio_cover_image ? (
+            <img 
+              src={getImageUrl(photographer.portfolio_cover_image)} 
+              alt={photographer.business_name}
+              className="w-full h-full object-cover transform scale-105"
+            />
+          ) : collections.length > 0 && collections[0].cover_image ? (
             <img 
               src={getImageUrl(collections[0].cover_image)} 
               alt={photographer.business_name}

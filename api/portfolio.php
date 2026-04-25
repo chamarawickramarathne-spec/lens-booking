@@ -35,14 +35,14 @@ class PortfolioController
 
         // Fetch public galleries for this user
         $galleries = $this->gallery->getByUserId($id);
-        
+
         // Filter only public galleries
-        $publicGalleries = array_filter($galleries, function($g) {
-            return (bool)$g['is_public'];
+        $publicGalleries = array_filter($galleries, function ($g) {
+            return (bool) $g['is_public'];
         });
 
         // Format galleries
-        $formattedGalleries = array_map(function($g) {
+        $formattedGalleries = array_map(function ($g) {
             return [
                 'id' => $g['id'],
                 'title' => $g['gallery_name'],
@@ -66,7 +66,8 @@ class PortfolioController
                 'personal_phone' => $userData['phone'],
                 'address' => $userData['business_address'],
                 'website' => $userData['website'],
-                'portfolio' => $userData['portfolio_url']
+                'portfolio' => $userData['portfolio_url'],
+                'portfolio_cover_image' => $userData['portfolio_cover_image'] ?? ''
             ],
             'collections' => $formattedGalleries
         ];
@@ -86,7 +87,7 @@ $api_pos = strpos($path, $api_path);
 $endpoint = $api_pos !== false ? substr($path, $api_pos + strlen($api_path)) : $path;
 
 if ($method === 'GET' && preg_match('/^\/(\d+)$/', $endpoint, $matches)) {
-    $controller->getPublicPortfolio((int)$matches[1]);
+    $controller->getPublicPortfolio((int) $matches[1]);
 } else {
     http_response_code(404);
     echo json_encode(["message" => "Endpoint not found"]);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
   Upload,
   ExternalLink,
   Trash2,
+  Info,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/integrations/api/client";
@@ -49,8 +51,17 @@ const Galleries = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [localCoverImage, setLocalCoverImage] = useState<string | null>(null);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.portfolio_cover_image) {
+      setLocalCoverImage(user.portfolio_cover_image);
+    }
+  }, [user]);
 
   const getImageUrl = (path: string | undefined) => {
     if (!path) return "";
@@ -80,6 +91,41 @@ const Galleries = () => {
       fetchGalleries();
     }
   }, [user, fetchGalleries]);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const response = await apiClient.uploadPortfolioCoverImage(file);
+      setLocalCoverImage(response.file_path || response.filename);
+      toast({
+        title: "Success",
+        description: "Portfolio cover image updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload portfolio cover",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingCover(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleDeleteGallery = async (galleryId: number) => {
     try {
@@ -120,9 +166,66 @@ const Galleries = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row h-full min-h-[calc(100vh-theme(spacing.16)-theme(spacing.12))] gap-6">
+        {/* Left Sidebar Panel (Portfolio Cover) */}
+        <div className="w-full md:w-80 flex-shrink-0 flex flex-col bg-white border rounded-xl overflow-hidden self-start">
+          <div className="p-4 border-b bg-[#F9FAFB]">
+            <h2 className="font-semibold text-lg text-gray-900">Portfolio Settings</h2>
+          </div>
+          <div className="p-4 space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-3 block text-gray-700">Portfolio Cover Page</label>
+              <div 
+                className="relative aspect-[16/10] rounded-lg overflow-hidden group bg-secondary/50 border shadow-sm cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {localCoverImage ? (
+                  <img src={getImageUrl(localCoverImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Portfolio Cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40 gap-3 bg-secondary/20">
+                    <ImageIcon className="h-10 w-10" />
+                    <span className="text-sm font-medium">Click to upload cover</span>
+                  </div>
+                )}
+                
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                  <Button size="sm" variant="secondary" className="bg-white hover:bg-white/90 text-black border-none text-xs font-semibold shadow-lg pointer-events-none">
+                    <span>
+                      <ImageIcon className="h-3.5 w-3.5 mr-2 inline-block" />
+                      {isUploadingCover ? "Uploading..." : "Change Cover"}
+                    </span>
+                  </Button>
+                </div>
+
+                {isUploadingCover && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 bg-blue-50 text-blue-800 text-xs rounded-md p-3 border border-blue-100 flex items-start gap-2">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold mb-0.5">Recommended Resolution</p>
+                  <p>1920 × 1080 pixels (16:9 ratio). Max file size: 5MB.</p>
+                </div>
+              </div>
+            </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleCoverUpload} 
+            />
+          </div>
+        </div>
+
+        {/* Right Main Content */}
+        <div className="flex-1 space-y-8 animate-in fade-in duration-500">
+          {/* Header Section */}
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             <h1 className="text-3xl font-semibold tracking-tight">Collections</h1>
             <div className="relative max-w-xs w-full">
@@ -284,6 +387,7 @@ const Galleries = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
     </DashboardLayout>
   );

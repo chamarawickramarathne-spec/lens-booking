@@ -4,7 +4,8 @@
  * Handles user-related database operations
  */
 
-class User {
+class User
+{
     private $conn;
     private $table_name = "users";
 
@@ -32,14 +33,16 @@ class User {
     public $created_at;
     public $updated_at;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
     /**
      * Create new user
      */
-    public function create() {
+    public function create()
+    {
         // Generate verification token
         $verification_token = bin2hex(random_bytes(32));
         $token_expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
@@ -57,7 +60,7 @@ class User {
         $this->email = htmlspecialchars(strip_tags($this->email));
         $this->full_name = htmlspecialchars(strip_tags($this->full_name));
         $this->phone = htmlspecialchars(strip_tags($this->phone));
-        
+
         // Hash password
         $password_hash = password_hash($this->password_hash, PASSWORD_DEFAULT);
 
@@ -90,7 +93,8 @@ class User {
     /**
      * Login user
      */
-    public function login($email, $password) {
+    public function login($email, $password)
+    {
         $query = "SELECT u.id, u.email, u.password_hash, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, 
                  u.business_name, u.business_email, u.business_phone, u.business_address,
@@ -123,7 +127,7 @@ class User {
                         'message' => 'Your account is inactive. Please contact support.'
                     ];
                 }
-                
+
                 // Return user data
                 return [
                     'id' => $row['id'],
@@ -161,11 +165,12 @@ class User {
     /**
      * Get user by ID
      */
-    public function getById($id) {
+    public function getById($id)
+    {
         $query = "SELECT u.id, u.email, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, u.business_name, u.business_email, 
                  u.business_phone, u.business_address, u.bio, u.website, 
-                 u.portfolio_url, u.is_active, u.email_verified, u.access_level_id,
+                 u.portfolio_url, u.portfolio_cover_image, u.is_active, u.email_verified, u.access_level_id,
                  u.created_at, u.updated_at,
                  al.level_name as access_level_name, al.role, al.max_clients, al.max_bookings, al.max_storage_gb
                  FROM " . $this->table_name . " u
@@ -193,6 +198,7 @@ class User {
                 'bio' => $row['bio'] ?? '',
                 'website' => $row['website'] ?? '',
                 'portfolio_url' => $row['portfolio_url'] ?? '',
+                'portfolio_cover_image' => $row['portfolio_cover_image'] ?? '',
                 'is_active' => $row['is_active'],
                 'email_verified' => $row['email_verified'],
                 'access_level' => [
@@ -213,7 +219,8 @@ class User {
     /**
      * Update user
      */
-    public function update() {
+    public function update()
+    {
         $query = "UPDATE " . $this->table_name . " 
              SET full_name=:full_name, phone=:phone, 
                  profile_picture=:profile_picture, currency_type=:currency_type,
@@ -256,19 +263,21 @@ class User {
     /**
      * Check if email exists
      */
-    public function emailExists($email) {
+    public function emailExists($email)
+    {
         $query = "SELECT id FROM " . $this->table_name . " WHERE email = :email";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
         $stmt->execute();
-        
+
         return $stmt->rowCount() > 0;
     }
 
     /**
      * Get user by email
      */
-    public function getByEmail($email) {
+    public function getByEmail($email)
+    {
         $query = "SELECT u.id, u.email, u.full_name, u.phone, 
                  u.profile_picture, u.currency_type, u.business_name, u.business_email, 
                  u.business_phone, u.business_address, u.bio, u.website, 
@@ -320,18 +329,19 @@ class User {
     /**
      * Verify email with token
      */
-    public function verifyEmail($token) {
+    public function verifyEmail($token)
+    {
         $query = "SELECT id, email, full_name, email_verified, token_expires_at 
                  FROM " . $this->table_name . " 
                  WHERE verification_token = :token";
-        
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":token", $token);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             // Check if already verified
             if ($row['email_verified'] == 1) {
                 return ['status' => 'already_verified', 'message' => 'Email already verified'];
@@ -348,13 +358,13 @@ class User {
                                verification_token = NULL, 
                                token_expires_at = NULL 
                            WHERE id = :id";
-            
+
             $update_stmt = $this->conn->prepare($update_query);
             $update_stmt->bindParam(":id", $row['id']);
-            
+
             if ($update_stmt->execute()) {
                 return [
-                    'status' => 'success', 
+                    'status' => 'success',
                     'message' => 'Email verified successfully! You can now login.',
                     'user' => [
                         'email' => $row['email'],
@@ -363,14 +373,15 @@ class User {
                 ];
             }
         }
-        
+
         return ['status' => 'invalid', 'message' => 'Invalid verification link'];
     }
 
     /**
      * Resend verification email
      */
-    public function resendVerification($email) {
+    public function resendVerification($email)
+    {
         $query = "SELECT id, email_verified FROM " . $this->table_name . " WHERE email = :email";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
@@ -378,7 +389,7 @@ class User {
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($row['email_verified'] == 1) {
                 return ['status' => 'already_verified', 'message' => 'Email already verified'];
             }
@@ -391,25 +402,26 @@ class User {
                            SET verification_token = :token, 
                                token_expires_at = :expires_at 
                            WHERE id = :id";
-            
+
             $update_stmt = $this->conn->prepare($update_query);
             $update_stmt->bindParam(":token", $verification_token);
             $update_stmt->bindParam(":expires_at", $token_expires_at);
             $update_stmt->bindParam(":id", $row['id']);
-            
+
             if ($update_stmt->execute()) {
                 $this->verification_token = $verification_token;
                 return ['status' => 'success', 'message' => 'Verification email sent', 'token' => $verification_token];
             }
         }
-        
+
         return ['status' => 'not_found', 'message' => 'Email not found'];
     }
 
     /**
      * Request account deletion
      */
-    public function requestDeletion() {
+    public function requestDeletion()
+    {
         $token = bin2hex(random_bytes(32));
         $expires = date('Y-m-d H:i:s', strtotime('+2 hours'));
 
@@ -417,12 +429,12 @@ class User {
                  SET deletion_token = :token, 
                      deletion_token_expires_at = :expires 
                  WHERE id = :id";
-        
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":token", $token);
         $stmt->bindParam(":expires", $expires);
         $stmt->bindParam(":id", $this->id);
-        
+
         if ($stmt->execute()) {
             return $token;
         }
@@ -432,11 +444,12 @@ class User {
     /**
      * Confirm and perform account deletion
      */
-    public function confirmDeletion($token) {
+    public function confirmDeletion($token)
+    {
         // 1. Find user by token
         $query = "SELECT id, full_name, email, profile_picture FROM " . $this->table_name . " 
                  WHERE deletion_token = :token AND deletion_token_expires_at > NOW()";
-        
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":token", $token);
         $stmt->execute();
@@ -458,7 +471,7 @@ class User {
                 if (file_exists($profile_path) && is_file($profile_path)) {
                     unlink($profile_path);
                 }
-                
+
                 // Also clean up any other files following the same pattern for this user
                 $profile_dir = dirname(__DIR__, 2) . '/uploads/profiles/';
                 $pattern = $profile_dir . 'profile_' . $user_id . '_*';
@@ -485,10 +498,10 @@ class User {
 
             // C. Delete all associated database records 
             // Note: Many tables have ON DELETE CASCADE from Users table!
-            
+
             // Delete clients (database says SET NULL in schema, but request says remove all records)
             $this->conn->prepare("DELETE FROM clients WHERE user_id = ?")->execute([$user_id]);
-            
+
             // D. Delete the user itself (Will cascade to most other tables)
             $this->conn->prepare("DELETE FROM " . $this->table_name . " WHERE id = ?")->execute([$user_id]);
 
@@ -503,13 +516,18 @@ class User {
     /**
      * Recursively delete a directory
      */
-    private function deleteDirectory($dir) {
-        if (!file_exists($dir)) return true;
-        if (!is_dir($dir)) return unlink($dir);
+    private function deleteDirectory($dir)
+    {
+        if (!file_exists($dir))
+            return true;
+        if (!is_dir($dir))
+            return unlink($dir);
 
         foreach (scandir($dir) as $item) {
-            if ($item == '.' || $item == '..') continue;
-            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+            if ($item == '.' || $item == '..')
+                continue;
+            if (!$this->deleteDirectory($dir . DIRECTORY_SEPARATOR . $item))
+                return false;
         }
 
         return rmdir($dir);
