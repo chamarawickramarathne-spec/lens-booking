@@ -127,6 +127,24 @@ const Galleries = () => {
     }
   };
 
+  const handleDeleteCover = async () => {
+    if (!window.confirm("Are you sure you want to remove the portfolio cover image?")) return;
+    try {
+      await apiClient.deletePortfolioCoverImage();
+      setLocalCoverImage(null);
+      toast({
+        title: "Removed",
+        description: "Portfolio cover image has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove cover image",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteGallery = async (galleryId: number) => {
     try {
       await apiClient.deleteGallery(galleryId);
@@ -210,6 +228,17 @@ const Galleries = () => {
                   <p>1920 × 1080 pixels (16:9 ratio). Max file size: 5MB.</p>
                 </div>
               </div>
+              {localCoverImage && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2 gap-2 text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+                  onClick={handleDeleteCover}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove Cover Image
+                </Button>
+              )}
             </div>
             
             <input 
