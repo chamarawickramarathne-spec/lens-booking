@@ -57,13 +57,6 @@ const LoginForm = ({ onToggleMode }: LoginFormProps) => {
 
   return (
     <form onSubmit={handleLogin} className="space-y-6">
-      <div className="flex items-center justify-center mb-8">
-        <img
-          src="hireartist_logo_dim.png"
-          alt="HireArtist Logo"
-          className="h-24 w-auto object-contain"
-        />
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -106,7 +99,8 @@ const LoginForm = ({ onToggleMode }: LoginFormProps) => {
 
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-[#e94560] to-[#533483] hover:opacity-90 transition-opacity text-white font-semibold shadow-lg hover:shadow-xl"
+        className="w-full font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
+        size="lg"
         disabled={isLoading}
       >
         {isLoading ? "Signing in..." : "Sign In"}
@@ -117,7 +111,7 @@ const LoginForm = ({ onToggleMode }: LoginFormProps) => {
           type="button"
           variant="link"
           onClick={onToggleMode}
-          className="text-gray-600 hover:text-[#e94560] transition-colors"
+          className="text-muted-foreground hover:text-primary transition-colors"
         >
           Don't have an account? Sign up
         </Button>

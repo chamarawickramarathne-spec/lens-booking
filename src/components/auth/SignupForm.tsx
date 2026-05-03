@@ -83,97 +83,92 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
 
   return (
     <form onSubmit={handleSignup} className="space-y-6">
-      <div className="flex items-center justify-center mb-8">
-        <img
-          src="hireartist_logo_dim.png"
-          alt="HireArtist Logo"
-          className="h-24 w-auto object-contain"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="photographerName">Photographer Name</Label>
-        <Input
-          id="photographerName"
-          type="text"
-          value={photographerName}
-          onChange={(e) => setPhotographerName(e.target.value)}
-          placeholder="Your full name"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="photographer@example.com"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="photographerName">Photographer Name</Label>
           <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            id="photographerName"
+            type="text"
+            value={photographerName}
+            onChange={(e) => setPhotographerName(e.target.value)}
+            placeholder="Your full name"
             required
-            minLength={6}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <div className="relative">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
           <Input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="photographer@example.com"
             required
-            minLength={6}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
-            {showConfirmPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-[#e94560] to-[#533483] hover:opacity-90 transition-opacity text-white font-semibold shadow-lg hover:shadow-xl"
+        className="w-full font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
+        size="lg"
         disabled={isLoading}
       >
         {isLoading ? "Creating account..." : "Create Account"}
@@ -184,7 +179,7 @@ const SignupForm = ({ onToggleMode }: SignupFormProps) => {
           type="button"
           variant="link"
           onClick={onToggleMode}
-          className="text-gray-600 hover:text-[#e94560] transition-colors"
+          className="text-muted-foreground hover:text-primary transition-colors"
         >
           Already have an account? Sign in
         </Button>
