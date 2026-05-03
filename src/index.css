@@ -18,10 +18,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 20% 15%;
 
-    /* Elegant navy blue primary */
-    --primary: 240 60% 25%;
+    /* Logo matching Rust Red primary */
+    --primary: 8 65% 40%;
     --primary-foreground: 0 0% 98%;
-    --primary-glow: 240 40% 45%;
+    --primary-glow: 8 65% 55%;
 
     /* Warm grey secondary */
     --secondary: 240 10% 96%;
@@ -39,7 +39,7 @@ All colors MUST be HSL.
 
     --border: 240 15% 92%;
     --input: 240 15% 97%;
-    --ring: 240 60% 25%;
+    --ring: 8 65% 40%;
 
     /* Success color for completed items */
     --success: 140 60% 45%;
@@ -87,9 +87,9 @@ All colors MUST be HSL.
     --popover: 240 20% 10%;
     --popover-foreground: 240 10% 95%;
 
-    --primary: 240 50% 70%;
+    --primary: 8 70% 50%;
     --primary-foreground: 240 25% 8%;
-    --primary-glow: 240 40% 55%;
+    --primary-glow: 8 70% 65%;
 
     --secondary: 240 15% 15%;
     --secondary-foreground: 240 10% 90%;
@@ -111,7 +111,7 @@ All colors MUST be HSL.
 
     --border: 240 15% 18%;
     --input: 240 15% 15%;
-    --ring: 240 50% 70%;
+    --ring: 8 70% 50%;
 
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(240 40% 60%));

@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import GalleryPreview from "./pages/GalleryPreview";
 import PortfolioPreview from "./pages/PortfolioPreview";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 import React from "react";
 
 // Create QueryClient outside of component to prevent re-creation
@@ -52,7 +53,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/" element={<Index />} />
     <Route
       path="/dashboard"
       element={
